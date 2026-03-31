@@ -9,6 +9,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import ProductsPage from "@/pages/ProductsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import UnauthorizedPage from "@/pages/UnauthorizedPage";
+import { Toaster } from "sonner";
 
 // ──────────────────────────────────────────────
 // React Query Client
@@ -55,6 +56,7 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
+        <Toaster richColors closeButton position="top-right" />
       </AuthProvider>
     </QueryClientProvider>
   );

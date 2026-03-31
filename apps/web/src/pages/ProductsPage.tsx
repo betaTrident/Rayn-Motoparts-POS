@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Plus,
   Search,
@@ -27,6 +28,7 @@ import type {
 import * as productService from "@/services/productService";
 
 import { cn } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +79,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  PageEmptyState,
+  PageErrorState,
+  PageLoadingState,
+} from "@/components/ui/page-state";
+import PageHeader from "@/components/layout/PageHeader";
 
 // ── Constants ──────────────────────────────────────────
 const SIZE_OPTIONS: { value: ProductSize; label: string }[] = [
@@ -101,9 +109,40 @@ const EMPTY_CATEGORY: CategoryFormData = {
   is_active: true,
 };
 
+type ProductFormErrors = Partial<Record<keyof ProductFormData, string>>;
+type CategoryFormErrors = Partial<Record<keyof CategoryFormData, string>>;
+
 function formatCurrency(amount: string | number) {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return `₱${num.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+}
+
+function validateProductForm(data: ProductFormData): ProductFormErrors {
+  const errors: ProductFormErrors = {};
+
+  if (!data.name.trim()) {
+    errors.name = "Product name is required.";
+  }
+
+  if (!data.category) {
+    errors.category = "Select a category.";
+  }
+
+  if (!Number.isFinite(data.price) || data.price <= 0) {
+    errors.price = "Price must be greater than 0.";
+  }
+
+  return errors;
+}
+
+function validateCategoryForm(data: CategoryFormData): CategoryFormErrors {
+  const errors: CategoryFormErrors = {};
+
+  if (!data.name.trim()) {
+    errors.name = "Category name is required.";
+  }
+
+  return errors;
 }
 
 // ════════════════════════════════════════════════════════
@@ -139,6 +178,15 @@ export default function ProductsPage() {
     useState<ProductFormData>(EMPTY_PRODUCT);
   const [categoryForm, setCategoryForm] =
     useState<CategoryFormData>(EMPTY_CATEGORY);
+  const [productFormErrors, setProductFormErrors] =
+    useState<ProductFormErrors>({});
+  const [categoryFormErrors, setCategoryFormErrors] =
+    useState<CategoryFormErrors>({});
+  const [productServerError, setProductServerError] = useState<string | null>(
+    null
+  );
+  const [categoryServerError, setCategoryServerError] =
+    useState<string | null>(null);
 
   // ── Queries ──
   const categoriesQuery = useQuery({
@@ -158,6 +206,25 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setProductDialogOpen(false);
+      setProductServerError(null);
+      setProductFormErrors({});
+      toast.success("Product created successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to create product. Please try again."
+      );
+      setProductServerError(parsed.message);
+      setProductFormErrors((prev) => ({
+        ...prev,
+        name: parsed.fieldErrors.name ?? prev.name,
+        category: parsed.fieldErrors.category ?? prev.category,
+        price: parsed.fieldErrors.price ?? prev.price,
+        size: parsed.fieldErrors.size ?? prev.size,
+        description: parsed.fieldErrors.description ?? prev.description,
+      }));
+      toast.error(parsed.message);
     },
   });
 
@@ -173,6 +240,51 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setProductDialogOpen(false);
+      setProductServerError(null);
+      setProductFormErrors({});
+      toast.success("Product updated successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to update product. Please try again."
+      );
+      setProductServerError(parsed.message);
+      setProductFormErrors((prev) => ({
+        ...prev,
+        name: parsed.fieldErrors.name ?? prev.name,
+        category: parsed.fieldErrors.category ?? prev.category,
+        price: parsed.fieldErrors.price ?? prev.price,
+        size: parsed.fieldErrors.size ?? prev.size,
+        description: parsed.fieldErrors.description ?? prev.description,
+      }));
+      toast.error(parsed.message);
+    },
+  });
+
+  const toggleAvailabilityMut = useMutation({
+    mutationFn: ({
+      id,
+      nextAvailability,
+    }: {
+      id: number;
+      nextAvailability: boolean;
+    }) => productService.updateProduct(id, { is_available: nextAvailability }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success(
+        vars.nextAvailability
+          ? "Product marked as available."
+          : "Product marked as unavailable."
+      );
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to update availability. Please try again."
+      );
+      toast.error(parsed.message);
     },
   });
 
@@ -182,6 +294,14 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setDeleteDialogOpen(false);
+      toast.success("Product deleted successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to delete product. Please try again."
+      );
+      toast.error(parsed.message);
     },
   });
 
@@ -191,6 +311,22 @@ export default function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setCategoryDialogOpen(false);
+      setCategoryServerError(null);
+      setCategoryFormErrors({});
+      toast.success("Category created successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to create category. Please try again."
+      );
+      setCategoryServerError(parsed.message);
+      setCategoryFormErrors((prev) => ({
+        ...prev,
+        name: parsed.fieldErrors.name ?? prev.name,
+        description: parsed.fieldErrors.description ?? prev.description,
+      }));
+      toast.error(parsed.message);
     },
   });
 
@@ -206,6 +342,22 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setCategoryDialogOpen(false);
+      setCategoryServerError(null);
+      setCategoryFormErrors({});
+      toast.success("Category updated successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to update category. Please try again."
+      );
+      setCategoryServerError(parsed.message);
+      setCategoryFormErrors((prev) => ({
+        ...prev,
+        name: parsed.fieldErrors.name ?? prev.name,
+        description: parsed.fieldErrors.description ?? prev.description,
+      }));
+      toast.error(parsed.message);
     },
   });
 
@@ -214,6 +366,14 @@ export default function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       setDeleteCategoryDialogOpen(false);
+      toast.success("Category deleted successfully.");
+    },
+    onError: (error) => {
+      const parsed = parseApiError(
+        error,
+        "Unable to delete category. Please try again."
+      );
+      toast.error(parsed.message);
     },
   });
 
@@ -253,11 +413,15 @@ export default function ProductsPage() {
   function openCreateProduct() {
     setEditingProduct(null);
     setProductForm(EMPTY_PRODUCT);
+    setProductFormErrors({});
+    setProductServerError(null);
     setProductDialogOpen(true);
   }
 
   function openEditProduct(product: Product) {
     setEditingProduct(product);
+    setProductFormErrors({});
+    setProductServerError(null);
     setProductForm({
       name: product.name,
       category: product.category,
@@ -277,11 +441,15 @@ export default function ProductsPage() {
   function openCreateCategory() {
     setEditingCategory(null);
     setCategoryForm(EMPTY_CATEGORY);
+    setCategoryFormErrors({});
+    setCategoryServerError(null);
     setCategoryDialogOpen(true);
   }
 
   function openEditCategory(category: Category) {
     setEditingCategory(category);
+    setCategoryFormErrors({});
+    setCategoryServerError(null);
     setCategoryForm({
       name: category.name,
       description: category.description,
@@ -295,8 +463,18 @@ export default function ProductsPage() {
     setDeleteCategoryDialogOpen(true);
   }
 
-  function handleProductSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleProductSubmit(e?: React.FormEvent | React.MouseEvent) {
+    e?.preventDefault();
+
+    const errors = validateProductForm(productForm);
+    setProductFormErrors(errors);
+    setProductServerError(null);
+
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the highlighted product fields.");
+      return;
+    }
+
     if (editingProduct) {
       updateProductMut.mutate({ id: editingProduct.id, data: productForm });
     } else {
@@ -304,8 +482,18 @@ export default function ProductsPage() {
     }
   }
 
-  function handleCategorySubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleCategorySubmit(e?: React.FormEvent | React.MouseEvent) {
+    e?.preventDefault();
+
+    const errors = validateCategoryForm(categoryForm);
+    setCategoryFormErrors(errors);
+    setCategoryServerError(null);
+
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the highlighted category fields.");
+      return;
+    }
+
     if (editingCategory) {
       updateCategoryMut.mutate({
         id: editingCategory.id,
@@ -325,9 +513,9 @@ export default function ProductsPage() {
   }
 
   function toggleProductAvailability(product: Product) {
-    updateProductMut.mutate({
+    toggleAvailabilityMut.mutate({
       id: product.id,
-      data: { is_available: !product.is_available },
+      nextAvailability: !product.is_available,
     });
   }
 
@@ -342,15 +530,11 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Manage your menu items and categories
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {activeTab === "categories" ? (
+      <PageHeader
+        title="Products"
+        description="Manage your menu items and categories"
+        actions={
+          activeTab === "categories" ? (
             <Button onClick={openCreateCategory} className="cursor-pointer">
               <Plus className="mr-2 size-4" />
               New Category
@@ -360,9 +544,9 @@ export default function ProductsPage() {
               <Plus className="mr-2 size-4" />
               New Product
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -417,7 +601,10 @@ export default function ProductsPage() {
           {activeTab === "products" && (
             <div className="hidden items-center gap-1 rounded-lg border p-0.5 sm:flex">
               <button
+                type="button"
                 onClick={() => setViewMode("table")}
+                aria-label="Switch to table view"
+                aria-pressed={viewMode === "table"}
                 className={cn(
                   "cursor-pointer rounded-md p-1.5 transition-colors",
                   viewMode === "table"
@@ -428,7 +615,10 @@ export default function ProductsPage() {
                 <LayoutList className="size-4" />
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode("grid")}
+                aria-label="Switch to grid view"
+                aria-pressed={viewMode === "grid"}
                 className={cn(
                   "cursor-pointer rounded-md p-1.5 transition-colors",
                   viewMode === "grid"
@@ -457,7 +647,9 @@ export default function ProductsPage() {
                 />
                 {search && (
                   <button
+                    type="button"
                     onClick={() => setSearch("")}
+                    aria-label="Clear product search"
                     className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
                   >
                     <X className="size-3.5" />
@@ -525,11 +717,15 @@ export default function ProductsPage() {
 
             {/* Content */}
             {productsQuery.isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="text-primary size-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading products..." />
+            ) : productsQuery.isError ? (
+              <PageErrorState
+                title="Unable to load products"
+                description="Please check your connection and try again."
+                onRetry={() => productsQuery.refetch()}
+              />
             ) : filteredProducts.length === 0 ? (
-              <EmptyState
+              <PageEmptyState
                 icon={Package}
                 title={
                   hasActiveFilters ? "No matching products" : "No products yet"
@@ -653,6 +849,7 @@ export default function ProductsPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={`Open actions for ${product.name}`}
                                 className="size-8 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
                               >
                                 <MoreHorizontal className="size-4" />
@@ -728,11 +925,15 @@ export default function ProductsPage() {
             <Separator />
 
             {categoriesQuery.isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="text-primary size-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading categories..." />
+            ) : categoriesQuery.isError ? (
+              <PageErrorState
+                title="Unable to load categories"
+                description="Please refresh the data and try again."
+                onRetry={() => categoriesQuery.refetch()}
+              />
             ) : categories.length === 0 ? (
-              <EmptyState
+              <PageEmptyState
                 icon={Tag}
                 title="No categories yet"
                 description="Create categories to organize your menu items"
@@ -786,6 +987,7 @@ export default function ProductsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={`Open actions for category ${cat.name}`}
                             className="size-7 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
                           >
                             <MoreHorizontal className="size-4" />
@@ -846,6 +1048,7 @@ export default function ProductsPage() {
 
                 {/* Add category card */}
                 <button
+                  type="button"
                   onClick={openCreateCategory}
                   className="text-muted-foreground hover:border-primary/40 hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 transition-colors"
                 >
@@ -881,34 +1084,56 @@ export default function ProductsPage() {
                 htmlFor="product-name"
                 className="text-muted-foreground text-xs font-medium"
               >
-                Product Name
+                Product Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="product-name"
                 placeholder="e.g. Iced Caramel Latte"
                 value={productForm.name}
-                onChange={(e) =>
-                  setProductForm((f) => ({ ...f, name: e.target.value }))
-                }
+                onChange={(e) => {
+                  setProductForm((f) => ({ ...f, name: e.target.value }));
+                  setProductFormErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                aria-invalid={!!productFormErrors.name}
+                aria-describedby="product-name-hint product-name-error"
+                className={cn(productFormErrors.name && "border-destructive")}
                 required
               />
+              <p id="product-name-hint" className="text-muted-foreground text-xs">
+                Use a clear, customer-facing name.
+              </p>
+              {productFormErrors.name ? (
+                <p id="product-name-error" className="text-destructive text-xs">
+                  {productFormErrors.name}
+                </p>
+              ) : null}
             </div>
 
             {/* Category + Size */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-muted-foreground text-xs font-medium">
-                  Category
+                  Category <span className="text-destructive">*</span>
                 </Label>
                 <Select
                   value={
                     productForm.category ? String(productForm.category) : ""
                   }
-                  onValueChange={(val) =>
-                    setProductForm((f) => ({ ...f, category: Number(val) }))
-                  }
+                  onValueChange={(val) => {
+                    setProductForm((f) => ({ ...f, category: Number(val) }));
+                    setProductFormErrors((prev) => ({
+                      ...prev,
+                      category: undefined,
+                    }));
+                  }}
                 >
-                  <SelectTrigger className="w-full cursor-pointer">
+                  <SelectTrigger
+                    className={cn(
+                      "w-full cursor-pointer",
+                      productFormErrors.category && "border-destructive"
+                    )}
+                    aria-invalid={!!productFormErrors.category}
+                  >
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -921,6 +1146,11 @@ export default function ProductsPage() {
                       ))}
                   </SelectContent>
                 </Select>
+                {productFormErrors.category ? (
+                  <p className="text-destructive text-xs">
+                    {productFormErrors.category}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-muted-foreground text-xs font-medium">
@@ -955,7 +1185,7 @@ export default function ProductsPage() {
                 htmlFor="product-price"
                 className="text-muted-foreground text-xs font-medium"
               >
-                Price (₱)
+                Price (₱) <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="product-price"
@@ -964,14 +1194,26 @@ export default function ProductsPage() {
                 step="0.01"
                 placeholder="0.00"
                 value={productForm.price || ""}
-                onChange={(e) =>
+                onChange={(e) => {
                   setProductForm((f) => ({
                     ...f,
                     price: parseFloat(e.target.value) || 0,
-                  }))
-                }
+                  }));
+                  setProductFormErrors((prev) => ({ ...prev, price: undefined }));
+                }}
+                aria-invalid={!!productFormErrors.price}
+                aria-describedby="product-price-hint product-price-error"
+                className={cn(productFormErrors.price && "border-destructive")}
                 required
               />
+              <p id="product-price-hint" className="text-muted-foreground text-xs">
+                Enter the final selling price.
+              </p>
+              {productFormErrors.price ? (
+                <p id="product-price-error" className="text-destructive text-xs">
+                  {productFormErrors.price}
+                </p>
+              ) : null}
             </div>
 
             {/* Description */}
@@ -1015,9 +1257,9 @@ export default function ProductsPage() {
             </div>
 
             {/* Error */}
-            {(createProductMut.isError || updateProductMut.isError) && (
+            {productServerError && (
               <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                Something went wrong. Please check the fields and try again.
+                {productServerError}
               </div>
             )}
           </form>
@@ -1034,6 +1276,7 @@ export default function ProductsPage() {
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={handleProductSubmit}
               disabled={isProductSaving}
               className="cursor-pointer"
@@ -1072,17 +1315,29 @@ export default function ProductsPage() {
                 htmlFor="cat-name"
                 className="text-muted-foreground text-xs font-medium"
               >
-                Category Name
+                Category Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="cat-name"
                 placeholder="e.g. Hot Coffee"
                 value={categoryForm.name}
-                onChange={(e) =>
-                  setCategoryForm((f) => ({ ...f, name: e.target.value }))
-                }
+                onChange={(e) => {
+                  setCategoryForm((f) => ({ ...f, name: e.target.value }));
+                  setCategoryFormErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                aria-invalid={!!categoryFormErrors.name}
+                aria-describedby="cat-name-hint cat-name-error"
+                className={cn(categoryFormErrors.name && "border-destructive")}
                 required
               />
+              <p id="cat-name-hint" className="text-muted-foreground text-xs">
+                Keep it short and easy to scan.
+              </p>
+              {categoryFormErrors.name ? (
+                <p id="cat-name-error" className="text-destructive text-xs">
+                  {categoryFormErrors.name}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-1.5">
@@ -1123,9 +1378,9 @@ export default function ProductsPage() {
               />
             </div>
 
-            {(createCategoryMut.isError || updateCategoryMut.isError) && (
+            {categoryServerError && (
               <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                Something went wrong. Please try again.
+                {categoryServerError}
               </div>
             )}
           </form>
@@ -1142,6 +1397,7 @@ export default function ProductsPage() {
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={handleCategorySubmit}
               disabled={isCategorySaving}
               className="cursor-pointer"
@@ -1283,6 +1539,7 @@ function TabButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         "relative flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
@@ -1339,6 +1596,7 @@ function ProductCard({
             <Button
               variant="ghost"
               size="icon"
+              aria-label={`Open actions for ${product.name}`}
               className="size-7 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
             >
               <MoreHorizontal className="size-4" />
@@ -1420,28 +1678,3 @@ function ProductCard({
   );
 }
 
-/** Reusable empty state */
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-  action,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="bg-muted mb-4 flex size-14 items-center justify-center rounded-full">
-        <Icon className="text-muted-foreground size-6" />
-      </div>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-muted-foreground mt-1 max-w-xs text-xs">
-        {description}
-      </p>
-      {action && <div className="mt-4">{action}</div>}
-    </div>
-  );
-}

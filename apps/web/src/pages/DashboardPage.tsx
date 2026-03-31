@@ -57,6 +57,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import PageHeader from "@/components/layout/PageHeader";
 
 // ── Chart configs ──
 const weeklySalesConfig: ChartConfig = {
@@ -156,14 +157,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {greeting}, {user?.first_name}!
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Here's what's happening at Rayn Motorparts and accessories today.
-        </p>
-      </div>
+      <PageHeader
+        title={`${greeting}, ${user?.first_name}!`}
+        description="Here's what's happening at Rayn Motorparts and accessories today."
+      />
 
       {/* ── KPI Summary Cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -202,7 +199,12 @@ export default function DashboardPage() {
             <CardDescription>Revenue & orders for the past 7 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={weeklySalesConfig} className="h-70 w-full">
+            <ChartContainer
+              config={weeklySalesConfig}
+              className="h-70 w-full"
+              role="img"
+              aria-label="Weekly sales chart showing revenue and orders"
+            >
               <AreaChart data={weeklySales} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -248,7 +250,12 @@ export default function DashboardPage() {
             <CardDescription>Revenue distribution today</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={categoryConfig} className="mx-auto h-50 w-full">
+            <ChartContainer
+              config={categoryConfig}
+              className="mx-auto h-50 w-full"
+              role="img"
+              aria-label="Donut chart showing sales by category"
+            >
               <PieChart>
                 <ChartTooltip
                   content={
@@ -361,7 +368,12 @@ export default function DashboardPage() {
             <CardDescription>Order distribution today</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={hourlyConfig} className="h-60 w-full">
+            <ChartContainer
+              config={hourlyConfig}
+              className="h-60 w-full"
+              role="img"
+              aria-label="Bar chart showing hourly order distribution"
+            >
               <BarChart data={hourlySales} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="hour" tickLine={false} axisLine={false} fontSize={12} />
