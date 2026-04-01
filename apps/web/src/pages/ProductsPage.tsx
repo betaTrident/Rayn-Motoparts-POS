@@ -12,7 +12,7 @@ import {
   Loader2,
   Archive,
   ArchiveRestore,
-  Coffee,
+  Wrench,
   Grid3X3,
   LayoutList,
   X,
@@ -532,7 +532,7 @@ export default function ProductsPage() {
       {/* ── Page Header ── */}
       <PageHeader
         title="Products"
-        description="Manage your menu items and categories"
+        description="Manage your motorparts and accessory categories"
         actions={
           activeTab === "categories" ? (
             <Button onClick={openCreateCategory} className="cursor-pointer">
@@ -559,7 +559,7 @@ export default function ProductsPage() {
         <StatCard
           label="Available"
           value={stats.available}
-          icon={Coffee}
+          icon={Wrench}
           accent="green"
         />
         <StatCard
@@ -790,7 +790,7 @@ export default function ProductsPage() {
                         <TableCell className="pl-4">
                           <div className="flex items-center gap-3">
                             <div className="bg-primary/8 text-primary flex size-9 items-center justify-center rounded-lg">
-                              <Coffee className="size-4" />
+                              <Wrench className="size-4" />
                             </div>
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium">
@@ -936,7 +936,7 @@ export default function ProductsPage() {
               <PageEmptyState
                 icon={Tag}
                 title="No categories yet"
-                description="Create categories to organize your menu items"
+                description="Create categories to organize your motorparts and accessories"
                 action={
                   <Button
                     size="sm"
@@ -1071,7 +1071,7 @@ export default function ProductsPage() {
             <DialogDescription>
               {editingProduct
                 ? "Update the product details below."
-                : "Add a new item to your menu."}
+                : "Add a new motorpart or accessory."}
             </DialogDescription>
           </DialogHeader>
 
@@ -1088,7 +1088,7 @@ export default function ProductsPage() {
               </Label>
               <Input
                 id="product-name"
-                placeholder="e.g. Iced Caramel Latte"
+                placeholder="e.g. Brake Pad Set"
                 value={productForm.name}
                 onChange={(e) => {
                   setProductForm((f) => ({ ...f, name: e.target.value }));
@@ -1319,7 +1319,7 @@ export default function ProductsPage() {
               </Label>
               <Input
                 id="cat-name"
-                placeholder="e.g. Hot Coffee"
+                placeholder="e.g. Engine Parts"
                 value={categoryForm.name}
                 onChange={(e) => {
                   setCategoryForm((f) => ({ ...f, name: e.target.value }));
@@ -1582,7 +1582,7 @@ function ProductCard({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-primary/8 text-primary flex size-10 items-center justify-center rounded-lg">
-            <Coffee className="size-5" />
+            <Wrench className="size-5" />
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{product.name}</p>

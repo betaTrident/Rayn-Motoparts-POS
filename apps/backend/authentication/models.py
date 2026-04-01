@@ -6,8 +6,19 @@ class User(AbstractUser):
     """Custom user model extending Django's AbstractUser."""
 
     email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=30, null=True, blank=True)
+    pin_hash = models.CharField(max_length=255, null=True, blank=True)
+    warehouse = models.ForeignKey(
+        'inventory.Warehouse',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='users',
+    )
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

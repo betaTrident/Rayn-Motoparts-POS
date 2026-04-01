@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -59,7 +60,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'username', 'first_name',
-            'last_name', 'is_active', 'is_staff', 'date_joined',
+            'last_name', 'phone', 'warehouse', 'last_login_at', 'deleted_at',
+            'is_active', 'is_staff', 'date_joined',
         )
         read_only_fields = ('id', 'email', 'is_active', 'is_staff', 'date_joined')
 
@@ -92,3 +94,14 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """SimpleJWT serializer that embeds role and warehouse context in tokens."""
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['roles'] = list(user.groups.values_list('name', flat=True))
+        token['warehouse_id'] = getattr(user, 'warehouse_id', None)
+        return token
