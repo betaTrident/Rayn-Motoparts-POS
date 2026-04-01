@@ -66,10 +66,10 @@ const weeklySalesConfig: ChartConfig = {
 };
 
 const categoryConfig: ChartConfig = {
-  "hot-coffee": { label: "Hot Coffee", color: "oklch(0.55 0.12 35)" },
-  "cold-drinks": { label: "Cold Drinks", color: "oklch(0.65 0.19 50)" },
-  blended: { label: "Blended", color: "oklch(0.75 0.15 65)" },
-  pastries: { label: "Pastries", color: "oklch(0.82 0.12 75)" },
+  "engine-parts": { label: "Engine Parts", color: "oklch(0.55 0.12 35)" },
+  accessories: { label: "Accessories", color: "oklch(0.65 0.19 50)" },
+  lubricants: { label: "Lubricants", color: "oklch(0.75 0.15 65)" },
+  tires: { label: "Tires", color: "oklch(0.82 0.12 75)" },
   others: { label: "Others", color: "oklch(0.45 0.08 30)" },
 };
 

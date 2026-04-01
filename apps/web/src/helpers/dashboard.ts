@@ -77,12 +77,12 @@ export function getWeeklySales(): DailySales[] {
 // ── Top-selling products ──
 export function getTopProducts(): TopProduct[] {
   return [
-    { name: "Iced Caramel Latte", category: "Cold Drinks", sold: 38, revenue: 5_700 },
-    { name: "Americano", category: "Hot Coffee", sold: 32, revenue: 3_520 },
-    { name: "Matcha Frappe", category: "Blended", sold: 27, revenue: 4_320 },
-    { name: "Spanish Latte", category: "Hot Coffee", sold: 24, revenue: 3_360 },
-    { name: "Croissant", category: "Pastries", sold: 22, revenue: 1_980 },
-    { name: "Chocolate Cake", category: "Pastries", sold: 18, revenue: 2_700 },
+    { name: "LED Headlight Bulb", category: "Accessories", sold: 38, revenue: 5_700 },
+    { name: "Brake Pad Set", category: "Engine Parts", sold: 32, revenue: 3_520 },
+    { name: "4T Engine Oil 1L", category: "Lubricants", sold: 27, revenue: 4_320 },
+    { name: "Chain Sprocket Kit", category: "Engine Parts", sold: 24, revenue: 3_360 },
+    { name: "Tire Valve Set", category: "Tires", sold: 22, revenue: 1_980 },
+    { name: "Phone Mount", category: "Accessories", sold: 18, revenue: 2_700 },
   ];
 }
 
@@ -102,10 +102,10 @@ export function getRecentTransactions(): RecentTransaction[] {
 // ── Sales by category (pie/donut chart) ──
 export function getCategorySales(): CategorySale[] {
   return [
-    { category: "Hot Coffee", revenue: 6_880, fill: "var(--color-hot-coffee)" },
-    { category: "Cold Drinks", revenue: 5_700, fill: "var(--color-cold-drinks)" },
-    { category: "Blended", revenue: 4_320, fill: "var(--color-blended)" },
-    { category: "Pastries", revenue: 4_680, fill: "var(--color-pastries)" },
+    { category: "Engine Parts", revenue: 6_880, fill: "var(--color-engine-parts)" },
+    { category: "Accessories", revenue: 5_700, fill: "var(--color-accessories)" },
+    { category: "Lubricants", revenue: 4_320, fill: "var(--color-lubricants)" },
+    { category: "Tires", revenue: 4_680, fill: "var(--color-tires)" },
     { category: "Others", revenue: 900, fill: "var(--color-others)" },
   ];
 }
