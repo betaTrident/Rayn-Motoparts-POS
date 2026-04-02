@@ -1,5 +1,7 @@
-import { Navigate, Outlet } from "react-router";
+import { useEffect } from "react";
+import { Navigate, Outlet, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
+import type { UserRole } from "@/types/auth";
 
 /**
  * ProtectedRoute — a route wrapper that checks authentication.
@@ -18,8 +20,29 @@ import { useAuth } from "@/context/AuthContext";
  *
  * All child routes inside will require authentication.
  */
-export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+interface ProtectedRouteProps {
+  requiredRoles?: UserRole[];
+}
+
+function ForceLogoutRedirect() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  useEffect(() => {
+    void logout().finally(() => {
+      navigate("/login", { replace: true });
+    });
+  }, [logout, navigate]);
+
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-muted-foreground text-lg">Signing out...</div>
+    </div>
+  );
+}
+
+export default function ProtectedRoute({ requiredRoles = [] }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, hasAnyRole } = useAuth();
 
   // Still checking if the user's token is valid
   if (isLoading) {
@@ -34,6 +57,10 @@ export default function ProtectedRoute() {
   // `replace` prevents the login page from appearing in browser history
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!hasAnyRole(requiredRoles)) {
+    return <ForceLogoutRedirect />;
   }
 
   // Authenticated → render the child routes

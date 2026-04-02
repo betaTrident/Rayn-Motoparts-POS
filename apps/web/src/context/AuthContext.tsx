@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import {
@@ -12,6 +13,8 @@ import {
 } from "@tanstack/react-query";
 import type {
   User,
+  UserRole,
+  AuthClaims,
   LoginCredentials,
   RegisterData,
   AuthResponse,
@@ -30,6 +33,14 @@ interface AuthContextType {
   isAuthenticated: boolean;
   /** The underlying React Query result (for advanced use) */
   userQuery: UseQueryResult<User, Error>;
+  /** Roles from JWT claims */
+  roles: UserRole[];
+  /** Warehouse context from JWT claims */
+  warehouseId: number | null;
+  /** Full parsed auth claims if available */
+  claims: AuthClaims | null;
+  /** Check if user has any of the provided roles */
+  hasAnyRole: (requiredRoles: UserRole[]) => boolean;
   /** Log in — returns the auth response */
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   /** Register — returns the auth response */
@@ -124,11 +135,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [logoutMutation]
   );
 
+  const claims = useMemo(() => authService.getAuthClaims(), [userQuery.data]);
+  const roles = claims?.roles ?? [];
+  const warehouseId = claims?.warehouse_id ?? null;
+
+  const hasAnyRole = useCallback(
+    (requiredRoles: UserRole[]) => {
+      if (!requiredRoles.length) {
+        return true;
+      }
+      return requiredRoles.some((role) => roles.includes(role));
+    },
+    [roles]
+  );
+
   const value: AuthContextType = {
     user: userQuery.data ?? null,
     isLoading: userQuery.isLoading,
     isAuthenticated: !!userQuery.data,
     userQuery,
+    roles,
+    warehouseId,
+    claims,
+    hasAnyRole,
     login,
     register,
     logout,

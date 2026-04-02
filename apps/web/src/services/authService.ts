@@ -1,11 +1,16 @@
 import api from "./api";
+import { ENDPOINTS } from "@/services/endpoints";
 import type {
+  AuthClaims,
   AuthResponse,
   LoginCredentials,
   RegisterData,
   ChangePasswordData,
   User,
+  UserRole,
 } from "@/types/auth";
+
+const VALID_ROLES: UserRole[] = ["admin", "cashier"];
 
 // ──────────────────────────────────────────────
 // TOKEN HELPERS
@@ -25,6 +30,41 @@ export const getRefreshToken = (): string | null => {
 export const getStoredUser = (): User | null => {
   const user = localStorage.getItem("user");
   return user ? JSON.parse(user) : null;
+};
+
+const parseJwtPayload = (token: string): Record<string, unknown> | null => {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = `${base64}${"=".repeat((4 - (base64.length % 4)) % 4)}`;
+    const decoded = atob(padded);
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+export const getAuthClaims = (): AuthClaims | null => {
+  const token = getAccessToken();
+  if (!token) return null;
+
+  const payload = parseJwtPayload(token);
+  if (!payload) return null;
+
+  const rawRoles = payload.roles;
+  const roles = Array.isArray(rawRoles)
+    ? rawRoles.filter(
+        (v): v is AuthClaims["roles"][number] =>
+          typeof v === "string" && VALID_ROLES.includes(v as UserRole)
+      )
+    : [];
+
+  const rawWarehouse = payload.warehouse_id;
+  const warehouse_id = typeof rawWarehouse === "number" ? rawWarehouse : null;
+
+  return { roles, warehouse_id };
 };
 
 /** Save tokens + user to localStorage after login/register */
@@ -54,7 +94,7 @@ const clearAuthData = (): void => {
  * Returns user data + JWT tokens.
  */
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("auth/register/", data);
+  const response = await api.post<AuthResponse>(ENDPOINTS.auth.register, data);
   storeAuthData(response.data);
   return response.data;
 };
@@ -67,7 +107,7 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
 export const login = async (
   credentials: LoginCredentials
 ): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("auth/login/", credentials);
+  const response = await api.post<AuthResponse>(ENDPOINTS.auth.login, credentials);
   storeAuthData(response.data);
   return response.data;
 };
@@ -83,7 +123,7 @@ export const logout = async (): Promise<void> => {
     if (refreshToken) {
       // Tell the backend to blacklist the refresh token
       // so it can never be used again
-      await api.post("auth/logout/", { refresh: refreshToken });
+      await api.post(ENDPOINTS.auth.logout, { refresh: refreshToken });
     }
   } catch {
     // Even if the server call fails, we still clear local data
@@ -99,7 +139,7 @@ export const logout = async (): Promise<void> => {
  * The access token is attached automatically by the interceptor.
  */
 export const getProfile = async (): Promise<User> => {
-  const response = await api.get<User>("auth/profile/");
+  const response = await api.get<User>(ENDPOINTS.auth.profile);
   return response.data;
 };
 
@@ -110,7 +150,7 @@ export const getProfile = async (): Promise<User> => {
 export const updateProfile = async (
   data: Partial<User>
 ): Promise<User> => {
-  const response = await api.put<User>("auth/profile/", data);
+  const response = await api.put<User>(ENDPOINTS.auth.profile, data);
   // Update the stored user data
   localStorage.setItem("user", JSON.stringify(response.data));
   return response.data;
@@ -123,7 +163,7 @@ export const updateProfile = async (
 export const changePassword = async (
   data: ChangePasswordData
 ): Promise<void> => {
-  await api.post("auth/change-password/", data);
+  await api.post(ENDPOINTS.auth.changePassword, data);
 };
 
 /**

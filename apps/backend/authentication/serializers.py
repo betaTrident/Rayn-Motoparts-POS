@@ -102,6 +102,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['roles'] = list(user.groups.values_list('name', flat=True))
+        roles = list(user.groups.values_list('name', flat=True))
+        if user.is_superuser and 'admin' not in roles:
+            roles.append('admin')
+        token['roles'] = roles
         token['warehouse_id'] = getattr(user, 'warehouse_id', None)
         return token

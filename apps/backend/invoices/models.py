@@ -55,7 +55,6 @@ class Invoice(TimeStampedModel):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ISSUED)
     issued_at = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=14, decimal_places=4, default=0)
-    discount_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     tax_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     total_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
 
@@ -73,7 +72,6 @@ class InvoiceItem(TimeStampedModel):
     qty = models.DecimalField(max_digits=12, decimal_places=4, validators=[MinValueValidator(0.0001)])
     unit_price = models.DecimalField(max_digits=14, decimal_places=4, validators=[MinValueValidator(0)])
     tax_rate = models.DecimalField(max_digits=8, decimal_places=4, default=0)
-    discount_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     line_total = models.DecimalField(max_digits=14, decimal_places=4, default=0)
 
     class Meta:

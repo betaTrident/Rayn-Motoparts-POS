@@ -33,7 +33,6 @@ def generate_invoice(sales_transaction_id: int, invoice_type: str, performed_by)
             warehouse=txn.warehouse,
             issued_by=performed_by,
             subtotal=txn.subtotal,
-            discount_amount=txn.discount_amount,
             tax_amount=txn.tax_amount,
             total_amount=txn.total_amount,
         )
@@ -47,7 +46,6 @@ def generate_invoice(sales_transaction_id: int, invoice_type: str, performed_by)
                     qty=item.qty,
                     unit_price=item.unit_price,
                     tax_rate=item.tax_rate,
-                    discount_amount=item.discount_amount,
                     line_total=item.line_total,
                 )
             )

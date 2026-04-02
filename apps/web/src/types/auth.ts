@@ -7,9 +7,22 @@ export interface User {
   username: string;
   first_name: string;
   last_name: string;
+  phone?: string | null;
+  warehouse?: number | null;
+  last_login_at?: string | null;
+  deleted_at?: string | null;
   is_active: boolean;
   is_staff: boolean;
   date_joined: string;
+}
+
+export type UserRole =
+  | "admin"
+  | "cashier";
+
+export interface AuthClaims {
+  roles: UserRole[];
+  warehouse_id: number | null;
 }
 
 // ──────────────────────────────────────────────

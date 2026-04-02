@@ -47,24 +47,6 @@ class CashSession(TimeStampedModel):
         return f"{self.pos_terminal.code} :: {self.status}"
 
 
-class Discount(TimeStampedModel):
-    class DiscountType(models.TextChoices):
-        FIXED = 'fixed', 'Fixed'
-        PERCENT = 'percent', 'Percent'
-
-    name = models.CharField(max_length=120, unique=True)
-    discount_type = models.CharField(max_length=20, choices=DiscountType.choices)
-    value = models.DecimalField(max_digits=12, decimal_places=4, validators=[MinValueValidator(0)])
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = 'discounts'
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
-
 class SalesTransaction(TimeStampedModel):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
@@ -89,11 +71,9 @@ class SalesTransaction(TimeStampedModel):
         related_name='transactions_as_cashier',
     )
     customer_name = models.CharField(max_length=180, null=True, blank=True)
-    discount = models.ForeignKey(Discount, null=True, blank=True, on_delete=models.SET_NULL)
     status = models.CharField(max_length=25, choices=Status.choices, default=Status.PENDING)
     transaction_date = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=14, decimal_places=4, default=0)
-    discount_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     taxable_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     tax_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     total_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
@@ -134,7 +114,6 @@ class SalesTransactionItem(TimeStampedModel):
     unit_price = models.DecimalField(max_digits=14, decimal_places=4, validators=[MinValueValidator(0)])
     unit_cost = models.DecimalField(max_digits=14, decimal_places=6, validators=[MinValueValidator(0)])
     tax_rate = models.DecimalField(max_digits=8, decimal_places=4, default=0)
-    discount_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     line_subtotal = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     line_tax_amount = models.DecimalField(max_digits=14, decimal_places=4, default=0)
     line_total = models.DecimalField(max_digits=14, decimal_places=4, default=0)
@@ -147,7 +126,7 @@ class SalesTransactionItem(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.line_subtotal = self.qty * self.unit_price
-        taxable = self.line_subtotal - self.discount_amount
+        taxable = self.line_subtotal
         self.line_tax_amount = taxable * (self.tax_rate / 100)
         self.line_total = taxable + self.line_tax_amount
         super().save(*args, **kwargs)

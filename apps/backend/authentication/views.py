@@ -15,6 +15,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+ALLOWED_SYSTEM_ROLES = {'admin', 'cashier'}
 
 
 class RegisterView(generics.CreateAPIView):
@@ -66,6 +67,13 @@ class LoginView(APIView):
         if not user.is_active:
             return Response(
                 {'detail': 'Account is disabled.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+        if not has_system_role and not user.is_superuser:
+            return Response(
+                {'detail': 'Account has no system access role.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

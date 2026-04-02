@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from .models import (
     CashSession,
-    Discount,
     PaymentMethod,
     PosTerminal,
     SalesReturn,
@@ -35,13 +34,6 @@ class CashSessionAdmin(admin.ModelAdmin):
     list_display = ('pos_terminal', 'cashier', 'status', 'opened_at', 'closed_at')
     search_fields = ('pos_terminal__code', 'cashier__email')
     list_filter = ('status', 'pos_terminal')
-
-
-@admin.register(Discount)
-class DiscountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'discount_type', 'value', 'is_active')
-    search_fields = ('name',)
-    list_filter = ('discount_type', 'is_active')
 
 
 @admin.register(SalesTransaction)

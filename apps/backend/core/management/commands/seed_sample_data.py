@@ -19,7 +19,6 @@ from customers.models import Customer
 from inventory.models import InventoryStock, Warehouse
 from pos.models import (
     CashSession,
-    Discount,
     PaymentMethod,
     PosTerminal,
     SalesReturn,
@@ -79,15 +78,31 @@ class Command(BaseCommand):
         return out
 
     def seed_users_and_roles(self, warehouses):
-        group_names = ['admin', 'manager', 'cashier', 'stock_clerk', 'viewer']
+        allowed_emails = ['admin@motorparts.ph', 'cashier@motorparts.ph']
+        group_names = ['admin', 'cashier']
         groups = {name: Group.objects.get_or_create(name=name)[0] for name in group_names}
+
+        # Remove legacy sample roles from prior seed runs.
+        Group.objects.filter(name__in=['manager', 'stock_clerk', 'viewer']).delete()
+
+        # Keep historical rows intact: legacy sample users may be referenced by
+        # protected foreign keys (transactions, invoices, stock movements).
+        # We deactivate them and clear roles so only admin/cashier can log in.
+        User.objects.filter(email__in=[
+            'juan.cruz@motorparts.ph',
+            'c.villanueva@motorparts.ph',
+            'l.gomez@motorparts.ph',
+            'rosa.reyes@motorparts.ph',
+        ]).exclude(email='cashier@motorparts.ph').update(is_active=False)
+
+        User.objects.exclude(email__in=allowed_emails).exclude(is_superuser=True).update(is_active=False)
+
+        for legacy_user in User.objects.exclude(email__in=allowed_emails):
+            legacy_user.groups.clear()
 
         data = [
             ('admin@motorparts.ph', 'admin', 'Maria', 'Santos', '+63917111001', '0001', 'MAIN', 'admin'),
-            ('juan.cruz@motorparts.ph', 'jdcruz', 'Juan', 'Dela Cruz', '+63917111002', '0002', 'MAIN', 'manager'),
-            ('rosa.reyes@motorparts.ph', 'rreyes', 'Rosa', 'Reyes', '+63917111003', '0003', 'MAIN', 'cashier'),
-            ('c.villanueva@motorparts.ph', 'cvillanueva', 'Carlos', 'Villanueva', '+63917111004', '0004', 'BRANCH2', 'stock_clerk'),
-            ('l.gomez@motorparts.ph', 'lgomez', 'Luisa', 'Gomez', '+63917111005', '0005', 'BRANCH2', 'cashier'),
+            ('cashier@motorparts.ph', 'cashier', 'Rosa', 'Reyes', '+63917111003', '0003', 'MAIN', 'cashier'),
         ]
 
         out = {}
@@ -404,7 +419,7 @@ class Command(BaseCommand):
                 'supplier': suppliers['SUP-MOTUL'],
                 'warehouse': warehouses['MAIN'],
                 'status': PurchaseOrder.Status.PARTIALLY_RECEIVED,
-                'ordered_by': users['jdcruz'],
+                'ordered_by': users['admin'],
                 'subtotal': Decimal('16464.0000'),
                 'tax_amount': Decimal('1975.6800'),
                 'total_amount': Decimal('18439.6800'),
@@ -530,21 +545,16 @@ class Command(BaseCommand):
             code='MAYA', defaults={'name': 'Maya', 'is_active': True}
         )[0]
 
-        Discount.objects.update_or_create(
-            name='Bulk Purchase 5% Off',
-            defaults={'discount_type': Discount.DiscountType.PERCENT, 'value': Decimal('5.0'), 'is_active': True},
-        )
-
         session, _ = CashSession.objects.update_or_create(
             pos_terminal=terminal,
-            cashier=users['rreyes'],
+            cashier=users['cashier'],
             status=CashSession.Status.OPEN,
             defaults={'opening_balance': Decimal('5000.00')},
         )
 
         branch_session, _ = CashSession.objects.update_or_create(
             pos_terminal=terminal_b2,
-            cashier=users['lgomez'],
+            cashier=users['cashier'],
             status=CashSession.Status.OPEN,
             defaults={'opening_balance': Decimal('3000.00')},
         )
@@ -555,7 +565,7 @@ class Command(BaseCommand):
             terminal=terminal,
             warehouse=warehouses['MAIN'],
             customer=customers['CUST-0001'],
-            cashier=users['rreyes'],
+            cashier=users['cashier'],
             payment_method=cash,
             amount_tendered=Decimal('500.00'),
             items=[
@@ -571,7 +581,7 @@ class Command(BaseCommand):
             terminal=terminal,
             warehouse=warehouses['MAIN'],
             customer=None,
-            cashier=users['rreyes'],
+            cashier=users['cashier'],
             payment_method=gcash,
             amount_tendered=Decimal('2000.00'),
             items=[
@@ -587,7 +597,7 @@ class Command(BaseCommand):
             terminal=terminal_b2,
             warehouse=warehouses['BRANCH2'],
             customer=customers['CUST-0002'],
-            cashier=users['lgomez'],
+            cashier=users['cashier'],
             payment_method=maya,
             amount_tendered=Decimal('800.00'),
             items=[
@@ -600,7 +610,7 @@ class Command(BaseCommand):
             sales_transaction=txn_branch,
             defaults={
                 'warehouse': warehouses['BRANCH2'],
-                'cashier': users['lgomez'],
+                'cashier': users['cashier'],
                 'reason': 'defective',
             },
         )
@@ -636,7 +646,6 @@ class Command(BaseCommand):
                 'cashier': cashier,
                 'status': SalesTransaction.Status.PENDING,
                 'subtotal': Decimal('0'),
-                'discount_amount': Decimal('0'),
                 'taxable_amount': Decimal('0'),
                 'tax_amount': Decimal('0'),
                 'total_amount': Decimal('0'),

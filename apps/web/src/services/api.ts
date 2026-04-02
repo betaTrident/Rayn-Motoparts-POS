@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ENDPOINTS } from "@/services/endpoints";
 
 // Create an Axios instance with the Django backend base URL.
 // Every request made with `api.get(...)` or `api.post(...)` will
@@ -110,7 +111,7 @@ api.interceptors.response.use(
 
         // Call the refresh endpoint to get a new access token
         const { data } = await axios.post(
-          "http://127.0.0.1:8000/api/auth/token/refresh/",
+          `http://127.0.0.1:8000/api/${ENDPOINTS.auth.refresh}`,
           { refresh: refreshToken }
         );
 
