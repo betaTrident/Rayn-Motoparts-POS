@@ -184,42 +184,41 @@ apps/web/src/
       StaffLayout.tsx
       SystemLayout.tsx
 
-    modules/
-      dashboard/
-        DashboardHeader.tsx
-        SummaryCards.tsx
-        SalesCharts.tsx
-      catalog/
-        ProductTable.tsx
-        ProductForm.tsx
-        CategoryManager.tsx
-      inventory/
-        InventoryTable.tsx
-        StockAdjustDialog.tsx
-      pos/
-        PosCart.tsx
-        PosCheckout.tsx
-        BarcodeInput.tsx
-      transactions/
-        TransactionFilters.tsx
-        TransactionTable.tsx
-        TransactionDetailDrawer.tsx
-      returns/
-        ReturnCreateForm.tsx
-        ReturnItemsTable.tsx
-      customers/
-        CustomerLookup.tsx
-        CustomerProfileCard.tsx
-      reports/
-        ReportFilters.tsx
-        ReportCharts.tsx
-      settings/
-        BusinessSettingsForm.tsx
-      system/
-        HealthPanel.tsx
-        RolloutFlagsPanel.tsx
-        ReconciliationPanel.tsx
-        AuditLogTable.tsx
+    dashboard/
+      DashboardHeader.tsx
+      SummaryCards.tsx
+      SalesCharts.tsx
+    catalog/
+      ProductTable.tsx
+      ProductForm.tsx
+      CategoryManager.tsx
+    inventory/
+      InventoryTable.tsx
+      StockAdjustDialog.tsx
+    pos/
+      PosCart.tsx
+      PosCheckout.tsx
+      BarcodeInput.tsx
+    transactions/
+      TransactionFilters.tsx
+      TransactionTable.tsx
+      TransactionDetailDrawer.tsx
+    returns/
+      ReturnCreateForm.tsx
+      ReturnItemsTable.tsx
+    customers/
+      CustomerLookup.tsx
+      CustomerProfileCard.tsx
+    reports/
+      ReportFilters.tsx
+      ReportCharts.tsx
+    settings/
+      BusinessSettingsForm.tsx
+    system/
+      HealthPanel.tsx
+      RolloutFlagsPanel.tsx
+      ReconciliationPanel.tsx
+      AuditLogTable.tsx
 
   services/
     api.service.ts
@@ -411,6 +410,70 @@ Output:
 Output:
 - Stable production-ready role architecture.
 
+## 8.5 Module Branching and Delivery Strategy
+
+To keep development traceable per module, implementation must be done using one branch per module with this pattern:
+
+- feat/module_name
+
+Examples:
+
+- feat/dashboard
+- feat/catalog
+- feat/inventory
+- feat/pos
+- feat/transactions
+- feat/returns
+- feat/customers
+- feat/reports
+- feat/settings
+- feat/system-rollout
+- feat/system-reconciliation
+- feat/system-audit
+
+Branch workflow:
+
+1. Start from latest main branch.
+2. Create one module branch only for that module scope.
+3. Implement frontend page entry, module components, service layer, query keys, and hooks for that module.
+4. Open pull request with title format:
+- feat(module_name): short summary
+5. Merge only after module checklist is complete (API contract match, role guard checks, loading/error states, tests).
+
+Scope control rules:
+
+1. Do not mix multiple modules in one feature branch.
+2. Shared/cross-cutting changes should use dedicated branches, for example:
+- feat/routing-foundation
+- feat/auth-guards
+- feat/query-infrastructure
+3. If a module depends on unfinished shared work, merge shared branch first, then rebase module branches.
+
+Tracking recommendation:
+
+1. Create one tracking issue per module.
+2. Link each pull request to its module issue.
+3. Maintain a simple status board with columns:
+- backlog
+- in progress
+- review
+- merged
+
+Suggested module execution order:
+
+1. dashboard
+2. transactions
+3. catalog
+4. inventory
+5. pos
+6. returns
+7. customers
+8. reports
+9. settings
+10. system modules (superadmin extras)
+
+This branch strategy ensures clean history, easier code reviews, clearer rollback, and accurate progress tracking per module.
+
 ---
 
 ## 9. Testing Plan
@@ -506,14 +569,18 @@ Exit criteria:
 
 ## 13. Immediate Next Sprint (Suggested)
 
-1. Implement AppRouter with role route groups and guards.
+1. Implement AppRouter with role route groups and guards in branch:
+- feat/routing-foundation
 2. Create page.tsx entries for:
 - app/admin/dashboard
 - app/staff/dashboard
 - app/system/reconciliation
 
-3. Create components/modules/dashboard and components/modules/transactions folders.
-4. Split transactions and dashboard services into services/modules/.
-5. Add query key factory entries and hook wrappers for dashboard and transactions.
+3. Start module implementation branches:
+- feat/dashboard
+- feat/transactions
+4. Create components/modules/dashboard and components/modules/transactions folders.
+5. Split transactions and dashboard services into services/modules/.
+6. Add query key factory entries and hook wrappers for dashboard and transactions.
 
 This gives immediate structure alignment with your desired architecture while preserving existing behavior.
