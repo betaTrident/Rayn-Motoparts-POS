@@ -60,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'username', 'first_name',
-            'last_name', 'phone', 'warehouse', 'last_login_at', 'deleted_at',
+            'last_name', 'phone', 'last_login_at', 'deleted_at',
             'is_active', 'is_staff', 'date_joined',
         )
         read_only_fields = ('id', 'email', 'is_active', 'is_staff', 'date_joined')
@@ -97,11 +97,13 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """SimpleJWT serializer that embeds role and warehouse context in tokens."""
+    """SimpleJWT serializer that embeds role context in tokens."""
 
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['roles'] = list(user.groups.values_list('name', flat=True))
-        token['warehouse_id'] = getattr(user, 'warehouse_id', None)
+        roles = list(user.groups.values_list('name', flat=True))
+        if user.is_superuser and 'superadmin' not in roles:
+            roles.append('superadmin')
+        token['roles'] = roles
         return token

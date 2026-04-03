@@ -24,8 +24,8 @@ import type {
   Category,
   CategoryFormData,
   ProductSize,
-} from "@/types/product";
-import * as productService from "@/services/productService";
+} from "@/types/product.types";
+import * as productService from "@/services/productService.service";
 
 import { cn } from "@/lib/utils";
 import { parseApiError } from "@/lib/api-error";

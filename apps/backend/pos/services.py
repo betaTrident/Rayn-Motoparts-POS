@@ -1,9 +1,19 @@
 from django.db import transaction as db_transaction
 
+from core.models import AuditLog
+from core.rollout_flags import (
+    assert_write_enabled,
+    dual_write_enabled,
+    pos_receipt_dual_write_enabled,
+)
+
+from .receipt_dual_write import ensure_receipt_dual_write_snapshot
+
 
 def complete_sale(transaction_id: int, amount_tendered, payment_method_id: int, performed_by) -> dict:
     from .models import CashSession, SalesTransaction, TransactionPayment
-    from invoices.services import generate_invoice
+
+    assert_write_enabled()
 
     with db_transaction.atomic():
         txn = (
@@ -30,15 +40,26 @@ def complete_sale(transaction_id: int, amount_tendered, payment_method_id: int, 
             amount=amount_tendered,
         )
 
-        invoice = generate_invoice(
-            sales_transaction_id=txn.id,
-            invoice_type='sales_invoice',
-            performed_by=performed_by,
-        )
+        if pos_receipt_dual_write_enabled():
+            ensure_receipt_dual_write_snapshot(txn=txn, performed_by=performed_by)
+        elif dual_write_enabled():
+            # Keep a lightweight marker for environments that enable global dual-write
+            # without receipt snapshot persistence.
+            AuditLog.objects.create(
+                table_name='sales_transactions',
+                record_pk=str(txn.id),
+                action=AuditLog.Action.UPDATE,
+                changed_by=performed_by,
+                new_values={
+                    'dual_write_marker': True,
+                    'status': txn.status,
+                    'amount_tendered': str(amount_tendered),
+                    'payment_method_id': payment_method_id,
+                },
+            )
 
     return {
         'change_given': change_given,
         'transaction_id': txn.id,
-        'invoice_id': invoice.id,
         'performed_by_id': performed_by.id,
     }

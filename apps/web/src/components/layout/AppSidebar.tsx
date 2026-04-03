@@ -11,6 +11,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 
 import {
@@ -43,21 +44,25 @@ const mainNavItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     path: "/dashboard",
+    enabled: true,
   },
   {
     title: "Point of Sale",
     icon: ShoppingCart,
     path: "/pos",
+    enabled: false,
   },
   {
     title: "Products",
     icon: Package,
     path: "/products",
+    enabled: true,
   },
   {
     title: "Transactions",
     icon: Receipt,
     path: "/transactions",
+    enabled: true,
   },
 ];
 
@@ -66,11 +71,13 @@ const adminNavItems = [
     title: "Staff Management",
     icon: Users,
     path: "/staff",
+    enabled: false,
   },
   {
     title: "Settings",
     icon: Settings,
     path: "/settings",
+    enabled: false,
   },
 ];
 
@@ -78,6 +85,7 @@ export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { canAccessAdmin, canAccessCatalog, canAccessPos } = usePermissions();
   const { state, toggleSidebar } = useSidebar();
 
   const handleLogout = async () => {
@@ -127,6 +135,11 @@ export default function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
+                (!item.enabled && item.path !== "/dashboard") ||
+                (item.path === "/products" && !canAccessCatalog) ||
+                (item.path === "/pos" && !canAccessPos)
+                  ? null
+                  : (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
@@ -138,18 +151,20 @@ export default function AppSidebar() {
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                  )
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Admin Navigation */}
-        {user?.is_staff && (
+        {canAccessAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminNavItems.map((item) => (
+                  !item.enabled ? null : (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={location.pathname === item.path}
@@ -161,6 +176,7 @@ export default function AppSidebar() {
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  )
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -213,7 +229,7 @@ export default function AppSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  variant="destructive"
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                 >
                   <LogOut className="mr-2 size-4" />
                   Sign out

@@ -1,12 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
-import ProtectedRoute from "@/routes/ProtectedRoute";
+import ProtectedRoute from "@/routes/middleware/ProtectedRoute";
 import GuestRoute from "@/routes/GuestRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProductsPage from "@/pages/ProductsPage";
+import TransactionsPage from "@/pages/TransactionsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import UnauthorizedPage from "@/pages/UnauthorizedPage";
 import { Toaster } from "sonner";
@@ -36,10 +37,20 @@ function App() {
             </Route>
 
             {/* Protected routes wrapped in MainLayout */}
-            <Route element={<ProtectedRoute />}>
+            <Route element={<ProtectedRoute requiredRoles={["superadmin", "admin", "staff"]} />}>
               <Route element={<MainLayout />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/products" element={<ProductsPage />} />
+                <Route
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={["superadmin", "admin", "staff"]}
+                    />
+                  }
+                >
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/transactions" element={<TransactionsPage />} />
+                </Route>
                 {/* Future pages go here:
                 <Route path="/pos" element={<POSPage />} />
                 <Route path="/transactions" element={<TransactionsPage />} />

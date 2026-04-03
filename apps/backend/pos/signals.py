@@ -17,7 +17,6 @@ def deduct_inventory_on_sale(sender, instance, created, **kwargs):
     with transaction.atomic():
         stock = InventoryStock.objects.select_for_update().get(
             product_variant=instance.product_variant,
-            warehouse=txn.warehouse,
         )
 
         if stock.qty_on_hand < instance.qty:
@@ -32,7 +31,6 @@ def deduct_inventory_on_sale(sender, instance, created, **kwargs):
 
         StockMovement.objects.create(
             product_variant=instance.product_variant,
-            warehouse=txn.warehouse,
             movement_type=StockMovement.MovementType.SALE,
             reference_type=StockMovement.ReferenceType.SALES_TRANSACTION,
             reference_id=txn.id,
@@ -54,7 +52,6 @@ def restore_inventory_on_return(sender, instance, created, **kwargs):
     with transaction.atomic():
         stock = InventoryStock.objects.select_for_update().get(
             product_variant=instance.product_variant,
-            warehouse=sales_return.warehouse,
         )
         qty_before = stock.qty_on_hand
         qty_after = qty_before + instance.qty_returned
@@ -63,7 +60,6 @@ def restore_inventory_on_return(sender, instance, created, **kwargs):
 
         StockMovement.objects.create(
             product_variant=instance.product_variant,
-            warehouse=sales_return.warehouse,
             movement_type=StockMovement.MovementType.SALE_RETURN,
             reference_type=StockMovement.ReferenceType.SALES_RETURN,
             reference_id=sales_return.id,

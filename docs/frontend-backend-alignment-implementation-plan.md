@@ -3,6 +3,13 @@
 ## Objective
 Align the React frontend with the current Django backend implementation so the UI reflects real backend capabilities, avoids broken integrations, and is ready for incremental feature rollout.
 
+## Operating Role Model
+This deployment is intentionally simplified to two user roles only:
+1. `admin` (owner)
+2. `cashier` (staff)
+
+All route guards, navigation visibility, and permission checks should be based only on these two roles.
+
 ## Current State Snapshot
 
 ### Backend (implemented)
@@ -72,7 +79,7 @@ Goal: Fully align auth UX with backend JWT + role claims.
 
 Deliverables:
 1. Surface JWT claim usage (`roles`, `warehouse_id`) in frontend auth state.
-2. Add role-aware route guards and navigation visibility.
+2. Add role-aware route guards and navigation visibility for only `admin` and `cashier`.
 3. Add profile edit/change password pages using existing endpoints.
 
 Frontend tasks:

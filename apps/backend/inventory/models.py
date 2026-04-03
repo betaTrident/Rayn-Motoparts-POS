@@ -4,26 +4,8 @@ from django.db import models
 
 from core.models import TimeStampedModel
 
-
-class Warehouse(TimeStampedModel):
-    code = models.CharField(max_length=20, unique=True)
-    name = models.CharField(max_length=120)
-    address = models.CharField(max_length=400, null=True, blank=True)
-    city = models.CharField(max_length=100, null=True, blank=True)
-    is_pos_location = models.BooleanField(default=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = 'warehouses'
-        ordering = ['code']
-
-    def __str__(self):
-        return f"{self.code} - {self.name}"
-
-
 class InventoryStock(models.Model):
     product_variant = models.ForeignKey('catalog.ProductVariant', on_delete=models.PROTECT)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT)
     qty_on_hand = models.DecimalField(
         max_digits=12,
         decimal_places=4,
@@ -59,8 +41,8 @@ class InventoryStock(models.Model):
         db_table = 'inventory_stock'
         constraints = [
             models.UniqueConstraint(
-                fields=['product_variant', 'warehouse'],
-                name='uq_inventory_stock_variant_warehouse',
+                fields=['product_variant'],
+                name='uq_inventory_stock_variant',
             ),
             models.CheckConstraint(
                 condition=models.Q(qty_on_hand__gte=0),
@@ -73,11 +55,11 @@ class InventoryStock(models.Model):
         ]
         indexes = [
             models.Index(
-                fields=['product_variant', 'warehouse', 'qty_on_hand'],
+                fields=['product_variant', 'qty_on_hand'],
                 name='idx_inventory_stock_lookup',
             ),
             models.Index(
-                fields=['warehouse', 'qty_on_hand', 'reorder_point'],
+                fields=['qty_on_hand', 'reorder_point'],
                 name='idx_inventory_low_stock',
             ),
         ]
@@ -106,7 +88,6 @@ class StockMovement(models.Model):
         MANUAL = 'manual', 'Manual'
 
     product_variant = models.ForeignKey('catalog.ProductVariant', on_delete=models.PROTECT)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT)
     movement_type = models.CharField(max_length=30, choices=MovementType.choices)
     reference_type = models.CharField(max_length=30, choices=ReferenceType.choices)
     reference_id = models.BigIntegerField()
@@ -122,7 +103,7 @@ class StockMovement(models.Model):
         db_table = 'stock_movements'
         indexes = [
             models.Index(
-                fields=['product_variant', 'warehouse', '-created_at'],
+                fields=['product_variant', '-created_at'],
                 name='idx_stk_mov_prod_date',
             ),
             models.Index(
@@ -139,7 +120,6 @@ class StockAdjustment(TimeStampedModel):
         SUBTRACT = 'subtract', 'Subtract'
 
     product_variant = models.ForeignKey('catalog.ProductVariant', on_delete=models.PROTECT)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT)
     adjustment_type = models.CharField(max_length=20, choices=AdjustmentType.choices)
     quantity = models.DecimalField(max_digits=12, decimal_places=4, validators=[MinValueValidator(0.0001)])
     reason = models.CharField(max_length=255)
