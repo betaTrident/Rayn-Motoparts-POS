@@ -42,7 +42,7 @@ export default function LoginPage() {
     try {
       setServerError(null);
       await login(data);
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (error: unknown) {
       // Extract error message from the backend response
       if (

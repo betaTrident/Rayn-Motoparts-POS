@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "@/context/AuthContext";
+import { getDefaultAppPath } from "./roleRedirect";
 
 /**
  * GuestRoute — only accessible when NOT logged in.
@@ -14,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
  *   </Route>
  */
 export default function GuestRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, roles } = useAuth();
 
   if (isLoading) {
     return (
@@ -26,7 +27,7 @@ export default function GuestRoute() {
 
   // Already logged in → send them to the dashboard
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDefaultAppPath(roles)} replace />;
   }
 
   // Not logged in → show login/register pages

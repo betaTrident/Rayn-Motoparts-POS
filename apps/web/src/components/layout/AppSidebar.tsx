@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
@@ -43,25 +44,25 @@ const mainNavItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/dashboard",
+    key: "dashboard",
     enabled: true,
   },
   {
     title: "Point of Sale",
     icon: ShoppingCart,
-    path: "/pos",
+    key: "pos",
     enabled: false,
   },
   {
-    title: "Products",
+    title: "Catalog",
     icon: Package,
-    path: "/products",
+    key: "catalog",
     enabled: true,
   },
   {
     title: "Transactions",
     icon: Receipt,
-    path: "/transactions",
+    key: "transactions",
     enabled: true,
   },
 ];
@@ -70,13 +71,13 @@ const adminNavItems = [
   {
     title: "Staff Management",
     icon: Users,
-    path: "/staff",
+    key: "staff",
     enabled: false,
   },
   {
     title: "Settings",
     icon: Settings,
-    path: "/settings",
+    key: "settings",
     enabled: false,
   },
 ];
@@ -85,13 +86,42 @@ export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { canAccessAdmin, canAccessCatalog, canAccessPos } = usePermissions();
+  const { canAccessAdmin, canAccessCatalog, canAccessPos, highestRole } = usePermissions();
   const { state, toggleSidebar } = useSidebar();
 
   const handleLogout = async () => {
     await logout();
     navigate("/login", { replace: true });
   };
+
+  const appBasePath = highestRole === "staff" ? "/app/staff" : "/app/admin";
+
+  const resolvedMainItems = useMemo(() => {
+    return mainNavItems
+      .map((item) => ({
+        ...item,
+        path: `${appBasePath}/${item.key}`,
+      }))
+      .filter((item) => {
+        if (highestRole === "staff" && item.key === "catalog") {
+          return false;
+        }
+        if (item.key === "catalog" && !canAccessCatalog) {
+          return false;
+        }
+        if (item.key === "pos" && !canAccessPos) {
+          return false;
+        }
+        return item.enabled || item.key === "dashboard";
+      });
+  }, [appBasePath, canAccessCatalog, canAccessPos, highestRole]);
+
+  const resolvedAdminItems = useMemo(() => {
+    return adminNavItems.map((item) => ({
+      ...item,
+      path: `${appBasePath}/${item.key}`,
+    }));
+  }, [appBasePath]);
 
   // Get user initials for the avatar fallback
   const initials = user
@@ -106,7 +136,7 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(`${appBasePath}/dashboard`)}
               className="cursor-pointer"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/15">
@@ -134,12 +164,7 @@ export default function AppSidebar() {
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                (!item.enabled && item.path !== "/dashboard") ||
-                (item.path === "/products" && !canAccessCatalog) ||
-                (item.path === "/pos" && !canAccessPos)
-                  ? null
-                  : (
+              {resolvedMainItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
@@ -151,7 +176,6 @@ export default function AppSidebar() {
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                  )
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -163,7 +187,7 @@ export default function AppSidebar() {
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavItems.map((item) => (
+                {resolvedAdminItems.map((item) => (
                   !item.enabled ? null : (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
@@ -222,7 +246,7 @@ export default function AppSidebar() {
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <DropdownMenuItem onClick={() => navigate(`${appBasePath}/dashboard`)}>
                   <Settings className="mr-2 size-4" />
                   Settings
                 </DropdownMenuItem>

@@ -10,17 +10,28 @@ import {
 
 // Map route paths to display titles
 const pageTitles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/pos": "Point of Sale",
-  "/products": "Products",
-  "/transactions": "Transactions",
-  "/staff": "Staff Management",
-  "/settings": "Settings",
+  "/app/admin/dashboard": "Dashboard",
+  "/app/admin/catalog": "Catalog",
+  "/app/admin/transactions": "Transactions",
+  "/app/staff/dashboard": "Dashboard",
+  "/app/staff/transactions": "Transactions",
+  "/app/system/reconciliation": "Reconciliation",
 };
+
+function toTitleFromPath(pathname: string): string {
+  const segment = pathname.split("/").filter(Boolean).pop();
+  if (!segment) {
+    return "Page";
+  }
+  return segment
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export default function AppHeader() {
   const location = useLocation();
-  const pageTitle = pageTitles[location.pathname] ?? "Page";
+  const pageTitle = pageTitles[location.pathname] ?? toTitleFromPath(location.pathname);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
