@@ -1,5 +1,4 @@
 from decimal import Decimal
-from datetime import date
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
@@ -16,20 +15,15 @@ from catalog.models import (
     UnitOfMeasure,
 )
 from customers.models import Customer
-from inventory.models import InventoryStock, Warehouse
+from inventory.models import InventoryStock
 from pos.models import (
     CashSession,
     PaymentMethod,
-    PosTerminal,
-    SalesReturn,
-    SalesReturnItem,
     SalesTransaction,
     SalesTransactionItem,
 )
 from pos.services import complete_sale
-from pricing.models import PriceTier, ProductPriceHistory, ProductPriceTierRule, SupplierCostHistory
-from procurement.models import PurchaseOrder, PurchaseOrderItem, Supplier, SupplierProduct
-from vehicles.models import ProductVehicleFitment, VehicleMake, VehicleModel, VehicleYear
+from vehicles.models import ProductVehicleFitment, VehicleMake, VehicleModel
 
 
 class Command(BaseCommand):
@@ -39,47 +33,22 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Seeding sample data...')
 
-        warehouses = self.seed_warehouses()
-        users = self.seed_users_and_roles(warehouses)
+        users = self.seed_users_and_roles()
         refs = self.seed_reference_data()
         self.seed_vehicle_data()
         products = self.seed_products(refs)
         variants = self.seed_product_variants(products)
         self.seed_barcodes(variants)
         self.seed_fitments(products)
-        self.seed_inventory(variants, warehouses)
-        suppliers = self.seed_suppliers(variants)
-        self.seed_procurement(users, warehouses, variants, suppliers)
+        self.seed_inventory(variants)
         customers = self.seed_customers()
-        self.seed_pricing(variants, users, suppliers)
-        self.seed_pos(customers, users, warehouses, variants)
+        self.seed_pos(customers, users, variants)
 
         self.stdout.write(self.style.SUCCESS('Sample data seeding complete.'))
 
-    def seed_warehouses(self):
-        data = [
-            ('MAIN', 'Main Store - Cebu City', 'Unit 5 M. Gotiaoco St., Capitol Site', 'Cebu City', True),
-            ('BRANCH2', 'Branch 2 - Mandaue', '123 M.C. Briones St., Centro', 'Mandaue City', True),
-            ('BODEGA', 'Main Bodega / Warehouse', 'Lot 9 Ouano Industrial Estate', 'Mandaue City', False),
-        ]
-        out = {}
-        for code, name, address, city, is_pos_location in data:
-            obj, _ = Warehouse.objects.update_or_create(
-                code=code,
-                defaults={
-                    'name': name,
-                    'address': address,
-                    'city': city,
-                    'is_pos_location': is_pos_location,
-                    'is_active': True,
-                },
-            )
-            out[code] = obj
-        return out
-
-    def seed_users_and_roles(self, warehouses):
-        allowed_emails = ['admin@motorparts.ph', 'cashier@motorparts.ph']
-        group_names = ['admin', 'cashier']
+    def seed_users_and_roles(self):
+        allowed_emails = ['superadmin@motorparts.ph', 'admin@motorparts.ph', 'staff@motorparts.ph']
+        group_names = ['superadmin', 'admin', 'staff']
         groups = {name: Group.objects.get_or_create(name=name)[0] for name in group_names}
 
         # Remove legacy sample roles from prior seed runs.
@@ -87,13 +56,13 @@ class Command(BaseCommand):
 
         # Keep historical rows intact: legacy sample users may be referenced by
         # protected foreign keys (transactions, invoices, stock movements).
-        # We deactivate them and clear roles so only admin/cashier can log in.
+        # We deactivate them and clear roles so only superadmin/admin/staff can log in.
         User.objects.filter(email__in=[
             'juan.cruz@motorparts.ph',
             'c.villanueva@motorparts.ph',
             'l.gomez@motorparts.ph',
             'rosa.reyes@motorparts.ph',
-        ]).exclude(email='cashier@motorparts.ph').update(is_active=False)
+        ]).exclude(email='staff@motorparts.ph').update(is_active=False)
 
         User.objects.exclude(email__in=allowed_emails).exclude(is_superuser=True).update(is_active=False)
 
@@ -101,12 +70,13 @@ class Command(BaseCommand):
             legacy_user.groups.clear()
 
         data = [
-            ('admin@motorparts.ph', 'admin', 'Maria', 'Santos', '+63917111001', '0001', 'MAIN', 'admin'),
-            ('cashier@motorparts.ph', 'cashier', 'Rosa', 'Reyes', '+63917111003', '0003', 'MAIN', 'cashier'),
+            ('superadmin@motorparts.ph', 'superadmin', 'Dev', 'Admin', '+63917111000', '0000', 'superadmin'),
+            ('admin@motorparts.ph', 'admin', 'Maria', 'Santos', '+63917111001', '0001', 'admin'),
+            ('staff@motorparts.ph', 'staff', 'Rosa', 'Reyes', '+63917111003', '0003', 'staff'),
         ]
 
         out = {}
-        for email, username, first_name, last_name, phone, pin_hash, wh_code, role in data:
+        for email, username, first_name, last_name, phone, pin_hash, role in data:
             user, _ = User.objects.update_or_create(
                 email=email,
                 defaults={
@@ -115,8 +85,9 @@ class Command(BaseCommand):
                     'last_name': last_name,
                     'phone': phone,
                     'pin_hash': pin_hash,
-                    'warehouse': warehouses[wh_code],
                     'is_active': True,
+                    'is_staff': role in {'superadmin', 'admin'},
+                    'is_superuser': role == 'superadmin',
                 },
             )
             user.set_password('password123')
@@ -154,12 +125,12 @@ class Command(BaseCommand):
             ('filters', 'Filters', None, 4),
             ('lubricants-fluids', 'Lubricants & Fluids', None, 5),
             ('belts-hoses', 'Belts & Hoses', None, 6),
+            ('batteries', 'Batteries', None, 7),
             ('spark-plugs', 'Spark Plugs', 'engine-parts', 1),
             ('brake-pads', 'Brake Pads', 'brakes-suspension', 1),
             ('oil-filters', 'Oil Filters', 'filters', 1),
             ('engine-oil', 'Engine Oil', 'lubricants-fluids', 1),
             ('timing-belts', 'Timing Belts', 'belts-hoses', 1),
-            ('batteries', 'Batteries', 'electrical', 1),
         ]
         categories = {}
         for slug, name, parent_slug, sort_order in categories_data:
@@ -202,16 +173,16 @@ class Command(BaseCommand):
             slug='honda-car', defaults={'name': 'Honda', 'is_active': True}
         )[0]
 
-        vios = VehicleModel.objects.update_or_create(
-            make=toyota, slug='vios', defaults={'name': 'Vios', 'is_active': True}
-        )[0]
-        city = VehicleModel.objects.update_or_create(
-            make=honda, slug='city', defaults={'name': 'City', 'is_active': True}
-        )[0]
-
-        for year in [2019, 2020, 2021, 2022, 2023]:
-            VehicleYear.objects.update_or_create(model=vios, year=year, defaults={'is_active': True})
-            VehicleYear.objects.update_or_create(model=city, year=year, defaults={'is_active': True})
+        VehicleModel.objects.update_or_create(
+            make=toyota,
+            slug='vios',
+            defaults={'name': 'Vios', 'is_active': True},
+        )
+        VehicleModel.objects.update_or_create(
+            make=honda,
+            slug='city',
+            defaults={'name': 'City', 'is_active': True},
+        )
 
     def seed_products(self, refs):
         products_data = [
@@ -234,8 +205,8 @@ class Command(BaseCommand):
                     'category': refs['categories'][category_slug],
                     'brand': refs['brands'][brand_name],
                     'uom': refs['uoms'][uom_code],
-                    'tax_rate': refs['tax_rates']['VAT 12%'],
                     'cost_price': Decimal(cost_price),
+                    'tax_rate': refs['tax_rates']['VAT 12%'],
                     'selling_price': Decimal(selling_price),
                     'is_taxable': True,
                     'is_active': True,
@@ -250,7 +221,7 @@ class Command(BaseCommand):
             ('NGK-BPR6ES-STD', 'NGK-BPR6ES', None, None),
             ('SAK-C109-STD', 'SAK-C-109', None, None),
             ('BRM-P06020-STD', 'BRM-P06020', None, None),
-            ('MOT-5W30-1L', 'MOT-5W30-1L', 'Motul 5W-30 - 1 Liter', '355.00'),
+            ('MOT-5W30-1L', 'MOT-5W30-1L', None, None),
             ('MOT-5W30-4L', 'MOT-5W30-1L', 'Motul 5W-30 - 4 Liters', '1280.00'),
             ('GAT-T223-STD', 'GAT-T223', None, None),
             ('ACD-B24R-STD', 'ACD-B24R', None, None),
@@ -280,7 +251,6 @@ class Command(BaseCommand):
             ('BRM-P06020-STD', '8020584073958'),
             ('MOT-5W30-1L', '3374650012443'),
             ('MOT-5W30-4L', '3374650018292'),
-            ('GAT-T223-STD', '0888641024905'),
             ('ACD-B24R-STD', '0012381573020'),
         ]
         for variant_sku, barcode in barcodes:
@@ -296,36 +266,34 @@ class Command(BaseCommand):
     def seed_fitments(self, products):
         vios = VehicleModel.objects.get(slug='vios')
         city = VehicleModel.objects.get(slug='city')
+        ProductVehicleFitment.objects.update_or_create(
+            product=products['NGK-CR8E'],
+            vehicle_model=vios,
+            year_range='2019-2023',
+            defaults={'fitment_notes': None, 'is_active': True},
+        )
+        ProductVehicleFitment.objects.update_or_create(
+            product=products['NGK-CR8E'],
+            vehicle_model=city,
+            year_range='2019-2023',
+            defaults={'fitment_notes': None, 'is_active': True},
+        )
 
-        for year in [2019, 2020, 2021, 2022, 2023]:
-            vy_vios = VehicleYear.objects.get(model=vios, year=year)
-            vy_city = VehicleYear.objects.get(model=city, year=year)
-            ProductVehicleFitment.objects.update_or_create(
-                product=products['NGK-CR8E'], vehicle_year=vy_vios, defaults={'is_active': True}
-            )
-            ProductVehicleFitment.objects.update_or_create(
-                product=products['NGK-CR8E'], vehicle_year=vy_city, defaults={'is_active': True}
-            )
-
-    def seed_inventory(self, variants, warehouses):
+    def seed_inventory(self, variants):
         stock_rows = [
-            ('NGK-CR8E-STD', 'MAIN', '45', '2', '10', '20', '100', '88'),
-            ('NGK-BPR6ES-STD', 'MAIN', '38', '0', '10', '20', '100', '92'),
-            ('SAK-C109-STD', 'MAIN', '60', '3', '15', '30', '150', '58'),
-            ('BRM-P06020-STD', 'MAIN', '15', '1', '5', '10', '40', '520'),
-            ('MOT-5W30-1L', 'MAIN', '50', '5', '12', '24', '120', '185'),
-            ('MOT-5W30-4L', 'MAIN', '30', '2', '10', '20', '80', '680'),
-            ('GAT-T223-STD', 'MAIN', '12', '0', '5', '10', '30', '320'),
-            ('ACD-B24R-STD', 'MAIN', '6', '0', '2', '4', '15', '1850'),
-            ('NGK-CR8E-STD', 'BRANCH2', '20', '0', '5', '10', '50', '88'),
-            ('NGK-BPR6ES-STD', 'BRANCH2', '15', '0', '5', '10', '50', '92'),
-            ('SAK-C109-STD', 'BRANCH2', '30', '0', '8', '15', '80', '58'),
+            ('NGK-CR8E-STD', '45', '2', '10', '20', '100', '88'),
+            ('NGK-BPR6ES-STD', '38', '0', '10', '20', '100', '92'),
+            ('SAK-C109-STD', '60', '3', '15', '30', '150', '58'),
+            ('BRM-P06020-STD', '15', '1', '5', '10', '40', '520'),
+            ('MOT-5W30-1L', '50', '5', '12', '24', '120', '185'),
+            ('MOT-5W30-4L', '30', '2', '10', '20', '80', '680'),
+            ('GAT-T223-STD', '12', '0', '5', '10', '30', '320'),
+            ('ACD-B24R-STD', '6', '0', '2', '4', '15', '1850'),
         ]
 
-        for variant_sku, wh_code, on_hand, reserved, reorder_point, reorder_qty, max_level, avg_cost in stock_rows:
+        for variant_sku, on_hand, reserved, reorder_point, reorder_qty, max_level, avg_cost in stock_rows:
             InventoryStock.objects.update_or_create(
                 product_variant=variants[variant_sku],
-                warehouse=warehouses[wh_code],
                 defaults={
                     'qty_on_hand': Decimal(on_hand),
                     'qty_reserved': Decimal(reserved),
@@ -337,112 +305,10 @@ class Command(BaseCommand):
             )
 
     def seed_suppliers(self, variants):
-        suppliers_data = [
-            ('SUP-NGK', 'NGK Philippines Inc.', 'orders@ngkph.com', '+632811001', 'Taguig City', 30),
-            ('SUP-BOSCH', 'Robert Bosch Philippines', 'parts@boschph.com', '+632811003', 'Taguig City', 45),
-            ('SUP-MOTUL', 'Motul Philippines Distributor', 'orders@motulph.com', '+632811004', 'Quezon City', 15),
-            ('SUP-LOCAL', 'Cebu Auto Parts Wholesaler', 'd.ong@cebuautoparts.ph', '+63321811005', 'Cebu City', 7),
-        ]
-        suppliers = {}
-        for code, name, email, phone, city, terms in suppliers_data:
-            suppliers[code] = Supplier.objects.update_or_create(
-                code=code,
-                defaults={
-                    'name': name,
-                    'email': email,
-                    'phone': phone,
-                    'city': city,
-                    'payment_terms_days': terms,
-                    'is_active': True,
-                },
-            )[0]
+        return {}
 
-        sp_data = [
-            ('SUP-NGK', 'NGK-CR8E-STD', 'NGK-CR8E', '82.00', 7),
-            ('SUP-NGK', 'NGK-BPR6ES-STD', 'NGK-BPR6ES', '86.00', 7),
-            ('SUP-LOCAL', 'SAK-C109-STD', 'SAK-C109', '52.00', 3),
-            ('SUP-LOCAL', 'BRM-P06020-STD', 'BRM-P06020', '495.00', 5),
-            ('SUP-MOTUL', 'MOT-5W30-1L', 'MOT5W301L', '178.00', 14),
-            ('SUP-MOTUL', 'MOT-5W30-4L', 'MOT5W304L', '660.00', 14),
-            ('SUP-LOCAL', 'ACD-B24R-STD', 'ACD-B24R', '1780.00', 5),
-        ]
-        for sup_code, variant_sku, supplier_sku, last_cost, lead in sp_data:
-            SupplierProduct.objects.update_or_create(
-                supplier=suppliers[sup_code],
-                product_variant=variants[variant_sku],
-                defaults={
-                    'supplier_sku': supplier_sku,
-                    'last_cost': Decimal(last_cost),
-                    'lead_time_days': lead,
-                    'is_preferred': True,
-                    'is_active': True,
-                },
-            )
-
-        return suppliers
-
-    def seed_procurement(self, users, warehouses, variants, suppliers):
-        po_1, _ = PurchaseOrder.objects.update_or_create(
-            po_number='PO-2025-001',
-            defaults={
-                'supplier': suppliers['SUP-NGK'],
-                'warehouse': warehouses['MAIN'],
-                'status': PurchaseOrder.Status.RECEIVED,
-                'ordered_by': users['admin'],
-                'subtotal': Decimal('6000.0000'),
-                'tax_amount': Decimal('720.0000'),
-                'total_amount': Decimal('6720.0000'),
-            },
-        )
-        PurchaseOrderItem.objects.update_or_create(
-            purchase_order=po_1,
-            product_variant=variants['NGK-CR8E-STD'],
-            defaults={
-                'ordered_qty': Decimal('48.0000'),
-                'received_qty': Decimal('48.0000'),
-                'unit_cost': Decimal('82.000000'),
-            },
-        )
-        PurchaseOrderItem.objects.update_or_create(
-            purchase_order=po_1,
-            product_variant=variants['NGK-BPR6ES-STD'],
-            defaults={
-                'ordered_qty': Decimal('24.0000'),
-                'received_qty': Decimal('24.0000'),
-                'unit_cost': Decimal('86.000000'),
-            },
-        )
-
-        po_2, _ = PurchaseOrder.objects.update_or_create(
-            po_number='PO-2025-002',
-            defaults={
-                'supplier': suppliers['SUP-MOTUL'],
-                'warehouse': warehouses['MAIN'],
-                'status': PurchaseOrder.Status.PARTIALLY_RECEIVED,
-                'ordered_by': users['admin'],
-                'subtotal': Decimal('16464.0000'),
-                'tax_amount': Decimal('1975.6800'),
-                'total_amount': Decimal('18439.6800'),
-            },
-        )
-        PurchaseOrderItem.objects.update_or_create(
-            purchase_order=po_2,
-            product_variant=variants['MOT-5W30-1L'],
-            defaults={
-                'ordered_qty': Decimal('48.0000'),
-                'received_qty': Decimal('48.0000'),
-                'unit_cost': Decimal('178.000000'),
-            },
-        )
-        PurchaseOrderItem.objects.update_or_create(
-            purchase_order=po_2,
-            product_variant=variants['MOT-5W30-4L'],
-            defaults={
-                'ordered_qty': Decimal('24.0000'),
-                'received_qty': Decimal('12.0000'),
-                'unit_cost': Decimal('660.000000'),
-            },
-        )
+    def seed_procurement(self, users, variants, suppliers):
+        return None
 
     def seed_customers(self):
         data = [
@@ -466,75 +332,9 @@ class Command(BaseCommand):
         return customers
 
     def seed_pricing(self, variants, users, suppliers):
-        tiers_data = [('RETAIL', 'Retail', 10), ('WHOLESALE', 'Wholesale', 20), ('VIP', 'VIP', 30)]
-        tiers = {}
-        for code, name, priority in tiers_data:
-            tiers[code] = PriceTier.objects.update_or_create(
-                code=code,
-                defaults={'name': name, 'priority': priority, 'is_active': True},
-            )[0]
+        return None
 
-        rules_data = [
-            ('NGK-CR8E-STD', 'RETAIL', '1', '165.00'),
-            ('NGK-CR8E-STD', 'WHOLESALE', '10', '140.00'),
-            ('SAK-C109-STD', 'RETAIL', '1', '110.00'),
-            ('SAK-C109-STD', 'WHOLESALE', '20', '90.00'),
-            ('MOT-5W30-1L', 'RETAIL', '1', '355.00'),
-            ('MOT-5W30-4L', 'WHOLESALE', '12', '980.00'),
-        ]
-        for variant_sku, tier_code, min_qty, price in rules_data:
-            ProductPriceTierRule.objects.update_or_create(
-                product_variant=variants[variant_sku],
-                price_tier=tiers[tier_code],
-                effective_date='2025-01-01',
-                defaults={
-                    'min_qty': Decimal(min_qty),
-                    'price': Decimal(price),
-                },
-            )
-
-        ProductPriceHistory.objects.get_or_create(
-            product_variant=variants['NGK-CR8E-STD'],
-            old_price=Decimal('158.0000'),
-            new_price=Decimal('165.0000'),
-            changed_by=users['admin'],
-            effective_date=date(2025, 2, 1),
-        )
-        ProductPriceHistory.objects.get_or_create(
-            product_variant=variants['MOT-5W30-1L'],
-            old_price=Decimal('340.0000'),
-            new_price=Decimal('355.0000'),
-            changed_by=users['admin'],
-            effective_date=date(2025, 2, 15),
-        )
-
-        SupplierCostHistory.objects.get_or_create(
-            supplier=suppliers['SUP-NGK'],
-            product_variant=variants['NGK-CR8E-STD'],
-            old_cost=Decimal('78.000000'),
-            new_cost=Decimal('82.000000'),
-            changed_by=users['admin'],
-            effective_date=date(2025, 1, 10),
-        )
-        SupplierCostHistory.objects.get_or_create(
-            supplier=suppliers['SUP-MOTUL'],
-            product_variant=variants['MOT-5W30-1L'],
-            old_cost=Decimal('168.000000'),
-            new_cost=Decimal('178.000000'),
-            changed_by=users['admin'],
-            effective_date=date(2025, 2, 10),
-        )
-
-    def seed_pos(self, customers, users, warehouses, variants):
-        terminal, _ = PosTerminal.objects.update_or_create(
-            code='POS-MAIN-01',
-            defaults={'name': 'Main Counter 1', 'warehouse': warehouses['MAIN'], 'is_active': True},
-        )
-        terminal_b2, _ = PosTerminal.objects.update_or_create(
-            code='POS-BR2-01',
-            defaults={'name': 'Branch 2 Counter', 'warehouse': warehouses['BRANCH2'], 'is_active': True},
-        )
-
+    def seed_pos(self, customers, users, variants):
         cash = PaymentMethod.objects.update_or_create(
             code='CASH', defaults={'name': 'Cash', 'is_active': True}
         )[0]
@@ -546,26 +346,19 @@ class Command(BaseCommand):
         )[0]
 
         session, _ = CashSession.objects.update_or_create(
-            pos_terminal=terminal,
-            cashier=users['cashier'],
-            status=CashSession.Status.OPEN,
-            defaults={'opening_balance': Decimal('5000.00')},
-        )
-
-        branch_session, _ = CashSession.objects.update_or_create(
-            pos_terminal=terminal_b2,
-            cashier=users['cashier'],
-            status=CashSession.Status.OPEN,
-            defaults={'opening_balance': Decimal('3000.00')},
+            session_code='CS-SEED-001',
+            defaults={
+                'cashier': users['staff'],
+                'status': CashSession.Status.OPEN,
+                'opening_balance': Decimal('5000.00'),
+            },
         )
 
         self._create_and_complete_transaction(
             transaction_number='TXN-20250322-0001',
             session=session,
-            terminal=terminal,
-            warehouse=warehouses['MAIN'],
             customer=customers['CUST-0001'],
-            cashier=users['cashier'],
+            cashier=users['staff'],
             payment_method=cash,
             amount_tendered=Decimal('500.00'),
             items=[
@@ -578,10 +371,8 @@ class Command(BaseCommand):
         self._create_and_complete_transaction(
             transaction_number='TXN-20250322-0002',
             session=session,
-            terminal=terminal,
-            warehouse=warehouses['MAIN'],
             customer=None,
-            cashier=users['cashier'],
+            cashier=users['staff'],
             payment_method=gcash,
             amount_tendered=Decimal('2000.00'),
             items=[
@@ -591,13 +382,11 @@ class Command(BaseCommand):
             variants=variants,
         )
 
-        txn_branch = self._create_and_complete_transaction(
+        self._create_and_complete_transaction(
             transaction_number='TXN-20250322-0003',
-            session=branch_session,
-            terminal=terminal_b2,
-            warehouse=warehouses['BRANCH2'],
+            session=session,
             customer=customers['CUST-0002'],
-            cashier=users['cashier'],
+            cashier=users['staff'],
             payment_method=maya,
             amount_tendered=Decimal('800.00'),
             items=[
@@ -606,29 +395,10 @@ class Command(BaseCommand):
             variants=variants,
         )
 
-        sales_return, return_created = SalesReturn.objects.get_or_create(
-            sales_transaction=txn_branch,
-            defaults={
-                'warehouse': warehouses['BRANCH2'],
-                'cashier': users['cashier'],
-                'reason': 'defective',
-            },
-        )
-        if return_created:
-            SalesReturnItem.objects.create(
-                sales_return=sales_return,
-                product_variant=variants['NGK-BPR6ES-STD'],
-                qty_returned=Decimal('1.0000'),
-                unit_price=Decimal('175.0000'),
-                restock=False,
-            )
-
     def _create_and_complete_transaction(
         self,
         transaction_number,
         session,
-        terminal,
-        warehouse,
         customer,
         cashier,
         payment_method,
@@ -640,8 +410,6 @@ class Command(BaseCommand):
             transaction_number=transaction_number,
             defaults={
                 'cash_session': session,
-                'pos_terminal': terminal,
-                'warehouse': warehouse,
                 'customer': customer,
                 'cashier': cashier,
                 'status': SalesTransaction.Status.PENDING,

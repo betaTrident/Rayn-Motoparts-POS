@@ -10,12 +10,12 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from inventory.models import Warehouse
+from core.rollout_flags import pos_receipt_read_enabled
 from inventory.models import InventoryStock
 
-from .models import SalesTransaction, SalesTransactionItem, TransactionPayment
+from .models import ReceiptPayment, SalesTransaction, SalesTransactionItem, TransactionPayment
 
-ALLOWED_SYSTEM_ROLES = {"admin", "cashier"}
+ALLOWED_SYSTEM_ROLES = {"superadmin", "admin", "staff"}
 
 
 def _to_float(value: Decimal | None) -> float:
@@ -54,12 +54,27 @@ def _parse_days(value: str | None) -> int:
     return max(1, min(days, 30))
 
 
+def _parse_page(value: str | None) -> int:
+    try:
+        page = int(value) if value is not None else 1
+    except (TypeError, ValueError):
+        return 1
+    return max(1, page)
+
+
+def _parse_page_size(value: str | None) -> int:
+    try:
+        page_size = int(value) if value is not None else 20
+    except (TypeError, ValueError):
+        return 20
+    return max(1, min(page_size, 100))
+
+
 def _serialize_inventory_row(row: InventoryStock) -> dict:
     available = row.qty_on_hand - row.qty_reserved
     return {
         "variantSku": row.product_variant.variant_sku,
         "productName": row.product_variant.product.name,
-        "warehouseCode": row.warehouse.code,
         "qtyAvailable": _to_float(available),
         "reorderPoint": _to_float(row.reorder_point),
     }
@@ -84,23 +99,6 @@ class PosDashboardView(APIView):
         prev_end = range_start - timedelta(days=1)
         prev_start = prev_end - timedelta(days=days - 1)
 
-        requested_warehouse_id = request.query_params.get("warehouse_id")
-        warehouse_id = requested_warehouse_id
-        if not is_admin_user:
-            assigned_warehouse_id = getattr(user, "warehouse_id", None)
-            if assigned_warehouse_id:
-                if requested_warehouse_id and str(assigned_warehouse_id) != str(requested_warehouse_id):
-                    return Response(
-                        {"detail": "You can only view analytics for your assigned warehouse."},
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-                warehouse_id = str(assigned_warehouse_id)
-            elif requested_warehouse_id:
-                return Response(
-                    {"detail": "Warehouse filtering is not available for this account."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
         completed = SalesTransaction.Status.COMPLETED
         refunded = SalesTransaction.Status.REFUNDED
         partially_refunded = SalesTransaction.Status.PARTIALLY_REFUNDED
@@ -116,10 +114,6 @@ class PosDashboardView(APIView):
             transaction_date__date__lte=prev_end,
             status__in=kpi_statuses,
         )
-        if warehouse_id:
-            current_base = current_base.filter(warehouse_id=warehouse_id)
-            previous_base = previous_base.filter(warehouse_id=warehouse_id)
-
         today_revenue = _to_float(current_base.aggregate(v=Coalesce(Sum("total_amount"), Decimal("0")))["v"])
         yesterday_revenue = _to_float(
             previous_base.aggregate(v=Coalesce(Sum("total_amount"), Decimal("0")))["v"]
@@ -147,9 +141,6 @@ class PosDashboardView(APIView):
             transaction_date__date__lte=today,
             status__in=kpi_statuses,
         )
-        if warehouse_id:
-            trend_base = trend_base.filter(warehouse_id=warehouse_id)
-
         trend_rows = (
             trend_base
             .annotate(day=TruncDate("transaction_date"))
@@ -178,11 +169,6 @@ class PosDashboardView(APIView):
             sales_transaction__transaction_date__date__lte=today,
             sales_transaction__status__in=kpi_statuses,
         )
-        if warehouse_id:
-            top_products_base = top_products_base.filter(
-                sales_transaction__warehouse_id=warehouse_id
-            )
-
         top_products_rows = (
             top_products_base
             .values(
@@ -210,11 +196,6 @@ class PosDashboardView(APIView):
             sales_transaction__transaction_date__date__lte=today,
             sales_transaction__status__in=kpi_statuses,
         )
-        if warehouse_id:
-            category_base = category_base.filter(
-                sales_transaction__warehouse_id=warehouse_id
-            )
-
         category_rows = (
             category_base
             .values("product_variant__product__category__name")
@@ -243,9 +224,6 @@ class PosDashboardView(APIView):
             transaction_date__date__lte=today,
             status__in=kpi_statuses,
         )
-        if warehouse_id:
-            hourly_base = hourly_base.filter(warehouse_id=warehouse_id)
-
         hourly_rows = (
             hourly_base
             .annotate(hour=TruncHour("transaction_date"))
@@ -268,25 +246,49 @@ class PosDashboardView(APIView):
             transaction_date__date__lte=today,
             status__in=[completed, refunded, partially_refunded],
         )
-        if warehouse_id:
-            recent_base = recent_base.filter(warehouse_id=warehouse_id)
-
+        receipt_read = pos_receipt_read_enabled()
         recent_rows = (
             recent_base
-            .prefetch_related("items", "payments__payment_method")
+            .select_related("receipt")
+            .prefetch_related(
+                "items",
+                "payments__payment_method",
+                "receipt__items",
+                "receipt__payments",
+            )
             .order_by("-transaction_date")[:7]
         )
         recent_transactions = []
         for txn in recent_rows:
-            first_payment = txn.payments.first()
-            payment_name = first_payment.payment_method.name if first_payment else None
+            receipt = None
+            if receipt_read:
+                try:
+                    receipt = txn.receipt
+                except SalesTransaction.receipt.RelatedObjectDoesNotExist:
+                    receipt = None
+
+            if receipt is not None:
+                first_receipt_payment = receipt.payments.first()
+                payment_name = (
+                    first_receipt_payment.payment_method_name
+                    if first_receipt_payment
+                    else None
+                )
+                items_qty = _to_float(receipt.items.aggregate(v=Coalesce(Sum("qty"), Decimal("0")))["v"])
+                total_amount = _to_float(receipt.total_amount)
+            else:
+                first_payment = txn.payments.first()
+                payment_name = first_payment.payment_method.name if first_payment else None
+                items_qty = _to_float(txn.items.aggregate(v=Coalesce(Sum("qty"), Decimal("0")))["v"])
+                total_amount = _to_float(txn.total_amount)
+
             txn_status = "Refunded" if txn.status in [refunded, partially_refunded] else "Completed"
             recent_transactions.append(
                 {
                     "id": txn.transaction_number,
                     "time": _format_txn_time(txn.transaction_date),
-                    "items": _to_float(txn.items.aggregate(v=Coalesce(Sum("qty"), Decimal("0")))["v"]),
-                    "total": _to_float(txn.total_amount),
+                    "items": items_qty,
+                    "total": total_amount,
                     "paymentMethod": _normalize_payment_method(payment_name),
                     "status": txn_status,
                 }
@@ -294,10 +296,7 @@ class PosDashboardView(APIView):
 
         inventory_base = InventoryStock.objects.select_related(
             "product_variant__product",
-            "warehouse",
         ).filter(product_variant__is_active=True)
-        if warehouse_id:
-            inventory_base = inventory_base.filter(warehouse_id=warehouse_id)
 
         low_stock_rows = (
             inventory_base.filter(
@@ -316,7 +315,6 @@ class PosDashboardView(APIView):
                 "days": days,
                 "startDate": range_start.isoformat(),
                 "endDate": today.isoformat(),
-                "warehouseId": int(warehouse_id) if warehouse_id else None,
             },
             "summary": {
                 "todayRevenue": today_revenue,
@@ -401,59 +399,52 @@ class PosDashboardView(APIView):
             for row in cashier_rows
         ]
 
-        payment_rows = (
-            TransactionPayment.objects.filter(
-                sales_transaction__in=current_base,
+        if receipt_read:
+            payment_rows = (
+                ReceiptPayment.objects.filter(
+                    receipt__sales_transaction__in=current_base,
+                )
+                .values("payment_method_name")
+                .annotate(amount=Coalesce(Sum("amount"), Decimal("0")))
+                .order_by("-amount")
             )
-            .values("payment_method__name")
-            .annotate(amount=Coalesce(Sum("amount"), Decimal("0")))
-            .order_by("-amount")
-        )
-        total_payment_amount = sum((_to_float(row["amount"]) for row in payment_rows), 0.0)
-        payload["paymentMix"] = [
-            {
-                "method": _normalize_payment_method(row["payment_method__name"]),
-                "amount": _to_float(row["amount"]),
-                "percentage": (
-                    (_to_float(row["amount"]) / total_payment_amount) * 100
-                    if total_payment_amount > 0
-                    else 0
-                ),
-            }
-            for row in payment_rows
-        ]
+            total_payment_amount = sum((_to_float(row["amount"]) for row in payment_rows), 0.0)
+            payload["paymentMix"] = [
+                {
+                    "method": _normalize_payment_method(row["payment_method_name"]),
+                    "amount": _to_float(row["amount"]),
+                    "percentage": (
+                        (_to_float(row["amount"]) / total_payment_amount) * 100
+                        if total_payment_amount > 0
+                        else 0
+                    ),
+                }
+                for row in payment_rows
+            ]
+        else:
+            payment_rows = (
+                TransactionPayment.objects.filter(
+                    sales_transaction__in=current_base,
+                )
+                .values("payment_method__name")
+                .annotate(amount=Coalesce(Sum("amount"), Decimal("0")))
+                .order_by("-amount")
+            )
+            total_payment_amount = sum((_to_float(row["amount"]) for row in payment_rows), 0.0)
+            payload["paymentMix"] = [
+                {
+                    "method": _normalize_payment_method(row["payment_method__name"]),
+                    "amount": _to_float(row["amount"]),
+                    "percentage": (
+                        (_to_float(row["amount"]) / total_payment_amount) * 100
+                        if total_payment_amount > 0
+                        else 0
+                    ),
+                }
+                for row in payment_rows
+            ]
 
         return Response(payload, status=status.HTTP_200_OK)
-
-
-class PosWarehouseListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
-        is_admin_user = user.is_superuser or user.groups.filter(name="admin").exists()
-        if not has_system_role and not user.is_superuser:
-            return Response(
-                {"detail": "You do not have access to warehouse list."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        qs = Warehouse.objects.filter(is_active=True, is_pos_location=True).order_by("code")
-
-        assigned_warehouse_id = getattr(user, "warehouse_id", None)
-        if not is_admin_user and assigned_warehouse_id:
-            qs = qs.filter(id=assigned_warehouse_id)
-
-        data = [
-            {
-                "id": warehouse.id,
-                "code": warehouse.code,
-                "name": warehouse.name,
-            }
-            for warehouse in qs
-        ]
-        return Response(data, status=status.HTTP_200_OK)
 
 
 class PosTransactionListView(APIView):
@@ -475,33 +466,15 @@ class PosTransactionListView(APIView):
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
         days = _parse_days(request.query_params.get("days"))
-
-        requested_warehouse_id = request.query_params.get("warehouse_id")
-        warehouse_id = requested_warehouse_id
-        if not is_admin_user:
-            assigned_warehouse_id = getattr(user, "warehouse_id", None)
-            if assigned_warehouse_id:
-                if requested_warehouse_id and str(assigned_warehouse_id) != str(requested_warehouse_id):
-                    return Response(
-                        {"detail": "You can only view transactions for your assigned warehouse."},
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-                warehouse_id = str(assigned_warehouse_id)
-            elif requested_warehouse_id:
-                return Response(
-                    {"detail": "Warehouse filtering is not available for this account."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        page = _parse_page(request.query_params.get("page"))
+        page_size = _parse_page_size(request.query_params.get("page_size"))
 
         queryset = (
-            SalesTransaction.objects.select_related("cashier", "warehouse", "pos_terminal")
-            .prefetch_related("payments__payment_method")
+            SalesTransaction.objects.select_related("cashier", "receipt")
+            .prefetch_related("payments__payment_method", "receipt__payments", "receipt__items")
             .annotate(items_qty=Coalesce(Sum("items__qty"), Decimal("0")))
             .order_by("-transaction_date")
         )
-
-        if warehouse_id:
-            queryset = queryset.filter(warehouse_id=warehouse_id)
 
         if start_date and end_date:
             queryset = queryset.filter(
@@ -517,29 +490,57 @@ class PosTransactionListView(APIView):
             queryset = queryset.filter(status=status_filter)
 
         if payment_filter:
-            queryset = queryset.filter(
-                Q(payments__payment_method__code__iexact=payment_filter)
-                | Q(payments__payment_method__name__iexact=payment_filter)
-            )
+            if pos_receipt_read_enabled():
+                queryset = queryset.filter(
+                    Q(receipt__payments__payment_method__code__iexact=payment_filter)
+                    | Q(receipt__payments__payment_method_name__iexact=payment_filter)
+                )
+            else:
+                queryset = queryset.filter(
+                    Q(payments__payment_method__code__iexact=payment_filter)
+                    | Q(payments__payment_method__name__iexact=payment_filter)
+                )
 
         if query:
-            queryset = queryset.filter(
+            query_filter = (
                 Q(transaction_number__icontains=query)
                 | Q(customer_name__icontains=query)
                 | Q(cashier__first_name__icontains=query)
                 | Q(cashier__last_name__icontains=query)
             )
+            if pos_receipt_read_enabled():
+                query_filter = query_filter | Q(receipt__buyer_name__icontains=query)
+            queryset = queryset.filter(query_filter)
 
         queryset = queryset.distinct()
 
-        rows = queryset[:150]
+        total_count = queryset.count()
+        total_pages = max(1, (total_count + page_size - 1) // page_size)
+        page = min(page, total_pages)
+        offset = (page - 1) * page_size
+
+        rows = queryset[offset : offset + page_size]
+        receipt_read = pos_receipt_read_enabled()
         results = []
         for txn in rows:
+            receipt = None
+            if receipt_read:
+                try:
+                    receipt = txn.receipt
+                except SalesTransaction.receipt.RelatedObjectDoesNotExist:
+                    receipt = None
+
             payment_methods = []
-            for payment in txn.payments.all():
-                method = _normalize_payment_method(payment.payment_method.name)
-                if method not in payment_methods:
-                    payment_methods.append(method)
+            if receipt is not None:
+                for payment in receipt.payments.all():
+                    method = _normalize_payment_method(payment.payment_method_name)
+                    if method not in payment_methods:
+                        payment_methods.append(method)
+            else:
+                for payment in txn.payments.all():
+                    method = _normalize_payment_method(payment.payment_method.name)
+                    if method not in payment_methods:
+                        payment_methods.append(method)
 
             cashier_name = (
                 f"{(txn.cashier.first_name or '').strip()} {(txn.cashier.last_name or '').strip()}".strip()
@@ -553,31 +554,160 @@ class PosTransactionListView(APIView):
                     "transactionDate": timezone.localtime(txn.transaction_date).isoformat(),
                     "status": txn.status,
                     "cashierName": cashier_name,
-                    "warehouseCode": txn.warehouse.code,
-                    "totalAmount": _to_float(txn.total_amount),
-                    "itemsQty": _to_float(txn.items_qty),
+                    "totalAmount": _to_float(receipt.total_amount) if receipt is not None else _to_float(txn.total_amount),
+                    "itemsQty": (
+                        _to_float(sum((item.qty for item in receipt.items.all()), Decimal("0")))
+                        if receipt is not None
+                        else _to_float(txn.items_qty)
+                    ),
                     "paymentMethods": payment_methods,
                 }
             )
 
-        payment_options_rows = (
-            TransactionPayment.objects.filter(sales_transaction__in=queryset)
-            .values("payment_method__code", "payment_method__name")
-            .distinct()
-        )
-        payment_options = [
-            {
-                "code": row["payment_method__code"],
-                "name": row["payment_method__name"],
-            }
-            for row in payment_options_rows
-        ]
+        if receipt_read:
+            payment_options_rows = (
+                ReceiptPayment.objects.filter(receipt__sales_transaction__in=queryset)
+                .values("payment_method__code", "payment_method_name")
+                .distinct()
+            )
+            payment_options = [
+                {
+                    "code": row["payment_method__code"],
+                    "name": row["payment_method_name"],
+                }
+                for row in payment_options_rows
+            ]
+        else:
+            payment_options_rows = (
+                TransactionPayment.objects.filter(sales_transaction__in=queryset)
+                .values("payment_method__code", "payment_method__name")
+                .distinct()
+            )
+            payment_options = [
+                {
+                    "code": row["payment_method__code"],
+                    "name": row["payment_method__name"],
+                }
+                for row in payment_options_rows
+            ]
 
         return Response(
             {
                 "results": results,
                 "statusOptions": [choice[0] for choice in SalesTransaction.Status.choices],
                 "paymentMethodOptions": payment_options,
+                "pagination": {
+                    "page": page,
+                    "pageSize": page_size,
+                    "totalCount": total_count,
+                    "totalPages": total_pages,
+                    "hasPrevious": page > 1,
+                    "hasNext": page < total_pages,
+                },
             },
             status=status.HTTP_200_OK,
         )
+
+
+class PosTransactionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, transaction_id: int):
+        user = request.user
+        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+        is_admin_user = user.is_superuser or user.groups.filter(name="admin").exists()
+        if not has_system_role and not user.is_superuser:
+            return Response(
+                {"detail": "You do not have access to transaction details."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = (
+            SalesTransaction.objects.select_related("cashier", "cash_session", "receipt")
+            .prefetch_related(
+                "payments__payment_method",
+                "items__product_variant__product",
+                "receipt__items",
+                "receipt__payments",
+            )
+            .filter(pk=transaction_id)
+        )
+
+        txn = queryset.first()
+        if not txn:
+            return Response(
+                {"detail": "Transaction not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        cashier_name = (
+            f"{(txn.cashier.first_name or '').strip()} {(txn.cashier.last_name or '').strip()}".strip()
+            or txn.cashier.username
+        )
+
+        items = [
+            {
+                "variantSku": item.product_variant.variant_sku,
+                "productName": item.product_variant.product.name,
+                "qty": _to_float(item.qty),
+                "unitPrice": _to_float(item.unit_price),
+                "lineTotal": _to_float(item.line_total),
+            }
+            for item in txn.items.all()
+        ]
+
+        payments = [
+            {
+                "method": _normalize_payment_method(payment.payment_method.name),
+                "amount": _to_float(payment.amount),
+                "referenceNumber": payment.reference_number,
+            }
+            for payment in txn.payments.all()
+        ]
+
+        receipt = None
+        if pos_receipt_read_enabled():
+            try:
+                receipt = txn.receipt
+            except SalesTransaction.receipt.RelatedObjectDoesNotExist:
+                receipt = None
+
+        if receipt is not None:
+            items = [
+                {
+                    "variantSku": item.sku,
+                    "productName": item.description,
+                    "qty": _to_float(item.qty),
+                    "unitPrice": _to_float(item.unit_price),
+                    "lineTotal": _to_float(item.line_total),
+                }
+                for item in receipt.items.all()
+            ]
+            payments = [
+                {
+                    "method": _normalize_payment_method(payment.payment_method_name),
+                    "amount": _to_float(payment.amount),
+                    "referenceNumber": payment.reference_number,
+                }
+                for payment in receipt.payments.all()
+            ]
+
+        payload = {
+            "id": txn.id,
+            "transactionNumber": txn.transaction_number,
+            "transactionDate": timezone.localtime(txn.transaction_date).isoformat(),
+            "status": txn.status,
+            "cashierName": cashier_name,
+            "terminalCode": None,
+            "sessionCode": txn.cash_session.session_code,
+            "customerName": receipt.buyer_name if receipt is not None else txn.customer_name,
+            "subtotal": _to_float(receipt.subtotal) if receipt is not None else _to_float(txn.subtotal),
+            "taxAmount": _to_float(receipt.tax_amount) if receipt is not None else _to_float(txn.tax_amount),
+            "totalAmount": _to_float(receipt.total_amount) if receipt is not None else _to_float(txn.total_amount),
+            "amountTendered": _to_float(receipt.amount_paid) if receipt is not None else _to_float(txn.amount_tendered),
+            "changeGiven": _to_float(receipt.change_given) if receipt is not None else _to_float(txn.change_given),
+            "items": items,
+            "payments": payments,
+        }
+
+        return Response(payload, status=status.HTTP_200_OK)

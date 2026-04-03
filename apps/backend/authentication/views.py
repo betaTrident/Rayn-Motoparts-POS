@@ -15,7 +15,7 @@ from .serializers import (
 )
 
 User = get_user_model()
-ALLOWED_SYSTEM_ROLES = {'admin', 'cashier'}
+ALLOWED_SYSTEM_ROLES = {'superadmin', 'admin', 'staff'}
 
 
 class RegisterView(generics.CreateAPIView):

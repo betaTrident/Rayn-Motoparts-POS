@@ -1,9 +1,17 @@
 from django.urls import path
 
-from .views import PosDashboardView, PosWarehouseListView, PosTransactionListView
+from .views import (
+    PosDashboardView,
+    PosTransactionDetailView,
+    PosTransactionListView,
+)
 
 urlpatterns = [
     path("dashboard/", PosDashboardView.as_view(), name="pos-dashboard"),
-    path("warehouses/", PosWarehouseListView.as_view(), name="pos-warehouses"),
     path("transactions/", PosTransactionListView.as_view(), name="pos-transactions"),
+    path(
+        "transactions/<int:transaction_id>/",
+        PosTransactionDetailView.as_view(),
+        name="pos-transaction-detail",
+    ),
 ]

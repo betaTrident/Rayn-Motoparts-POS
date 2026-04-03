@@ -34,9 +34,8 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import {
-  getDashboardWarehouses,
   getDashboardSnapshot,
-} from "@/services/dashboardService";
+} from "@/services/dashboardService.service";
 
 import {
   Card,
@@ -150,26 +149,14 @@ function KpiCard({
 // DashboardPage
 // ════════════════════════════════════════════════
 export default function DashboardPage() {
-  const { user, warehouseId } = useAuth();
+  const { user } = useAuth();
   const [rangeDays, setRangeDays] = useState("1");
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>(
-    warehouseId ? String(warehouseId) : "all"
-  );
-
-  const warehousesQuery = useQuery({
-    queryKey: ["dashboard", "warehouses"],
-    queryFn: getDashboardWarehouses,
-  });
 
   const dashboardQuery = useQuery({
-    queryKey: ["dashboard", "snapshot", rangeDays, selectedWarehouseId],
+    queryKey: ["dashboard", "snapshot", rangeDays],
     queryFn: () =>
       getDashboardSnapshot({
         days: Number(rangeDays),
-        warehouseId:
-          selectedWarehouseId === "all"
-            ? undefined
-            : Number(selectedWarehouseId),
       }),
   });
 
@@ -199,9 +186,6 @@ export default function DashboardPage() {
     topCashiers,
     paymentMix,
   } = dashboardQuery.data;
-
-  const warehouses = warehousesQuery.data ?? [];
-  const canSelectAllWarehouses = !warehouseId;
 
   const rangeLabel =
     rangeDays === "1" ? "today" : `the last ${rangeDays} days`;
@@ -233,26 +217,6 @@ export default function DashboardPage() {
                 <SelectItem value="1">Today</SelectItem>
                 <SelectItem value="7">Last 7 days</SelectItem>
                 <SelectItem value="30">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedWarehouseId}
-              onValueChange={setSelectedWarehouseId}
-              disabled={warehousesQuery.isLoading || !canSelectAllWarehouses}
-            >
-              <SelectTrigger className="w-56 cursor-pointer">
-                <SelectValue placeholder="Warehouse" />
-              </SelectTrigger>
-              <SelectContent>
-                {canSelectAllWarehouses && (
-                  <SelectItem value="all">All Warehouses</SelectItem>
-                )}
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse.id} value={String(warehouse.id)}>
-                    {warehouse.code} - {warehouse.name}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </>
@@ -515,13 +479,13 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   {inventoryAlerts.lowStock.map((item) => (
                     <div
-                      key={`${item.variantSku}-${item.warehouseCode}`}
+                      key={`${item.variantSku}-low`}
                       className="flex items-center justify-between rounded-md border px-3 py-2"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{item.productName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.variantSku} · {item.warehouseCode}
+                          {item.variantSku}
                         </p>
                       </div>
                       <div className="text-right text-xs">
@@ -547,13 +511,13 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   {inventoryAlerts.outOfStock.map((item) => (
                     <div
-                      key={`${item.variantSku}-${item.warehouseCode}`}
+                      key={`${item.variantSku}-oos`}
                       className="flex items-center justify-between rounded-md border px-3 py-2"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{item.productName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.variantSku} · {item.warehouseCode}
+                          {item.variantSku}
                         </p>
                       </div>
                       <div className="text-right text-xs">

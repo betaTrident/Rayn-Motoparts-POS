@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ProductVehicleFitment, VehicleMake, VehicleModel, VehicleYear
+from .models import ProductVehicleFitment, VehicleMake, VehicleModel
 
 
 @admin.register(VehicleMake)
@@ -17,15 +17,8 @@ class VehicleModelAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'make')
 
 
-@admin.register(VehicleYear)
-class VehicleYearAdmin(admin.ModelAdmin):
-    list_display = ('model', 'year', 'is_active')
-    search_fields = ('model__name', 'model__make__name')
-    list_filter = ('is_active', 'year', 'model__make')
-
-
 @admin.register(ProductVehicleFitment)
 class ProductVehicleFitmentAdmin(admin.ModelAdmin):
-    list_display = ('product', 'vehicle_year', 'is_active')
-    search_fields = ('product__sku', 'product__name', 'vehicle_year__model__name')
-    list_filter = ('is_active', 'vehicle_year__model__make')
+    list_display = ('product', 'vehicle_model', 'year_range', 'is_active')
+    search_fields = ('product__sku', 'product__name', 'vehicle_model__name')
+    list_filter = ('is_active', 'vehicle_model__make')

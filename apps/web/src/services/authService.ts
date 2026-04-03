@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./api.service";
 import { ENDPOINTS } from "@/services/endpoints";
 import type {
   AuthClaims,
@@ -10,7 +10,7 @@ import type {
   UserRole,
 } from "@/types/auth";
 
-const VALID_ROLES: UserRole[] = ["admin", "cashier"];
+const VALID_ROLES: UserRole[] = ["superadmin", "admin", "staff"];
 
 // ──────────────────────────────────────────────
 // TOKEN HELPERS
@@ -61,10 +61,7 @@ export const getAuthClaims = (): AuthClaims | null => {
       )
     : [];
 
-  const rawWarehouse = payload.warehouse_id;
-  const warehouse_id = typeof rawWarehouse === "number" ? rawWarehouse : null;
-
-  return { roles, warehouse_id };
+  return { roles };
 };
 
 /** Save tokens + user to localStorage after login/register */

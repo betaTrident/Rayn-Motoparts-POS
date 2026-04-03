@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
-import ProtectedRoute from "@/routes/ProtectedRoute";
+import ProtectedRoute from "@/routes/middleware/ProtectedRoute";
 import GuestRoute from "@/routes/GuestRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import LoginPage from "@/pages/LoginPage";
@@ -37,14 +37,14 @@ function App() {
             </Route>
 
             {/* Protected routes wrapped in MainLayout */}
-            <Route element={<ProtectedRoute requiredRoles={["admin", "cashier"]} />}>
+            <Route element={<ProtectedRoute requiredRoles={["superadmin", "admin", "staff"]} />}>
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route
                   element={
                     <ProtectedRoute
-                      requiredRoles={["admin", "cashier"]}
+                      requiredRoles={["superadmin", "admin", "staff"]}
                     />
                   }
                 >

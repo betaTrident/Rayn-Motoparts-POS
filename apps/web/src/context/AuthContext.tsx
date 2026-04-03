@@ -18,8 +18,8 @@ import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
-} from "@/types/auth";
-import * as authService from "@/services/authService";
+} from "@/types/auth.types";
+import * as authService from "@/services/authService.service";
 
 // ──────────────────────────────────────────────
 // 1. DEFINE THE CONTEXT SHAPE
@@ -35,8 +35,6 @@ interface AuthContextType {
   userQuery: UseQueryResult<User, Error>;
   /** Roles from JWT claims */
   roles: UserRole[];
-  /** Warehouse context from JWT claims */
-  warehouseId: number | null;
   /** Full parsed auth claims if available */
   claims: AuthClaims | null;
   /** Check if user has any of the provided roles */
@@ -137,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const claims = useMemo(() => authService.getAuthClaims(), [userQuery.data]);
   const roles = claims?.roles ?? [];
-  const warehouseId = claims?.warehouse_id ?? null;
 
   const hasAnyRole = useCallback(
     (requiredRoles: UserRole[]) => {
@@ -155,7 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!userQuery.data,
     userQuery,
     roles,
-    warehouseId,
     claims,
     hasAnyRole,
     login,

@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 
 import { useAuth } from "@/context/AuthContext";
-import type { UserRole } from "@/types/auth";
+import type { UserRole } from "@/types/auth.types";
 
 const ROLE_PRIORITY: UserRole[] = [
+  "superadmin",
   "admin",
-  "cashier",
+  "staff",
 ];
 
 export function usePermissions() {
@@ -23,10 +24,10 @@ export function usePermissions() {
   return {
     roles,
     highestRole,
-    canAccessAdmin: hasAnyRole(["admin"]),
-    canAccessCatalog: hasAnyRole(["admin", "cashier"]),
-    canAccessPos: hasAnyRole(["admin", "cashier"]),
-    canAccessProcurement: hasAnyRole(["admin"]),
+    canAccessAdmin: hasAnyRole(["superadmin", "admin"]),
+    canAccessCatalog: hasAnyRole(["superadmin", "admin", "staff"]),
+    canAccessPos: hasAnyRole(["superadmin", "admin", "staff"]),
+    canAccessProcurement: false,
     hasAnyRole,
   };
 }

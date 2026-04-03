@@ -1,4 +1,4 @@
-import api from "@/services/api";
+import api from "@/services/api.service";
 import { ENDPOINTS } from "@/services/endpoints";
 
 export interface DailySales {
@@ -80,7 +80,6 @@ export interface DashboardSnapshot {
     days: number;
     startDate: string;
     endDate: string;
-    warehouseId: number | null;
   };
   summary: SummaryStats;
   weeklySales: DailySales[];
@@ -100,15 +99,8 @@ export interface DashboardSnapshot {
   paymentMix: PaymentMixItem[];
 }
 
-export interface DashboardWarehouse {
-  id: number;
-  code: string;
-  name: string;
-}
-
 interface DashboardQuery {
   days?: number;
-  warehouseId?: number;
 }
 
 export async function getDashboardSnapshot(query?: DashboardQuery): Promise<DashboardSnapshot> {
@@ -116,15 +108,7 @@ export async function getDashboardSnapshot(query?: DashboardQuery): Promise<Dash
   if (query?.days) {
     params.days = String(query.days);
   }
-  if (query?.warehouseId) {
-    params.warehouse_id = String(query.warehouseId);
-  }
 
   const { data } = await api.get<DashboardSnapshot>(ENDPOINTS.pos.dashboard, { params });
-  return data;
-}
-
-export async function getDashboardWarehouses(): Promise<DashboardWarehouse[]> {
-  const { data } = await api.get<DashboardWarehouse[]>(ENDPOINTS.pos.warehouses);
   return data;
 }
