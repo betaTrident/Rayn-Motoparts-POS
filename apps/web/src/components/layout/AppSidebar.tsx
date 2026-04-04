@@ -51,7 +51,7 @@ const mainNavItems = [
     title: "Point of Sale",
     icon: ShoppingCart,
     key: "pos",
-    enabled: false,
+    enabled: true,
   },
   {
     title: "Catalog",

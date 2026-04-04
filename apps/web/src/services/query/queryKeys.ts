@@ -20,6 +20,11 @@ export interface CatalogProductQueryKeyInput {
   search?: string;
 }
 
+export interface PosCatalogQueryKeyInput {
+  categoryId?: number;
+  search?: string;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -41,5 +46,11 @@ export const queryKeys = {
     products: (input: CatalogProductQueryKeyInput = {}) =>
       ["catalog", "products", input] as const,
     sizes: ["catalog", "sizes"] as const,
+  },
+  pos: {
+    all: ["pos"] as const,
+    categories: ["pos", "categories"] as const,
+    products: (input: PosCatalogQueryKeyInput = {}) =>
+      ["pos", "products", input] as const,
   },
 };

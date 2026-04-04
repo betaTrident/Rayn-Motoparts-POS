@@ -12,8 +12,10 @@ import { getDefaultAppPath } from "./roleRedirect";
 
 import AdminCatalogPage from "@/app/admin/catalog/page";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
+import AdminPosPage from "@/app/admin/pos/page";
 import AdminTransactionsPage from "@/app/admin/transactions/page";
 import StaffDashboardPage from "@/app/staff/dashboard/page";
+import StaffPosPage from "@/app/staff/pos/page";
 import StaffTransactionsPage from "@/app/staff/transactions/page";
 import SystemReconciliationPage from "@/app/system/reconciliation/page";
 
@@ -36,12 +38,14 @@ export default function AppRouter() {
 
             <Route element={<RoleGuard allowedRoles={["superadmin", "admin"]} />}>
               <Route path="/app/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/app/admin/pos" element={<AdminPosPage />} />
               <Route path="/app/admin/catalog" element={<AdminCatalogPage />} />
               <Route path="/app/admin/transactions" element={<AdminTransactionsPage />} />
             </Route>
 
             <Route element={<RoleGuard allowedRoles={["staff"]} />}>
               <Route path="/app/staff/dashboard" element={<StaffDashboardPage />} />
+              <Route path="/app/staff/pos" element={<StaffPosPage />} />
               <Route path="/app/staff/transactions" element={<StaffTransactionsPage />} />
             </Route>
 
@@ -50,6 +54,7 @@ export default function AppRouter() {
             </Route>
 
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
+            <Route path="/pos" element={<Navigate to="/" replace />} />
             <Route path="/products" element={<Navigate to="/" replace />} />
             <Route path="/transactions" element={<Navigate to="/" replace />} />
           </Route>
