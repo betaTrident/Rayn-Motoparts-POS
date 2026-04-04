@@ -1,5 +1,5 @@
-import ProductsPage from "@/pages/ProductsPage";
+import CatalogModulePage from "@/components/modules/catalog/CatalogModulePage";
 
 export default function AdminCatalogPage() {
-  return <ProductsPage />;
+  return <CatalogModulePage />;
 }
