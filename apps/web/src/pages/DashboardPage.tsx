@@ -17,7 +17,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useDashboardSnapshot } from "@/hooks/modules/useDashboard";
 import {
   Bar,
   BarChart,
@@ -33,10 +33,6 @@ import {
 } from "recharts";
 
 import { useAuth } from "@/context/AuthContext";
-import {
-  getDashboardSnapshot,
-} from "@/services/dashboardService.service";
-
 import {
   Card,
   CardContent,
@@ -151,14 +147,7 @@ function KpiCard({
 export default function DashboardPage() {
   const { user } = useAuth();
   const [rangeDays, setRangeDays] = useState("1");
-
-  const dashboardQuery = useQuery({
-    queryKey: ["dashboard", "snapshot", rangeDays],
-    queryFn: () =>
-      getDashboardSnapshot({
-        days: Number(rangeDays),
-      }),
-  });
+  const dashboardQuery = useDashboardSnapshot(Number(rangeDays));
 
   if (dashboardQuery.isLoading) {
     return <PageLoadingState label="Loading dashboard..." />;

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Download, Eye, Receipt, Search } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
@@ -36,10 +35,12 @@ import {
 } from "@/components/ui/page-state";
 
 import {
-  getTransactionDetail,
-  getTransactions,
   type TransactionRow,
 } from "@/services/transactionService.service";
+import {
+  useTransactionDetail,
+  useTransactionsList,
+} from "@/hooks/modules/useTransactions";
 
 function formatCurrency(value: number): string {
   return `PHP ${value.toLocaleString("en-PH", {
@@ -68,25 +69,13 @@ export default function TransactionsPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionRow | null>(null);
   const pageSize = 20;
 
-  const transactionsQuery = useQuery({
-    queryKey: [
-      "transactions",
-      "list",
-      q,
-      days,
-      status,
-      paymentMethod,
-      page,
-    ],
-    queryFn: () =>
-      getTransactions({
-        q,
-        days: Number(days),
-        status,
-        paymentMethod,
-        page,
-        pageSize,
-      }),
+  const transactionsQuery = useTransactionsList({
+    q,
+    days: Number(days),
+    status,
+    paymentMethod,
+    page,
+    pageSize,
   });
 
   const results = transactionsQuery.data?.results ?? [];
@@ -106,11 +95,7 @@ export default function TransactionsPage() {
     setPage(1);
   };
 
-  const detailQuery = useQuery({
-    queryKey: ["transactions", "detail", selectedTransaction?.id],
-    queryFn: () => getTransactionDetail(selectedTransaction!.id),
-    enabled: Boolean(selectedTransaction),
-  });
+  const detailQuery = useTransactionDetail(selectedTransaction?.id ?? null);
 
   const exportCsv = () => {
     if (!results.length) return;

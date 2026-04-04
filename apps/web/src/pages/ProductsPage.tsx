@@ -26,6 +26,7 @@ import type {
   ProductSize,
 } from "@/types/product.types";
 import * as productService from "@/services/productService.service";
+import { queryKeys } from "@/services/query/queryKeys";
 
 import { cn } from "@/lib/utils";
 import { parseApiError } from "@/lib/api-error";
@@ -190,12 +191,12 @@ export default function ProductsPage() {
 
   // ── Queries ──
   const categoriesQuery = useQuery({
-    queryKey: ["categories"],
+    queryKey: queryKeys.catalog.categories,
     queryFn: () => productService.getCategories(),
   });
 
   const productsQuery = useQuery({
-    queryKey: ["products"],
+    queryKey: queryKeys.catalog.products(),
     queryFn: () => productService.getProducts(),
   });
 
@@ -203,8 +204,7 @@ export default function ProductsPage() {
   const createProductMut = useMutation({
     mutationFn: (data: ProductFormData) => productService.createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setProductDialogOpen(false);
       setProductServerError(null);
       setProductFormErrors({});
@@ -237,8 +237,7 @@ export default function ProductsPage() {
       data: Partial<ProductFormData>;
     }) => productService.updateProduct(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setProductDialogOpen(false);
       setProductServerError(null);
       setProductFormErrors({});
@@ -271,8 +270,7 @@ export default function ProductsPage() {
       nextAvailability: boolean;
     }) => productService.updateProduct(id, { is_available: nextAvailability }),
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       toast.success(
         vars.nextAvailability
           ? "Product marked as available."
@@ -291,8 +289,7 @@ export default function ProductsPage() {
   const deleteProductMut = useMutation({
     mutationFn: (id: number) => productService.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setDeleteDialogOpen(false);
       toast.success("Product deleted successfully.");
     },
@@ -309,7 +306,7 @@ export default function ProductsPage() {
     mutationFn: (data: CategoryFormData) =>
       productService.createCategory(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setCategoryDialogOpen(false);
       setCategoryServerError(null);
       setCategoryFormErrors({});
@@ -339,8 +336,7 @@ export default function ProductsPage() {
       data: Partial<CategoryFormData>;
     }) => productService.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setCategoryDialogOpen(false);
       setCategoryServerError(null);
       setCategoryFormErrors({});
@@ -364,7 +360,7 @@ export default function ProductsPage() {
   const deleteCategoryMut = useMutation({
     mutationFn: (id: number) => productService.deleteCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setDeleteCategoryDialogOpen(false);
       toast.success("Category deleted successfully.");
     },

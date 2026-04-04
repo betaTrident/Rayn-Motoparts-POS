@@ -1,20 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
+import { queryClient } from "@/lib/query-client";
 import AppRouter from "./routes/AppRouter";
 import { Toaster } from "sonner";
-
-// ──────────────────────────────────────────────
-// React Query Client
-// ──────────────────────────────────────────────
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
 
 function App() {
   return (
