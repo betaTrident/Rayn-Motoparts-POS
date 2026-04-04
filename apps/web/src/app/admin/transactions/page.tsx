@@ -1,5 +1,5 @@
-import TransactionsPage from "@/pages/TransactionsPage";
+import TransactionsModulePage from "@/components/modules/transactions/TransactionsModulePage";
 
 export default function AdminTransactionsPage() {
-  return <TransactionsPage />;
+  return <TransactionsModulePage />;
 }
