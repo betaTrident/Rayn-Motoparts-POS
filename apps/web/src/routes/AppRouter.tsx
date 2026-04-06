@@ -14,10 +14,12 @@ import AdminCatalogPage from "@/app/admin/catalog/page";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
 import AdminInventoryPage from "@/app/admin/inventory/page";
 import AdminPosPage from "@/app/admin/pos/page";
+import AdminReturnsPage from "@/app/admin/returns/page";
 import AdminTransactionsPage from "@/app/admin/transactions/page";
 import StaffDashboardPage from "@/app/staff/dashboard/page";
 import StaffInventoryPage from "@/app/staff/inventory/page";
 import StaffPosPage from "@/app/staff/pos/page";
+import StaffReturnsPage from "@/app/staff/returns/page";
 import StaffTransactionsPage from "@/app/staff/transactions/page";
 import SystemReconciliationPage from "@/app/system/reconciliation/page";
 
@@ -44,6 +46,7 @@ export default function AppRouter() {
               <Route path="/app/admin/catalog" element={<AdminCatalogPage />} />
               <Route path="/app/admin/inventory" element={<AdminInventoryPage />} />
               <Route path="/app/admin/transactions" element={<AdminTransactionsPage />} />
+              <Route path="/app/admin/returns" element={<AdminReturnsPage />} />
             </Route>
 
             <Route element={<RoleGuard allowedRoles={["staff"]} />}>
@@ -51,6 +54,7 @@ export default function AppRouter() {
               <Route path="/app/staff/pos" element={<StaffPosPage />} />
               <Route path="/app/staff/inventory" element={<StaffInventoryPage />} />
               <Route path="/app/staff/transactions" element={<StaffTransactionsPage />} />
+              <Route path="/app/staff/returns" element={<StaffReturnsPage />} />
             </Route>
 
             <Route element={<RoleGuard allowedRoles={["superadmin"]} />}>
@@ -62,6 +66,7 @@ export default function AppRouter() {
             <Route path="/products" element={<Navigate to="/" replace />} />
             <Route path="/inventory" element={<Navigate to="/" replace />} />
             <Route path="/transactions" element={<Navigate to="/" replace />} />
+            <Route path="/returns" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
 

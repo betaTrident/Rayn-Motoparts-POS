@@ -25,6 +25,17 @@ export interface PosCatalogQueryKeyInput {
   search?: string;
 }
 
+export interface ReturnListQueryKeyInput {
+  q?: string;
+  status?: "all_returns" | "refunded" | "partially_refunded";
+  days?: number;
+  startDate?: string;
+  endDate?: string;
+  paymentMethod?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -52,5 +63,11 @@ export const queryKeys = {
     categories: ["pos", "categories"] as const,
     products: (input: PosCatalogQueryKeyInput = {}) =>
       ["pos", "products", input] as const,
+  },
+  returns: {
+    all: ["returns"] as const,
+    list: (input: ReturnListQueryKeyInput) =>
+      ["returns", "list", input] as const,
+    detail: (id: number) => ["returns", "detail", id] as const,
   },
 };

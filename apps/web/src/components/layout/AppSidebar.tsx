@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
+  RotateCcw,
   Receipt,
   Users,
   Settings,
@@ -71,6 +72,12 @@ const mainNavItems = [
     key: "transactions",
     enabled: true,
   },
+  {
+    title: "Returns",
+    icon: RotateCcw,
+    key: "returns",
+    enabled: true,
+  },
 ];
 
 const adminNavItems = [
@@ -116,6 +123,9 @@ export default function AppSidebar() {
           return false;
         }
         if (item.key === "pos" && !canAccessPos) {
+          return false;
+        }
+        if (item.key === "returns" && !canAccessPos) {
           return false;
         }
         return item.enabled || item.key === "dashboard";
