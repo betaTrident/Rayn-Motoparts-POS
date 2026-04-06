@@ -104,7 +104,7 @@ const adminNavItems = [
     title: "Settings",
     icon: Settings,
     key: "settings",
-    enabled: false,
+    enabled: true,
   },
 ];
 

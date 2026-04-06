@@ -91,4 +91,8 @@ export const queryKeys = {
     snapshot: (input: ReportsSnapshotQueryKeyInput) =>
       ["reports", "snapshot", input] as const,
   },
+  settings: {
+    all: ["settings"] as const,
+    profile: ["settings", "profile"] as const,
+  },
 };
