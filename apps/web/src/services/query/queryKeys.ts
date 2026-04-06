@@ -36,6 +36,13 @@ export interface ReturnListQueryKeyInput {
   pageSize?: number;
 }
 
+export interface CustomerListQueryKeyInput {
+  q?: string;
+  days?: number;
+  page?: number;
+  pageSize?: number;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -69,5 +76,10 @@ export const queryKeys = {
     list: (input: ReturnListQueryKeyInput) =>
       ["returns", "list", input] as const,
     detail: (id: number) => ["returns", "detail", id] as const,
+  },
+  customers: {
+    all: ["customers"] as const,
+    list: (input: CustomerListQueryKeyInput) =>
+      ["customers", "list", input] as const,
   },
 };

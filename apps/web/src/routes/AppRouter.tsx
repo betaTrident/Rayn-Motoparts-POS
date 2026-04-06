@@ -11,11 +11,13 @@ import RoleGuard from "./guards/RoleGuard";
 import { getDefaultAppPath } from "./roleRedirect";
 
 import AdminCatalogPage from "@/app/admin/catalog/page";
+import AdminCustomersPage from "@/app/admin/customers/page";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
 import AdminInventoryPage from "@/app/admin/inventory/page";
 import AdminPosPage from "@/app/admin/pos/page";
 import AdminReturnsPage from "@/app/admin/returns/page";
 import AdminTransactionsPage from "@/app/admin/transactions/page";
+import StaffCustomersPage from "@/app/staff/customers/page";
 import StaffDashboardPage from "@/app/staff/dashboard/page";
 import StaffInventoryPage from "@/app/staff/inventory/page";
 import StaffPosPage from "@/app/staff/pos/page";
@@ -44,6 +46,7 @@ export default function AppRouter() {
               <Route path="/app/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/app/admin/pos" element={<AdminPosPage />} />
               <Route path="/app/admin/catalog" element={<AdminCatalogPage />} />
+              <Route path="/app/admin/customers" element={<AdminCustomersPage />} />
               <Route path="/app/admin/inventory" element={<AdminInventoryPage />} />
               <Route path="/app/admin/transactions" element={<AdminTransactionsPage />} />
               <Route path="/app/admin/returns" element={<AdminReturnsPage />} />
@@ -52,6 +55,7 @@ export default function AppRouter() {
             <Route element={<RoleGuard allowedRoles={["staff"]} />}>
               <Route path="/app/staff/dashboard" element={<StaffDashboardPage />} />
               <Route path="/app/staff/pos" element={<StaffPosPage />} />
+              <Route path="/app/staff/customers" element={<StaffCustomersPage />} />
               <Route path="/app/staff/inventory" element={<StaffInventoryPage />} />
               <Route path="/app/staff/transactions" element={<StaffTransactionsPage />} />
               <Route path="/app/staff/returns" element={<StaffReturnsPage />} />
@@ -64,6 +68,7 @@ export default function AppRouter() {
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/pos" element={<Navigate to="/" replace />} />
             <Route path="/products" element={<Navigate to="/" replace />} />
+            <Route path="/customers" element={<Navigate to="/" replace />} />
             <Route path="/inventory" element={<Navigate to="/" replace />} />
             <Route path="/transactions" element={<Navigate to="/" replace />} />
             <Route path="/returns" element={<Navigate to="/" replace />} />
