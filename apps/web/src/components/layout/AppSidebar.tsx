@@ -60,6 +60,12 @@ const mainNavItems = [
     enabled: true,
   },
   {
+    title: "Inventory",
+    icon: Package,
+    key: "inventory",
+    enabled: true,
+  },
+  {
     title: "Transactions",
     icon: Receipt,
     key: "transactions",
