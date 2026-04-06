@@ -43,6 +43,10 @@ export interface CustomerListQueryKeyInput {
   pageSize?: number;
 }
 
+export interface ReportsSnapshotQueryKeyInput {
+  days: 7 | 30;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -81,5 +85,10 @@ export const queryKeys = {
     all: ["customers"] as const,
     list: (input: CustomerListQueryKeyInput) =>
       ["customers", "list", input] as const,
+  },
+  reports: {
+    all: ["reports"] as const,
+    snapshot: (input: ReportsSnapshotQueryKeyInput) =>
+      ["reports", "snapshot", input] as const,
   },
 };

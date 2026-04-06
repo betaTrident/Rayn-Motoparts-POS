@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Package,
   RotateCcw,
+  BarChart3,
   Receipt,
   Users,
   Settings,
@@ -84,6 +85,12 @@ const mainNavItems = [
     key: "returns",
     enabled: true,
   },
+  {
+    title: "Reports",
+    icon: BarChart3,
+    key: "reports",
+    enabled: true,
+  },
 ];
 
 const adminNavItems = [
@@ -132,6 +139,9 @@ export default function AppSidebar() {
           return false;
         }
         if (item.key === "returns" && !canAccessPos) {
+          return false;
+        }
+        if (highestRole === "staff" && item.key === "reports") {
           return false;
         }
         return item.enabled || item.key === "dashboard";

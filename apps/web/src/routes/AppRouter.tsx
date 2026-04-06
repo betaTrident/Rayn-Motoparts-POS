@@ -15,6 +15,7 @@ import AdminCustomersPage from "@/app/admin/customers/page";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
 import AdminInventoryPage from "@/app/admin/inventory/page";
 import AdminPosPage from "@/app/admin/pos/page";
+import AdminReportsPage from "@/app/admin/reports/page";
 import AdminReturnsPage from "@/app/admin/returns/page";
 import AdminTransactionsPage from "@/app/admin/transactions/page";
 import StaffCustomersPage from "@/app/staff/customers/page";
@@ -50,6 +51,7 @@ export default function AppRouter() {
               <Route path="/app/admin/inventory" element={<AdminInventoryPage />} />
               <Route path="/app/admin/transactions" element={<AdminTransactionsPage />} />
               <Route path="/app/admin/returns" element={<AdminReturnsPage />} />
+              <Route path="/app/admin/reports" element={<AdminReportsPage />} />
             </Route>
 
             <Route element={<RoleGuard allowedRoles={["staff"]} />}>
@@ -72,6 +74,7 @@ export default function AppRouter() {
             <Route path="/inventory" element={<Navigate to="/" replace />} />
             <Route path="/transactions" element={<Navigate to="/" replace />} />
             <Route path="/returns" element={<Navigate to="/" replace />} />
+            <Route path="/reports" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
 
