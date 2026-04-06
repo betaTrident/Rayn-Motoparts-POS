@@ -19,4 +19,12 @@ export const ENDPOINTS = {
     transactions: 'pos/transactions/',
     transactionById: (id: number) => `pos/transactions/${id}/`,
   },
+  customers: {
+    list: 'customers/',
+    byId: (id: number) => `customers/${id}/`,
+  },
+  returns: {
+    list: 'returns/',
+    byId: (id: number) => `returns/${id}/`,
+  },
 } as const;

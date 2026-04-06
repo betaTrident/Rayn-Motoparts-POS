@@ -711,3 +711,292 @@ class PosTransactionDetailView(APIView):
         }
 
         return Response(payload, status=status.HTTP_200_OK)
+
+
+def _parse_returns_days(value: str | None) -> int:
+    if value is None:
+        return 30
+    try:
+        days = int(value)
+    except (TypeError, ValueError):
+        return 30
+    return max(1, min(days, 365))
+
+
+class ReturnTransactionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+        if not has_system_role and not user.is_superuser:
+            return Response(
+                {"detail": "You do not have access to returns."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        query = request.query_params.get("q", "").strip()
+        status_filter = request.query_params.get("status")
+        payment_filter = request.query_params.get("payment_method")
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        days = _parse_returns_days(request.query_params.get("days"))
+        page = _parse_page(request.query_params.get("page"))
+        page_size = _parse_page_size(request.query_params.get("page_size"))
+
+        return_statuses = [
+            SalesTransaction.Status.REFUNDED,
+            SalesTransaction.Status.PARTIALLY_REFUNDED,
+        ]
+
+        queryset = (
+            SalesTransaction.objects.select_related("cashier", "receipt")
+            .prefetch_related("payments__payment_method", "receipt__payments", "receipt__items")
+            .annotate(items_qty=Coalesce(Sum("items__qty"), Decimal("0")))
+            .filter(status__in=return_statuses)
+            .order_by("-transaction_date")
+        )
+
+        if start_date and end_date:
+            queryset = queryset.filter(
+                transaction_date__date__gte=start_date,
+                transaction_date__date__lte=end_date,
+            )
+        else:
+            today = timezone.localdate()
+            window_start = today - timedelta(days=days - 1)
+            queryset = queryset.filter(transaction_date__date__gte=window_start)
+
+        if status_filter in return_statuses:
+            queryset = queryset.filter(status=status_filter)
+
+        if payment_filter:
+            if pos_receipt_read_enabled():
+                queryset = queryset.filter(
+                    Q(receipt__payments__payment_method__code__iexact=payment_filter)
+                    | Q(receipt__payments__payment_method_name__iexact=payment_filter)
+                )
+            else:
+                queryset = queryset.filter(
+                    Q(payments__payment_method__code__iexact=payment_filter)
+                    | Q(payments__payment_method__name__iexact=payment_filter)
+                )
+
+        if query:
+            query_filter = (
+                Q(transaction_number__icontains=query)
+                | Q(customer_name__icontains=query)
+                | Q(cashier__first_name__icontains=query)
+                | Q(cashier__last_name__icontains=query)
+            )
+            if pos_receipt_read_enabled():
+                query_filter = query_filter | Q(receipt__buyer_name__icontains=query)
+            queryset = queryset.filter(query_filter)
+
+        queryset = queryset.distinct()
+
+        total_count = queryset.count()
+        total_pages = max(1, (total_count + page_size - 1) // page_size)
+        page = min(page, total_pages)
+        offset = (page - 1) * page_size
+
+        rows = queryset[offset : offset + page_size]
+        receipt_read = pos_receipt_read_enabled()
+        results = []
+        for txn in rows:
+            receipt = None
+            if receipt_read:
+                try:
+                    receipt = txn.receipt
+                except SalesTransaction.receipt.RelatedObjectDoesNotExist:
+                    receipt = None
+
+            payment_methods = []
+            if receipt is not None:
+                for payment in receipt.payments.all():
+                    method = _normalize_payment_method(payment.payment_method_name)
+                    if method not in payment_methods:
+                        payment_methods.append(method)
+            else:
+                for payment in txn.payments.all():
+                    method = _normalize_payment_method(payment.payment_method.name)
+                    if method not in payment_methods:
+                        payment_methods.append(method)
+
+            cashier_name = (
+                f"{(txn.cashier.first_name or '').strip()} {(txn.cashier.last_name or '').strip()}".strip()
+                or txn.cashier.username
+            )
+
+            results.append(
+                {
+                    "id": txn.id,
+                    "transactionNumber": txn.transaction_number,
+                    "transactionDate": timezone.localtime(txn.transaction_date).isoformat(),
+                    "status": txn.status,
+                    "cashierName": cashier_name,
+                    "totalAmount": _to_float(receipt.total_amount) if receipt is not None else _to_float(txn.total_amount),
+                    "itemsQty": (
+                        _to_float(sum((item.qty for item in receipt.items.all()), Decimal("0")))
+                        if receipt is not None
+                        else _to_float(txn.items_qty)
+                    ),
+                    "paymentMethods": payment_methods,
+                }
+            )
+
+        if receipt_read:
+            payment_options_rows = (
+                ReceiptPayment.objects.filter(receipt__sales_transaction__in=queryset)
+                .values("payment_method__code", "payment_method_name")
+                .distinct()
+            )
+            payment_options = [
+                {
+                    "code": row["payment_method__code"],
+                    "name": row["payment_method_name"],
+                }
+                for row in payment_options_rows
+            ]
+        else:
+            payment_options_rows = (
+                TransactionPayment.objects.filter(sales_transaction__in=queryset)
+                .values("payment_method__code", "payment_method__name")
+                .distinct()
+            )
+            payment_options = [
+                {
+                    "code": row["payment_method__code"],
+                    "name": row["payment_method__name"],
+                }
+                for row in payment_options_rows
+            ]
+
+        return Response(
+            {
+                "results": results,
+                "statusOptions": [
+                    SalesTransaction.Status.REFUNDED,
+                    SalesTransaction.Status.PARTIALLY_REFUNDED,
+                ],
+                "paymentMethodOptions": payment_options,
+                "pagination": {
+                    "page": page,
+                    "pageSize": page_size,
+                    "totalCount": total_count,
+                    "totalPages": total_pages,
+                    "hasPrevious": page > 1,
+                    "hasNext": page < total_pages,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ReturnTransactionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, transaction_id: int):
+        user = request.user
+        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+        if not has_system_role and not user.is_superuser:
+            return Response(
+                {"detail": "You do not have access to return details."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = (
+            SalesTransaction.objects.select_related("cashier", "cash_session", "receipt")
+            .prefetch_related(
+                "payments__payment_method",
+                "items__product_variant__product",
+                "receipt__items",
+                "receipt__payments",
+            )
+            .filter(
+                pk=transaction_id,
+                status__in=[
+                    SalesTransaction.Status.REFUNDED,
+                    SalesTransaction.Status.PARTIALLY_REFUNDED,
+                ],
+            )
+        )
+
+        txn = queryset.first()
+        if not txn:
+            return Response(
+                {"detail": "Return transaction not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        cashier_name = (
+            f"{(txn.cashier.first_name or '').strip()} {(txn.cashier.last_name or '').strip()}".strip()
+            or txn.cashier.username
+        )
+
+        items = [
+            {
+                "variantSku": item.product_variant.variant_sku,
+                "productName": item.product_variant.product.name,
+                "qty": _to_float(item.qty),
+                "unitPrice": _to_float(item.unit_price),
+                "lineTotal": _to_float(item.line_total),
+            }
+            for item in txn.items.all()
+        ]
+
+        payments = [
+            {
+                "method": _normalize_payment_method(payment.payment_method.name),
+                "amount": _to_float(payment.amount),
+                "referenceNumber": payment.reference_number,
+            }
+            for payment in txn.payments.all()
+        ]
+
+        receipt = None
+        if pos_receipt_read_enabled():
+            try:
+                receipt = txn.receipt
+            except SalesTransaction.receipt.RelatedObjectDoesNotExist:
+                receipt = None
+
+        if receipt is not None:
+            items = [
+                {
+                    "variantSku": item.sku,
+                    "productName": item.description,
+                    "qty": _to_float(item.qty),
+                    "unitPrice": _to_float(item.unit_price),
+                    "lineTotal": _to_float(item.line_total),
+                }
+                for item in receipt.items.all()
+            ]
+            payments = [
+                {
+                    "method": _normalize_payment_method(payment.payment_method_name),
+                    "amount": _to_float(payment.amount),
+                    "referenceNumber": payment.reference_number,
+                }
+                for payment in receipt.payments.all()
+            ]
+
+        payload = {
+            "id": txn.id,
+            "transactionNumber": txn.transaction_number,
+            "transactionDate": timezone.localtime(txn.transaction_date).isoformat(),
+            "status": txn.status,
+            "cashierName": cashier_name,
+            "terminalCode": None,
+            "sessionCode": txn.cash_session.session_code,
+            "customerName": receipt.buyer_name if receipt is not None else txn.customer_name,
+            "subtotal": _to_float(receipt.subtotal) if receipt is not None else _to_float(txn.subtotal),
+            "taxAmount": _to_float(receipt.tax_amount) if receipt is not None else _to_float(txn.tax_amount),
+            "totalAmount": _to_float(receipt.total_amount) if receipt is not None else _to_float(txn.total_amount),
+            "amountTendered": _to_float(receipt.amount_paid) if receipt is not None else _to_float(txn.amount_tendered),
+            "changeGiven": _to_float(receipt.change_given) if receipt is not None else _to_float(txn.change_given),
+            "items": items,
+            "payments": payments,
+        }
+
+        return Response(payload, status=status.HTTP_200_OK)

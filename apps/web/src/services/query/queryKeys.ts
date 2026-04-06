@@ -38,7 +38,7 @@ export interface ReturnListQueryKeyInput {
 
 export interface CustomerListQueryKeyInput {
   q?: string;
-  days?: number;
+  active?: "all" | "active" | "inactive";
   page?: number;
   pageSize?: number;
 }

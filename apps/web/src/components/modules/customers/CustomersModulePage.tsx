@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Users } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,13 +20,6 @@ import {
 } from "@/components/ui/table";
 import { useCustomers } from "@/hooks/modules/useCustomers";
 
-function formatCurrency(value: number): string {
-  return `PHP ${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 function formatDateTime(value: string): string {
   const date = new Date(value);
   return date.toLocaleString("en-PH", {
@@ -41,25 +33,24 @@ function formatDateTime(value: string): string {
 
 export default function CustomersModulePage() {
   const [q, setQ] = useState("");
-  const [days, setDays] = useState(30);
+  const [active, setActive] = useState<"all" | "active" | "inactive">("all");
   const [page, setPage] = useState(1);
 
   const customersQuery = useCustomers({
     q,
-    days,
+    active,
     page,
     pageSize: 20,
   });
 
   const results = customersQuery.data?.results ?? [];
   const pagination = customersQuery.data?.pagination;
-  const meta = customersQuery.data?.meta;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Customers"
-        description="Customer directory based on recent transaction activity"
+        description="Customer directory from the dedicated customers API"
       />
 
       <Card>
@@ -76,32 +67,36 @@ export default function CustomersModulePage() {
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={days === 7 ? "default" : "outline"}
+                variant={active === "all" ? "default" : "outline"}
                 onClick={() => {
-                  setDays(7);
+                  setActive("all");
                   setPage(1);
                 }}
               >
-                7d
+                All
               </Button>
               <Button
                 type="button"
-                variant={days === 30 ? "default" : "outline"}
+                variant={active === "active" ? "default" : "outline"}
                 onClick={() => {
-                  setDays(30);
+                  setActive("active");
                   setPage(1);
                 }}
               >
-                30d
+                Active
+              </Button>
+              <Button
+                type="button"
+                variant={active === "inactive" ? "default" : "outline"}
+                onClick={() => {
+                  setActive("inactive");
+                  setPage(1);
+                }}
+              >
+                Inactive
               </Button>
             </div>
           </div>
-
-          {meta && (
-            <p className="text-xs text-muted-foreground">
-              Based on {meta.sampledTransactions} recent transactions across the last {meta.sampledDays} days.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -117,7 +112,7 @@ export default function CustomersModulePage() {
         <PageEmptyState
           icon={Users}
           title="No customers found"
-          description="Try adjusting search or date filters."
+          description="Try adjusting search or status filters."
         />
       ) : (
         <Card>
@@ -127,31 +122,24 @@ export default function CustomersModulePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Visits</TableHead>
-                    <TableHead className="text-right">Lifetime Value</TableHead>
-                    <TableHead className="text-right">Avg. Order</TableHead>
-                    <TableHead>Last Purchase</TableHead>
-                    <TableHead>Last Cashier</TableHead>
-                    <TableHead>Last Transaction</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Addresses</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {results.map((row) => (
-                    <TableRow key={row.key}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{row.name}</span>
-                          {row.name === "Walk-in" ? (
-                            <Badge variant="outline">Guest</Badge>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{row.visits}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(row.totalSpent)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(row.averageOrderValue)}</TableCell>
-                      <TableCell>{formatDateTime(row.lastPurchaseAt)}</TableCell>
-                      <TableCell>{row.lastCashier}</TableCell>
-                      <TableCell>{row.lastTransactionNumber}</TableCell>
+                    <TableRow key={row.id}>
+                      <TableCell className="font-medium">{row.fullName}</TableCell>
+                      <TableCell>{row.customerCode}</TableCell>
+                      <TableCell>{row.phone || "-"}</TableCell>
+                      <TableCell>{row.email || "-"}</TableCell>
+                      <TableCell className="text-right">{row.addressCount}</TableCell>
+                      <TableCell>{row.isActive ? "Active" : "Inactive"}</TableCell>
+                      <TableCell>{formatDateTime(row.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
