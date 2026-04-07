@@ -378,3 +378,126 @@ class SystemAuditLogView(APIView):
             },
         }
         return Response(payload, status=status.HTTP_200_OK)
+
+
+def _build_cutover_snapshot() -> dict:
+    flags = getattr(settings, "ROLLOUT_FLAGS", {})
+    reconciliation = _build_reconciliation_snapshot()
+
+    blockers = []
+    if not bool(flags.get("DB_V2_DUAL_WRITE_ENABLED", False)):
+        blockers.append(
+            "Dual write is disabled. Enable dual write before attempting cutover."
+        )
+
+    if not bool(flags.get("DB_V2_RECONCILIATION_ENABLED", False)):
+        blockers.append(
+            "Reconciliation flag is disabled. Enable reconciliation checks first."
+        )
+
+    if reconciliation["issueCounts"]["total"] > 0:
+        blockers.append(
+            "Reconciliation issues detected. Resolve all issues before cutover."
+        )
+
+    can_cutover = len(blockers) == 0
+
+    return {
+        "readOnly": True,
+        "canCutover": can_cutover,
+        "blockers": blockers,
+        "requiredConfirmations": {
+            "cutover": "CONFIRM CUTOVER",
+            "rollback": "CONFIRM ROLLBACK",
+        },
+        "flags": {
+            "dbV2ReadEnabled": bool(flags.get("DB_V2_READ_ENABLED", False)),
+            "dbV2WriteEnabled": bool(flags.get("DB_V2_WRITE_ENABLED", False)),
+            "dbV2DualWriteEnabled": bool(flags.get("DB_V2_DUAL_WRITE_ENABLED", False)),
+            "dbV2PosReceiptReadEnabled": bool(flags.get("DB_V2_POS_RECEIPT_READ_ENABLED", False)),
+            "dbV2ReconciliationEnabled": bool(flags.get("DB_V2_RECONCILIATION_ENABLED", False)),
+        },
+        "reconciliation": {
+            "status": reconciliation["status"],
+            "issuesTotal": reconciliation["issueCounts"]["total"],
+            "summaryMessage": reconciliation["summaryMessage"],
+        },
+    }
+
+
+class SystemCutoverControlsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        denied = _require_system_access(
+            request.user,
+            "You do not have access to cutover controls.",
+        )
+        if denied is not None:
+            return denied
+
+        payload = _build_cutover_snapshot()
+        return Response(payload, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        denied = _require_system_access(
+            request.user,
+            "You do not have access to cutover actions.",
+        )
+        if denied is not None:
+            return denied
+
+        action = str(request.data.get("action") or "").strip().lower()
+        confirmation_text = str(request.data.get("confirmationText") or "").strip()
+
+        if action not in {"cutover", "rollback"}:
+            return Response(
+                {"detail": "Invalid action. Expected 'cutover' or 'rollback'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        snapshot = _build_cutover_snapshot()
+        required_confirmations = snapshot["requiredConfirmations"]
+        expected_confirmation = (
+            required_confirmations["cutover"]
+            if action == "cutover"
+            else required_confirmations["rollback"]
+        )
+
+        if confirmation_text != expected_confirmation:
+            return Response(
+                {
+                    "detail": "Confirmation text mismatch.",
+                    "expectedConfirmation": expected_confirmation,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        blocked = action == "cutover" and not snapshot["canCutover"]
+
+        AuditLog.objects.create(
+            table_name="system_cutover_controls",
+            record_pk=action,
+            action=AuditLog.Action.UPDATE,
+            new_values={
+                "action": action,
+                "readOnly": True,
+                "blocked": blocked,
+                "blockers": snapshot["blockers"],
+            },
+            changed_by=request.user,
+        )
+
+        payload = {
+            "executedAt": timezone.now().isoformat(),
+            "action": action,
+            "readOnly": True,
+            "blocked": blocked,
+            "message": (
+                "Action simulated successfully. Apply environment flag changes to execute in infra."
+                if not blocked
+                else "Action blocked due to readiness constraints."
+            ),
+            "snapshot": snapshot,
+        }
+        return Response(payload, status=status.HTTP_200_OK)

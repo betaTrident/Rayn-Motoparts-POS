@@ -109,5 +109,6 @@ export const queryKeys = {
     rollout: ["system", "rollout"] as const,
     reconciliation: ["system", "reconciliation"] as const,
     audit: (input: SystemAuditQueryKeyInput) => ["system", "audit", input] as const,
+    cutoverControls: ["system", "cutover-controls"] as const,
   },
 };

@@ -9,6 +9,7 @@ import {
   Activity,
   ClipboardList,
   Rocket,
+  SlidersHorizontal,
   ShieldCheck,
   Receipt,
   Users,
@@ -117,6 +118,11 @@ const systemNavItems = [
     title: "System Audit",
     icon: ClipboardList,
     path: "/app/system/audit",
+  },
+  {
+    title: "Cutover Controls",
+    icon: SlidersHorizontal,
+    path: "/app/system/cutover-controls",
   },
   {
     title: "System Health",

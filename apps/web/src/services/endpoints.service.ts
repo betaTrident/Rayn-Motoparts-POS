@@ -32,5 +32,6 @@ export const ENDPOINTS = {
     rollout: 'system/rollout/',
     reconciliation: 'system/reconciliation/',
     audit: 'system/audit/',
+    cutoverControls: 'system/cutover-controls/',
   },
 } as const;
