@@ -95,4 +95,8 @@ export const queryKeys = {
     all: ["settings"] as const,
     profile: ["settings", "profile"] as const,
   },
+  system: {
+    all: ["system"] as const,
+    health: ["system", "health"] as const,
+  },
 };

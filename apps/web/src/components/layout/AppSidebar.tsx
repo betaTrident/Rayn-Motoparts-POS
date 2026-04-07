@@ -6,6 +6,8 @@ import {
   Package,
   RotateCcw,
   BarChart3,
+  Activity,
+  ShieldCheck,
   Receipt,
   Users,
   Settings,
@@ -105,6 +107,19 @@ const adminNavItems = [
     icon: Settings,
     key: "settings",
     enabled: true,
+  },
+];
+
+const systemNavItems = [
+  {
+    title: "System Health",
+    icon: Activity,
+    path: "/app/system/health",
+  },
+  {
+    title: "Reconciliation",
+    icon: ShieldCheck,
+    path: "/app/system/reconciliation",
   },
 ];
 
@@ -233,6 +248,29 @@ export default function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   )
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {highestRole === "superadmin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {systemNavItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={location.pathname === item.path}
+                      tooltip={item.title}
+                      onClick={() => navigate(item.path)}
+                      className="cursor-pointer"
+                    >
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

@@ -25,6 +25,7 @@ import StaffInventoryPage from "@/app/staff/inventory/page";
 import StaffPosPage from "@/app/staff/pos/page";
 import StaffReturnsPage from "@/app/staff/returns/page";
 import StaffTransactionsPage from "@/app/staff/transactions/page";
+import SystemHealthPage from "@/app/system/health/page";
 import SystemReconciliationPage from "@/app/system/reconciliation/page";
 
 function RoleHomeRedirect() {
@@ -66,6 +67,7 @@ export default function AppRouter() {
             </Route>
 
             <Route element={<RoleGuard allowedRoles={["superadmin"]} />}>
+              <Route path="/app/system/health" element={<SystemHealthPage />} />
               <Route path="/app/system/reconciliation" element={<SystemReconciliationPage />} />
             </Route>
 
@@ -78,6 +80,7 @@ export default function AppRouter() {
             <Route path="/returns" element={<Navigate to="/" replace />} />
             <Route path="/reports" element={<Navigate to="/" replace />} />
             <Route path="/settings" element={<Navigate to="/" replace />} />
+            <Route path="/system-health" element={<Navigate to="/" replace />} />
           </Route>
         </Route>
 

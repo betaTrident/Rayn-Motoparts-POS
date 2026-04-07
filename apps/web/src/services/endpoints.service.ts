@@ -27,4 +27,7 @@ export const ENDPOINTS = {
     list: 'returns/',
     byId: (id: number) => `returns/${id}/`,
   },
+  system: {
+    health: 'system/health/',
+  },
 } as const;
