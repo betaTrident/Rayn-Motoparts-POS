@@ -99,5 +99,6 @@ export const queryKeys = {
     all: ["system"] as const,
     health: ["system", "health"] as const,
     rollout: ["system", "rollout"] as const,
+    reconciliation: ["system", "reconciliation"] as const,
   },
 };

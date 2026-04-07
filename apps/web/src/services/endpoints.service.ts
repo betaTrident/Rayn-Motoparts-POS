@@ -30,5 +30,6 @@ export const ENDPOINTS = {
   system: {
     health: 'system/health/',
     rollout: 'system/rollout/',
+    reconciliation: 'system/reconciliation/',
   },
 } as const;
