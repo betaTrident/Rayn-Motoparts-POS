@@ -98,5 +98,6 @@ export const queryKeys = {
   system: {
     all: ["system"] as const,
     health: ["system", "health"] as const,
+    rollout: ["system", "rollout"] as const,
   },
 };

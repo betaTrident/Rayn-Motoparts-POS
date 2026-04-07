@@ -29,5 +29,6 @@ export const ENDPOINTS = {
   },
   system: {
     health: 'system/health/',
+    rollout: 'system/rollout/',
   },
 } as const;

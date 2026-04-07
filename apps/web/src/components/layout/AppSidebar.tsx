@@ -7,6 +7,7 @@ import {
   RotateCcw,
   BarChart3,
   Activity,
+  Rocket,
   ShieldCheck,
   Receipt,
   Users,
@@ -115,6 +116,11 @@ const systemNavItems = [
     title: "System Health",
     icon: Activity,
     path: "/app/system/health",
+  },
+  {
+    title: "System Rollout",
+    icon: Rocket,
+    path: "/app/system/rollout",
   },
   {
     title: "Reconciliation",
