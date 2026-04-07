@@ -47,6 +47,14 @@ export interface ReportsSnapshotQueryKeyInput {
   days: 7 | 30;
 }
 
+export interface SystemAuditQueryKeyInput {
+  q?: string;
+  table?: string;
+  action?: "INSERT" | "UPDATE" | "DELETE" | "";
+  page?: number;
+  pageSize?: number;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -100,5 +108,6 @@ export const queryKeys = {
     health: ["system", "health"] as const,
     rollout: ["system", "rollout"] as const,
     reconciliation: ["system", "reconciliation"] as const,
+    audit: (input: SystemAuditQueryKeyInput) => ["system", "audit", input] as const,
   },
 };

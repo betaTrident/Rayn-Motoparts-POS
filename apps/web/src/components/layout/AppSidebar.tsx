@@ -7,6 +7,7 @@ import {
   RotateCcw,
   BarChart3,
   Activity,
+  ClipboardList,
   Rocket,
   ShieldCheck,
   Receipt,
@@ -112,6 +113,11 @@ const adminNavItems = [
 ];
 
 const systemNavItems = [
+  {
+    title: "System Audit",
+    icon: ClipboardList,
+    path: "/app/system/audit",
+  },
   {
     title: "System Health",
     icon: Activity,

@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.db import connection
 from django.db import models
 from django.db.models import Sum
@@ -9,9 +12,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from decimal import Decimal
 
 from catalog.models import Product
+from core.models import AuditLog
 from core.rollout_flags import pos_receipt_dual_write_enabled, reconciliation_enabled
 from customers.models import Customer
 from inventory.models import InventoryStock, StockMovement
@@ -301,5 +304,77 @@ class SystemReconciliationView(APIView):
             "failOnIssues": fail_on_issues,
             "wouldFail": would_fail,
             "snapshot": snapshot,
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+class SystemAuditLogView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        denied = _require_system_access(
+            request.user,
+            "You do not have access to system audit logs.",
+        )
+        if denied is not None:
+            return denied
+
+        q = (request.query_params.get("q") or "").strip()
+        table_name = (request.query_params.get("table") or "").strip()
+        action = (request.query_params.get("action") or "").strip().upper()
+
+        page = max(int(request.query_params.get("page", 1)), 1)
+        page_size = max(min(int(request.query_params.get("pageSize", 20)), 100), 1)
+
+        queryset = AuditLog.objects.select_related("changed_by").order_by("-created_at")
+
+        if table_name:
+            queryset = queryset.filter(table_name=table_name)
+
+        if action in {AuditLog.Action.INSERT, AuditLog.Action.UPDATE, AuditLog.Action.DELETE}:
+            queryset = queryset.filter(action=action)
+
+        if q:
+            queryset = queryset.filter(
+                models.Q(table_name__icontains=q)
+                | models.Q(record_pk__icontains=q)
+                | models.Q(changed_by__email__icontains=q)
+                | models.Q(changed_by__username__icontains=q)
+            )
+
+        paginator = Paginator(queryset, page_size)
+        page_obj = paginator.get_page(page)
+
+        results = [
+            {
+                "id": entry.id,
+                "tableName": entry.table_name,
+                "recordPk": entry.record_pk,
+                "action": entry.action,
+                "changedBy": {
+                    "id": entry.changed_by_id,
+                    "username": entry.changed_by.username if entry.changed_by else None,
+                    "email": entry.changed_by.email if entry.changed_by else None,
+                },
+                "ipAddress": entry.ip_address,
+                "createdAt": entry.created_at.isoformat(),
+            }
+            for entry in page_obj.object_list
+        ]
+
+        payload = {
+            "results": results,
+            "pagination": {
+                "page": page_obj.number,
+                "pageSize": page_size,
+                "total": paginator.count,
+                "totalPages": paginator.num_pages,
+                "hasNext": page_obj.has_next(),
+                "hasPrevious": page_obj.has_previous(),
+            },
+            "filters": {
+                "actions": [choice[0] for choice in AuditLog.Action.choices],
+                "tables": list(AuditLog.objects.order_by().values_list("table_name", flat=True).distinct()[:200]),
+            },
         }
         return Response(payload, status=status.HTTP_200_OK)
