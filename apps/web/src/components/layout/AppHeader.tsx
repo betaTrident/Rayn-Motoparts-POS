@@ -1,12 +1,8 @@
+import { useMemo } from "react";
 import { useLocation } from "react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
+import { Bell, ChevronDown, Search, Settings, Store } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 // Map route paths to display titles
 const pageTitles: Record<string, string> = {
@@ -45,26 +41,56 @@ function toTitleFromPath(pathname: string): string {
 
 export default function AppHeader() {
   const location = useLocation();
+  const { user } = useAuth();
   const pageTitle = pageTitles[location.pathname] ?? toTitleFromPath(location.pathname);
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date()),
+    []
+  );
+  const userInitials = user
+    ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+    : "RM";
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/90 bg-white/85 px-4 backdrop-blur md:px-6">
       <h1 className="sr-only">{pageTitle}</h1>
-      {/* Toggle sidebar on mobile */}
-      <SidebarTrigger className="-ml-1 md:hidden" />
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <SidebarTrigger className="-ml-1 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 md:hidden" />
+        <div className="relative w-full max-w-lg">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            placeholder={`Search in ${pageTitle}`}
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none transition-colors focus:border-slate-300 focus:bg-white"
+          />
+        </div>
+      </div>
 
-      <Separator orientation="vertical" className="mr-2 h-4! md:hidden" />
-
-      {/* Breadcrumb showing current page */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage className="text-sm font-medium">
-              {pageTitle}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        <div className="hidden text-xs text-slate-500 lg:block">{formattedDate}</div>
+        <button className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:flex">
+          <Store className="size-4 text-slate-500" />
+          <span>Main Branch</span>
+          <ChevronDown className="size-4 text-slate-400" />
+        </button>
+        <button className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+          <Bell className="size-4" />
+        </button>
+        <button className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+          <Settings className="size-4" />
+        </button>
+        <div className="flex size-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-semibold text-slate-700">
+          {userInitials}
+        </div>
+      </div>
     </header>
   );
 }

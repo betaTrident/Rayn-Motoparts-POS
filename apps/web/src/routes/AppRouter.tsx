@@ -12,17 +12,13 @@ const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const UnauthorizedPage = lazy(() => import("@/pages/UnauthorizedPage"));
 
-const AdminCatalogPage = lazy(() => import("@/app/admin/catalog/page"));
-const AdminCustomersPage = lazy(() => import("@/app/admin/customers/page"));
 const AdminDashboardPage = lazy(() => import("@/app/admin/dashboard/page"));
 const AdminInventoryPage = lazy(() => import("@/app/admin/inventory/page"));
 const AdminPosPage = lazy(() => import("@/app/admin/pos/page"));
-const AdminReportsPage = lazy(() => import("@/app/admin/reports/page"));
 const AdminReturnsPage = lazy(() => import("@/app/admin/returns/page"));
 const AdminSettingsPage = lazy(() => import("@/app/admin/settings/page"));
 const AdminTransactionsPage = lazy(() => import("@/app/admin/transactions/page"));
 
-const StaffCustomersPage = lazy(() => import("@/app/staff/customers/page"));
 const StaffDashboardPage = lazy(() => import("@/app/staff/dashboard/page"));
 const StaffInventoryPage = lazy(() => import("@/app/staff/inventory/page"));
 const StaffPosPage = lazy(() => import("@/app/staff/pos/page"));
@@ -35,9 +31,36 @@ const SystemHealthPage = lazy(() => import("@/app/system/health/page"));
 const SystemRolloutPage = lazy(() => import("@/app/system/rollout/page"));
 const SystemReconciliationPage = lazy(() => import("@/app/system/reconciliation/page"));
 
+type LegacyDestination = "products" | "customers" | "reports";
+
 function RoleHomeRedirect() {
   const { roles } = useAuth();
   return <Navigate to={getDefaultAppPath(roles)} replace />;
+}
+
+function LegacyConsolidationRedirect({ destination }: { destination: LegacyDestination }) {
+  const { roles } = useAuth();
+  const roleHome = getDefaultAppPath(roles);
+
+  if (!roleHome.startsWith("/app/")) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const appBasePath = roleHome.startsWith("/app/staff") ? "/app/staff" : "/app/admin";
+
+  if (destination === "products") {
+    return <Navigate to={`${appBasePath}/inventory?tab=products`} replace />;
+  }
+
+  if (destination === "customers") {
+    return <Navigate to={`${appBasePath}/transactions?tab=customers`} replace />;
+  }
+
+  if (appBasePath === "/app/staff") {
+    return <Navigate to={`${appBasePath}/dashboard`} replace />;
+  }
+
+  return <Navigate to="/app/admin/dashboard?panel=reports" replace />;
 }
 
 export default function AppRouter() {
@@ -63,19 +86,19 @@ export default function AppRouter() {
               <Route element={<RoleGuard allowedRoles={["superadmin", "admin"]} />}>
                 <Route path="/app/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="/app/admin/pos" element={<AdminPosPage />} />
-                <Route path="/app/admin/catalog" element={<AdminCatalogPage />} />
-                <Route path="/app/admin/customers" element={<AdminCustomersPage />} />
+                <Route path="/app/admin/catalog" element={<Navigate to="/app/admin/inventory?tab=products" replace />} />
+                <Route path="/app/admin/customers" element={<Navigate to="/app/admin/transactions?tab=customers" replace />} />
                 <Route path="/app/admin/inventory" element={<AdminInventoryPage />} />
                 <Route path="/app/admin/transactions" element={<AdminTransactionsPage />} />
                 <Route path="/app/admin/returns" element={<AdminReturnsPage />} />
-                <Route path="/app/admin/reports" element={<AdminReportsPage />} />
+                <Route path="/app/admin/reports" element={<Navigate to="/app/admin/dashboard?panel=reports" replace />} />
                 <Route path="/app/admin/settings" element={<AdminSettingsPage />} />
               </Route>
 
               <Route element={<RoleGuard allowedRoles={["staff"]} />}>
                 <Route path="/app/staff/dashboard" element={<StaffDashboardPage />} />
                 <Route path="/app/staff/pos" element={<StaffPosPage />} />
-                <Route path="/app/staff/customers" element={<StaffCustomersPage />} />
+                <Route path="/app/staff/customers" element={<Navigate to="/app/staff/transactions?tab=customers" replace />} />
                 <Route path="/app/staff/inventory" element={<StaffInventoryPage />} />
                 <Route path="/app/staff/transactions" element={<StaffTransactionsPage />} />
                 <Route path="/app/staff/returns" element={<StaffReturnsPage />} />
@@ -91,12 +114,12 @@ export default function AppRouter() {
 
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
               <Route path="/pos" element={<Navigate to="/" replace />} />
-              <Route path="/products" element={<Navigate to="/" replace />} />
-              <Route path="/customers" element={<Navigate to="/" replace />} />
+              <Route path="/products" element={<LegacyConsolidationRedirect destination="products" />} />
+              <Route path="/customers" element={<LegacyConsolidationRedirect destination="customers" />} />
               <Route path="/inventory" element={<Navigate to="/" replace />} />
               <Route path="/transactions" element={<Navigate to="/" replace />} />
               <Route path="/returns" element={<Navigate to="/" replace />} />
-              <Route path="/reports" element={<Navigate to="/" replace />} />
+              <Route path="/reports" element={<LegacyConsolidationRedirect destination="reports" />} />
               <Route path="/settings" element={<Navigate to="/" replace />} />
               <Route path="/system-health" element={<Navigate to="/" replace />} />
               <Route path="/system-rollout" element={<Navigate to="/" replace />} />

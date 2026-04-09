@@ -29,9 +29,9 @@ export default function MainLayout() {
         Skip to main content
       </a>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="bg-[#f7f8fb]">
         <AppHeader />
-        <main id="main-content" className="flex-1 overflow-auto p-6" tabIndex={-1}>
+        <main id="main-content" className="flex-1 overflow-auto px-4 py-6 md:px-6 md:py-8" tabIndex={-1}>
           <Outlet />
         </main>
       </SidebarInset>

@@ -149,7 +149,11 @@ function validateCategoryForm(data: CategoryFormData): CategoryFormErrors {
 // ════════════════════════════════════════════════════════
 // CatalogModulePage
 // ════════════════════════════════════════════════════════
-export default function CatalogModulePage() {
+interface CatalogModulePageProps {
+  embedded?: boolean;
+}
+
+export default function CatalogModulePage({ embedded = false }: CatalogModulePageProps) {
   const queryClient = useQueryClient();
 
   // ── View & Tab state ──
@@ -525,12 +529,29 @@ export default function CatalogModulePage() {
   // ════════════════════════════════════════════════════
   return (
     <div className="space-y-6">
-      {/* ── Page Header ── */}
-      <PageHeader
-        title="Products"
-        description="Manage your motorparts and accessory categories"
-        actions={
-          activeTab === "categories" ? (
+      {!embedded && (
+        <PageHeader
+          title="Products"
+          description="Manage your motorparts and accessory categories"
+          actions={
+            activeTab === "categories" ? (
+              <Button onClick={openCreateCategory} className="cursor-pointer">
+                <Plus className="mr-2 size-4" />
+                New Category
+              </Button>
+            ) : (
+              <Button onClick={openCreateProduct} className="cursor-pointer">
+                <Plus className="mr-2 size-4" />
+                New Product
+              </Button>
+            )
+          }
+        />
+      )}
+
+      {embedded && (
+        <div className="flex justify-end">
+          {activeTab === "categories" ? (
             <Button onClick={openCreateCategory} className="cursor-pointer">
               <Plus className="mr-2 size-4" />
               New Category
@@ -540,9 +561,9 @@ export default function CatalogModulePage() {
               <Plus className="mr-2 size-4" />
               New Product
             </Button>
-          )
-        }
-      />
+          )}
+        </div>
+      )}
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

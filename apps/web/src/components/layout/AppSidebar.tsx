@@ -5,7 +5,6 @@ import {
   ShoppingCart,
   Package,
   RotateCcw,
-  BarChart3,
   Activity,
   ClipboardList,
   Rocket,
@@ -15,7 +14,6 @@ import {
   Users,
   Settings,
   LogOut,
-  ChevronUp,
   ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -35,14 +33,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import RaynLogo from "@/assets/RaynLogo.svg";
 
@@ -61,18 +51,6 @@ const mainNavItems = [
     enabled: true,
   },
   {
-    title: "Products",
-    icon: Package,
-    key: "catalog",
-    enabled: true,
-  },
-  {
-    title: "Customers",
-    icon: Users,
-    key: "customers",
-    enabled: true,
-  },
-  {
     title: "Inventory",
     icon: Package,
     key: "inventory",
@@ -88,12 +66,6 @@ const mainNavItems = [
     title: "Returns",
     icon: RotateCcw,
     key: "returns",
-    enabled: true,
-  },
-  {
-    title: "Reports",
-    icon: BarChart3,
-    key: "reports",
     enabled: true,
   },
 ];
@@ -144,8 +116,8 @@ const systemNavItems = [
 export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { canAccessAdmin, canAccessCatalog, canAccessPos, highestRole } = usePermissions();
+  const { logout } = useAuth();
+  const { canAccessAdmin, canAccessPos, highestRole } = usePermissions();
   const { state, toggleSidebar } = useSidebar();
 
   const handleLogout = async () => {
@@ -162,24 +134,15 @@ export default function AppSidebar() {
         path: `${appBasePath}/${item.key}`,
       }))
       .filter((item) => {
-        if (highestRole === "staff" && item.key === "catalog") {
-          return false;
-        }
-        if (item.key === "catalog" && !canAccessCatalog) {
-          return false;
-        }
         if (item.key === "pos" && !canAccessPos) {
           return false;
         }
         if (item.key === "returns" && !canAccessPos) {
           return false;
         }
-        if (highestRole === "staff" && item.key === "reports") {
-          return false;
-        }
         return item.enabled || item.key === "dashboard";
       });
-  }, [appBasePath, canAccessCatalog, canAccessPos, highestRole]);
+  }, [appBasePath, canAccessPos, highestRole]);
 
   const resolvedAdminItems = useMemo(() => {
     return adminNavItems.map((item) => ({
@@ -188,23 +151,18 @@ export default function AppSidebar() {
     }));
   }, [appBasePath]);
 
-  // Get user initials for the avatar fallback
-  const initials = user
-    ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
-    : "??";
-
   return (
     <Sidebar collapsible="icon">
       {/* ── Sidebar Header: Logo ── */}
-      <SidebarHeader className="h-14 border-b border-sidebar-border py-0 justify-center">
+      <SidebarHeader className="h-16 border-b border-sidebar-border/80 px-3 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               onClick={() => navigate(`${appBasePath}/dashboard`)}
-              className="cursor-pointer"
+              className="h-12 cursor-pointer rounded-xl border border-sidebar-border/80 px-3"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/15">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-slate-900 text-white">
                 <img
                   src={RaynLogo}
                   alt="Rayn Motorparts and accessories"
@@ -212,10 +170,8 @@ export default function AppSidebar() {
                 />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold text-sm">Admin</span>
-                <span className="text-xs text-sidebar-foreground/60">
-                  Ansel Ray Tapales
-                </span>
+                <span className="font-semibold text-sm text-sidebar-foreground">Rayn Motorparts</span>
+                <span className="text-xs text-sidebar-foreground/60">Operations Console</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -225,7 +181,7 @@ export default function AppSidebar() {
       {/* ── Sidebar Content: Navigation ── */}
       <SidebarContent>
         {/* Main Navigation */}
-        <SidebarGroup>
+        <SidebarGroup className="pt-4">
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -235,7 +191,7 @@ export default function AppSidebar() {
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
                     onClick={() => navigate(item.path)}
-                    className="cursor-pointer"
+                    className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
                   >
                     <item.icon className="size-4" />
                     <span>{item.title}</span>
@@ -259,7 +215,7 @@ export default function AppSidebar() {
                       isActive={location.pathname === item.path}
                       tooltip={item.title}
                       onClick={() => navigate(item.path)}
-                      className="cursor-pointer"
+                      className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
                     >
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -283,7 +239,7 @@ export default function AppSidebar() {
                       isActive={location.pathname === item.path}
                       tooltip={item.title}
                       onClick={() => navigate(item.path)}
-                      className="cursor-pointer"
+                      className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
                     >
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -300,54 +256,13 @@ export default function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="cursor-pointer data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="size-8">
-                    <AvatarFallback className="bg-white/20 text-white text-xs font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-0.5 leading-none text-left">
-                    <span className="truncate text-sm font-medium">
-                      {user?.first_name} {user?.last_name}
-                    </span>
-                    <span className="truncate text-xs text-sidebar-foreground/60">
-                      {user?.email}
-                    </span>
-                  </div>
-                  <ChevronUp className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                align="start"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
-              >
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">
-                    {user?.first_name} {user?.last_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(`${appBasePath}/dashboard`)}>
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                >
-                  <LogOut className="mr-2 size-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className="h-10 cursor-pointer rounded-xl border border-sidebar-border/80 px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            >
+              <LogOut className="size-4" />
+              <span>Logout</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

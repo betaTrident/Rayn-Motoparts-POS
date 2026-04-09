@@ -1,4 +1,3 @@
-import PageHeader from "@/components/layout/PageHeader";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,10 +31,16 @@ export default function DashboardHeaderControls({
   const isCustomRange = rangeValue === "custom";
 
   return (
-    <PageHeader
-      title={title}
-      description={description}
-      actions={
+    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Dashboard
+          </p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={rangeValue}
@@ -43,7 +48,7 @@ export default function DashboardHeaderControls({
               onRangeChange(value as "1" | "7" | "30" | "custom")
             }
           >
-            <SelectTrigger className="w-44 cursor-pointer">
+            <SelectTrigger className="h-10 w-44 cursor-pointer rounded-xl border-slate-200 bg-white">
               <SelectValue placeholder="Range" />
             </SelectTrigger>
             <SelectContent>
@@ -58,7 +63,7 @@ export default function DashboardHeaderControls({
             type="date"
             value={startDate}
             onChange={(event) => onStartDateChange(event.target.value)}
-            className="w-40"
+            className="h-10 w-40 rounded-xl border-slate-200 bg-white"
             disabled={!isCustomRange}
             aria-label="Start date"
           />
@@ -66,12 +71,12 @@ export default function DashboardHeaderControls({
             type="date"
             value={endDate}
             onChange={(event) => onEndDateChange(event.target.value)}
-            className="w-40"
+            className="h-10 w-40 rounded-xl border-slate-200 bg-white"
             disabled={!isCustomRange}
             aria-label="End date"
           />
         </div>
-      }
-    />
+      </div>
+    </section>
   );
 }

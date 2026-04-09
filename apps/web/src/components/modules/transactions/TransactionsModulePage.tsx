@@ -1,19 +1,33 @@
 import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 
+import CustomersModulePage from "@/components/modules/customers/CustomersModulePage";
 import PageHeader from "@/components/layout/PageHeader";
 import { exportTransactionsCsv } from "@/components/modules/transactions/formatters";
 import TransactionDetailDialog from "@/components/modules/transactions/parts/TransactionDetailDialog";
 import TransactionsFilters from "@/components/modules/transactions/parts/TransactionsFilters";
 import TransactionsTable from "@/components/modules/transactions/parts/TransactionsTable";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useTransactionDetail,
   useTransactionsList,
 } from "@/hooks/modules/useTransactions";
 import type { TransactionRow } from "@/services/transactionService.service";
 
+type TransactionsTab = "transactions" | "customers";
+
+function toValidTab(value: string | null): TransactionsTab {
+  if (value === "transactions" || value === "customers") {
+    return value;
+  }
+  return "transactions";
+}
+
 export default function TransactionsModulePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = toValidTab(searchParams.get("tab"));
   const [q, setQ] = useState("");
   const [days, setDays] = useState("7");
   const [status, setStatus] = useState("all");
@@ -50,69 +64,91 @@ export default function TransactionsModulePage() {
     setPage(1);
   };
 
+  const setTab = (value: TransactionsTab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Transactions"
-        description="Review completed and refunded sales transactions"
-        actions={
-          <Button
-            variant="outline"
-            onClick={() => exportTransactionsCsv(results)}
-            disabled={!results.length}
-          >
-            <Download className="mr-2 size-4" />
-            Export CSV
-          </Button>
-        }
+        description="Review sales history and customer context"
       />
 
-      <TransactionsFilters
-        q={q}
-        days={days}
-        status={status}
-        paymentMethod={paymentMethod}
-        statusOptions={statusOptions}
-        paymentOptions={paymentOptions}
-        activeFilters={activeFilters}
-        onQueryChange={(value) => {
-          setQ(value);
-          setPage(1);
-        }}
-        onDaysChange={(value) => {
-          setDays(value);
-          setPage(1);
-        }}
-        onStatusChange={(value) => {
-          setStatus(value);
-          setPage(1);
-        }}
-        onPaymentMethodChange={(value) => {
-          setPaymentMethod(value);
-          setPage(1);
-        }}
-        onClearFilters={clearFilters}
-      />
+      <Tabs value={tab} onValueChange={(value) => setTab(value as TransactionsTab)}>
+        <TabsList>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
+        </TabsList>
 
-      <TransactionsTable
-        isLoading={transactionsQuery.isLoading}
-        isError={transactionsQuery.isError}
-        results={results}
-        pagination={pagination}
-        onRetry={() => transactionsQuery.refetch()}
-        onViewDetail={setSelectedTransaction}
-        onPreviousPage={() => setPage((prev) => Math.max(1, prev - 1))}
-        onNextPage={() => setPage((prev) => prev + 1)}
-      />
+        <TabsContent value="transactions" className="space-y-6">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => exportTransactionsCsv(results)}
+              disabled={!results.length}
+            >
+              <Download className="mr-2 size-4" />
+              Export CSV
+            </Button>
+          </div>
 
-      <TransactionDetailDialog
-        selectedTransaction={selectedTransaction}
-        detailData={detailQuery.data}
-        isLoading={detailQuery.isLoading}
-        isError={detailQuery.isError}
-        onClose={() => setSelectedTransaction(null)}
-        onRetry={() => detailQuery.refetch()}
-      />
+          <TransactionsFilters
+            q={q}
+            days={days}
+            status={status}
+            paymentMethod={paymentMethod}
+            statusOptions={statusOptions}
+            paymentOptions={paymentOptions}
+            activeFilters={activeFilters}
+            onQueryChange={(value) => {
+              setQ(value);
+              setPage(1);
+            }}
+            onDaysChange={(value) => {
+              setDays(value);
+              setPage(1);
+            }}
+            onStatusChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
+            onPaymentMethodChange={(value) => {
+              setPaymentMethod(value);
+              setPage(1);
+            }}
+            onClearFilters={clearFilters}
+          />
+
+          <TransactionsTable
+            isLoading={transactionsQuery.isLoading}
+            isError={transactionsQuery.isError}
+            results={results}
+            pagination={pagination}
+            onRetry={() => transactionsQuery.refetch()}
+            onViewDetail={setSelectedTransaction}
+            onPreviousPage={() => setPage((prev) => Math.max(1, prev - 1))}
+            onNextPage={() => setPage((prev) => prev + 1)}
+          />
+        </TabsContent>
+
+        <TabsContent value="customers">
+          <CustomersModulePage embedded />
+        </TabsContent>
+      </Tabs>
+
+      {tab === "transactions" && (
+        <TransactionDetailDialog
+          selectedTransaction={selectedTransaction}
+          detailData={detailQuery.data}
+          isLoading={detailQuery.isLoading}
+          isError={detailQuery.isError}
+          onClose={() => setSelectedTransaction(null)}
+          onRetry={() => detailQuery.refetch()}
+        />
+      )}
     </div>
   );
 }

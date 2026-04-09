@@ -26,7 +26,11 @@ function formatCurrency(value: number): string {
   })}`;
 }
 
-export default function ReportsModulePage() {
+interface ReportsModulePageProps {
+  embedded?: boolean;
+}
+
+export default function ReportsModulePage({ embedded = false }: ReportsModulePageProps) {
   const [days, setDays] = useState<7 | 30>(30);
   const reportsQuery = useReportsSnapshot(days);
 
@@ -34,10 +38,14 @@ export default function ReportsModulePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Reports"
-        description="Consolidated analytics for revenue, operations, and sales performance"
-        actions={
+      {embedded && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Reports</h2>
+            <p className="text-sm text-muted-foreground">
+              Consolidated analytics for revenue, operations, and sales performance
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -63,8 +71,42 @@ export default function ReportsModulePage() {
               Refresh
             </Button>
           </div>
-        }
-      />
+        </div>
+      )}
+
+      {!embedded && (
+        <PageHeader
+          title="Reports"
+          description="Consolidated analytics for revenue, operations, and sales performance"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={days === 7 ? "default" : "outline"}
+                onClick={() => setDays(7)}
+              >
+                Last 7 days
+              </Button>
+              <Button
+                type="button"
+                variant={days === 30 ? "default" : "outline"}
+                onClick={() => setDays(30)}
+              >
+                Last 30 days
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => reportsQuery.refetch()}
+                disabled={reportsQuery.isFetching}
+              >
+                <RefreshCw className="mr-2 size-4" />
+                Refresh
+              </Button>
+            </div>
+          }
+        />
+      )}
 
       {reportsQuery.isLoading ? (
         <PageLoadingState label="Loading reports..." />

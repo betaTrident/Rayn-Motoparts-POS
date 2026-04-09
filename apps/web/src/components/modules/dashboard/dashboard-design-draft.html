@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Industrial Atelier - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#3b0900",
+                    "surface-container-low": "#f3f3f3",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#001e2e",
+                    "secondary-fixed-dim": "#bbc8d0",
+                    "outline": "#907067",
+                    "on-secondary-fixed-variant": "#3c494f",
+                    "on-surface": "#1a1c1c",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#862200",
+                    "surface-dim": "#dadada",
+                    "secondary-container": "#d7e4ec",
+                    "on-tertiary-fixed-variant": "#004c6d",
+                    "tertiary-fixed-dim": "#86cfff",
+                    "on-background": "#1a1c1c",
+                    "tertiary-fixed": "#c8e6ff",
+                    "surface-container": "#eeeeee",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#fcfcff",
+                    "error-container": "#ffdad6",
+                    "secondary": "#546067",
+                    "tertiary": "#00628c",
+                    "primary-container": "#ff5722",
+                    "surface-bright": "#f9f9f9",
+                    "surface": "#f9f9f9",
+                    "tertiary-container": "#007caf",
+                    "background": "#f9f9f9",
+                    "surface-container-highest": "#e2e2e2",
+                    "secondary-fixed": "#d7e4ec",
+                    "on-primary-container": "#541200",
+                    "surface-tint": "#b02f00",
+                    "primary": "#b02f00",
+                    "primary-fixed-dim": "#ffb5a0",
+                    "surface-variant": "#e2e2e2",
+                    "on-surface-variant": "#5b4039",
+                    "primary-fixed": "#ffdbd1",
+                    "inverse-surface": "#2f3131",
+                    "on-error-container": "#93000a",
+                    "on-secondary-container": "#5a666d",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e8e8e8",
+                    "inverse-primary": "#ffb5a0",
+                    "outline-variant": "#e4beb4",
+                    "inverse-on-surface": "#f1f1f1",
+                    "on-secondary-fixed": "#111d23"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col h-screen w-64 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 z-50">
+<div class="p-6 flex flex-col gap-1">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary-container flex items-center justify-center rounded-sm">
+<span class="material-symbols-outlined text-white text-xl">precision_manufacturing</span>
+</div>
+<div>
+<h1 class="text-lg font-semibold text-neutral-900 dark:text-white tracking-tight">Industrial Atelier</h1>
+<p class="text-[10px] text-neutral-500 uppercase font-bold tracking-widest">Precision POS</p>
+</div>
+</div>
+</div>
+<nav class="mt-4 flex-grow px-3 flex flex-col gap-1">
+<!-- Active Navigation -->
+<a class="flex items-center gap-3 px-4 py-3 text-orange-600 dark:text-orange-500 bg-neutral-100 dark:bg-neutral-800 border-r-2 border-orange-600 font-['Inter'] font-medium text-sm tracking-tight transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white font-['Inter'] font-medium text-sm tracking-tight transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">point_of_sale</span>
+                POS
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white font-['Inter'] font-medium text-sm tracking-tight transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Inventory
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white font-['Inter'] font-medium text-sm tracking-tight transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                Transactions
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white font-['Inter'] font-medium text-sm tracking-tight transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">assignment_return</span>
+                Returns
+            </a>
+</nav>
+<div class="mt-auto p-4 border-t border-neutral-200 dark:border-neutral-800">
+<button class="w-full bg-primary-container text-on-primary py-2 px-4 rounded-lg font-bold text-sm mb-4 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                New Sale
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 font-['Inter'] font-medium text-sm transition-colors" href="#">
+<span class="material-symbols-outlined">help_center</span>
+                Help Desk
+            </a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center px-6 z-40">
+<div class="flex items-center gap-4 flex-grow">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-lg">search</span>
+<input class="w-full bg-neutral-100 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary-container/20" placeholder="Search components, parts, or orders..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-neutral-100 rounded-lg text-sm font-medium text-neutral-700">
+<span class="material-symbols-outlined text-sm">store</span>
+                Main Branch
+                <span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<button class="text-neutral-600 hover:text-primary-container transition-colors scale-95 active:scale-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-neutral-600 hover:text-primary-container transition-colors scale-95 active:scale-100">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-neutral-200 ml-2">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional portrait of a warehouse floor manager in a high-tech facility, wearing a smart headset and casual workspace attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBggaUik-7h80NlXeAYnvdFKcDhB3pquWUxyv7j_XtS3OD1R8bWznbSjPzD0kc2t_1eO2fr2RkGGlA4xmvlvFTho2GI6k0zZZv0MMVPw7-lkldyRA2haj7PyAyKRzqQzt_7MMRMxeMLNeVne5BlaOig5axb6Z9yU6Lsxch7cDJjN-Csf25DChjwVM7QmFRx5HuaDc0VatH6E_xyl7-k9VOZUwBq2Ww0JmQhoox4qFhoGoOiG_CBCpoV14LtW0IHGNi7r7-75ICfli0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 p-8 bg-surface min-h-screen">
+<!-- Header Section -->
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight leading-none mb-1">Operational Velocity</h2>
+<p class="text-secondary text-sm font-medium">Real-time status of the Industrial Atelier workstation.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 border border-outline/20 text-on-surface font-bold text-[10px] uppercase tracking-widest hover:bg-neutral-100">Export Report</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary font-bold text-[10px] uppercase tracking-widest">Refresh Nodes</button>
+</div>
+</div>
+<!-- 4 KPI Cards (Asymmetric Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-lowest border border-outline/10 p-5 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Total Revenue</span>
+<span class="material-symbols-outlined text-primary-container">monetization_on</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold tracking-tight">$42,912</span>
+<span class="text-[10px] font-bold text-green-600">+12.5%</span>
+</div>
+<div class="mt-4 w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[72%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline/10 p-5 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Orders Processed</span>
+<span class="material-symbols-outlined text-primary-container">shopping_cart</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold tracking-tight">1,204</span>
+<span class="text-[10px] font-bold text-green-600">+4.2%</span>
+</div>
+<div class="mt-4 w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[55%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline/10 p-5 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Low Stock Alerts</span>
+<span class="material-symbols-outlined text-error">warning</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold tracking-tight">18</span>
+<span class="text-[10px] font-bold text-error">-3 Critical</span>
+</div>
+<div class="mt-4 w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-error h-full w-[90%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline/10 p-5 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Active Customers</span>
+<span class="material-symbols-outlined text-primary-container">groups</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold tracking-tight">842</span>
+<span class="text-[10px] font-bold text-green-600">+18.1%</span>
+</div>
+<div class="mt-4 w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[40%]"></div>
+</div>
+</div>
+</div>
+<!-- Sales Trend Chart Section -->
+<section class="bg-surface-container-lowest border border-outline/10 rounded-lg mb-8 overflow-hidden">
+<div class="bg-surface-container-high px-6 py-4 flex justify-between items-center border-b border-outline/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface">Revenue Velocity (30-Day Trend)</h3>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-[10px] font-medium text-secondary">Offline Sales</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span class="text-[10px] font-medium text-secondary">E-Commerce</span>
+</div>
+</div>
+</div>
+<div class="p-8 h-64 relative flex items-end gap-1">
+<div class="flex flex-col h-full absolute left-4 justify-between text-[10px] text-neutral-400 font-bold py-8">
+<span>50K</span>
+<span>25K</span>
+<span>0</span>
+</div>
+<div class="flex-grow h-full flex items-end justify-between px-10 gap-2">
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[40%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[60%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[55%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[40%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[75%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[70%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[65%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[30%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[85%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[85%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[90%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[50%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[100%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[95%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[60%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[20%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[75%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[55%]"></div>
+</div>
+<div class="w-full bg-primary-container/20 hover:bg-primary-container/40 transition-colors h-[45%] relative group">
+<div class="bg-primary-container absolute bottom-0 w-full h-[35%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Side-by-Side Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Recent Transactions -->
+<div class="bg-surface-container-lowest border border-outline/10 rounded-lg overflow-hidden flex flex-col">
+<div class="bg-surface-container-high px-6 py-4 border-b border-outline/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface">Recent Log Nodes</h3>
+</div>
+<div class="flex-grow">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-3 text-[10px] font-bold text-secondary uppercase tracking-widest">ID</th>
+<th class="px-6 py-3 text-[10px] font-bold text-secondary uppercase tracking-widest">Customer</th>
+<th class="px-6 py-3 text-[10px] font-bold text-secondary uppercase tracking-widest">Status</th>
+<th class="px-6 py-3 text-[10px] font-bold text-secondary uppercase tracking-widest text-right">Value</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline/5">
+<tr class="hover:bg-neutral-50 transition-colors">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">#TRX-0912</td>
+<td class="px-6 py-4 text-xs font-medium text-secondary">Advanced Dynamics Corp.</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold uppercase rounded">Completed</span></td>
+<td class="px-6 py-4 text-xs font-bold text-right">$1,240.00</td>
+</tr>
+<tr class="hover:bg-neutral-50 transition-colors">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">#TRX-0911</td>
+<td class="px-6 py-4 text-xs font-medium text-secondary">Precision Mills Ltd.</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-[9px] font-bold uppercase rounded">Processing</span></td>
+<td class="px-6 py-4 text-xs font-bold text-right">$850.50</td>
+</tr>
+<tr class="hover:bg-neutral-50 transition-colors">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">#TRX-0910</td>
+<td class="px-6 py-4 text-xs font-medium text-secondary">Steel Foundry Inc.</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold uppercase rounded">Completed</span></td>
+<td class="px-6 py-4 text-xs font-bold text-right">$4,120.00</td>
+</tr>
+<tr class="hover:bg-neutral-50 transition-colors">
+<td class="px-6 py-4 text-xs font-bold text-on-surface">#TRX-0909</td>
+<td class="px-6 py-4 text-xs font-medium text-secondary">Horizon Robotics</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold uppercase rounded">Flagged</span></td>
+<td class="px-6 py-4 text-xs font-bold text-right">$210.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Top Selling Parts -->
+<div class="bg-surface-container-lowest border border-outline/10 rounded-lg overflow-hidden flex flex-col">
+<div class="bg-surface-container-high px-6 py-4 border-b border-outline/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface">High-Demand Components</h3>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface border border-outline/10 flex items-center justify-center p-2">
+<img alt="Component 1" class="w-full h-full object-contain" data-alt="high-precision mechanical bearing made of polished chrome steel, studio lighting with reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXQhJ1xVfzpyLMD6k2RDCmYXUtVua8sK9fJJpKUGkXDO8wS1YEUv0sRv0byxpn3I7AKKHHq3881xqKVohrhitIBvB-5cjK8ugLBq8-9pmoXsh3FYRPm5DtHZGSPHZaqpKr4oGzCCPESjbOjE5rlvvE3EUy9lc0w_mO9YOFaGDa7Co5of-o8o-EeS0yyBVjmyvwgVpxLWLt24AWMKEjZybcTDNxrjW1PNcw7xWsS4aOANq4Aie_u4_QeEY6t4RSKOqiQszHLVE_us0"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="text-xs font-bold text-on-surface">TX-400 Servo Motor</p>
+<span class="text-xs font-bold text-primary-container">412 Sold</span>
+</div>
+<div class="text-[10px] text-secondary font-medium mt-0.5">Category: Automation Core</div>
+<div class="mt-2 w-full h-1 bg-surface-container">
+<div class="bg-primary-container h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface border border-outline/10 flex items-center justify-center p-2">
+<img alt="Component 2" class="w-full h-full object-contain" data-alt="industrial motherboard with intricate gold circuits and silicon chips, technical macro photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACsqMaZHvYBzeC6CaguURHaGAJFD7XT-sHtqmRwQRZF8PhzhHl_eYvxSqWpDDEnmAOB-QP6ObvgfSduubJXCNDHbQietbTZV3I0hzWmPIiGeiwxCRvKlAV_ijcZKnv4HxvPGtNa80XNTAd7MXVtBh2BiWXduqxETDfphjG0IeOkKCFJEqMrs8R_FrE-rxL2CJHWQNBOob8TTpxQFnEIfUbSB8SWtApi9PCiESvLIHqs__O6SIEvwWbl7pYaMYdzAWLo6HiLey3vxk"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="text-xs font-bold text-on-surface">Omega Logic Controller</p>
+<span class="text-xs font-bold text-primary-container">328 Sold</span>
+</div>
+<div class="text-[10px] text-secondary font-medium mt-0.5">Category: Processing Units</div>
+<div class="mt-2 w-full h-1 bg-surface-container">
+<div class="bg-primary-container h-full w-[65%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface border border-outline/10 flex items-center justify-center p-2">
+<img alt="Component 3" class="w-full h-full object-contain" data-alt="braided heavy-duty industrial cable with copper wiring and thick insulation, technical detail shot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsdlaUlB_R5z1yrVDkkft05BZHjVXM22UtJ63_3mJh_HDyQ_mG8VNfQvjnlDisoe4CdewzLHe0V-7JJbS5_IRsXDHIWr2TZlqXdqasoCnUUeij2k7I5_k9YJj4M4eap1tyIWbyGKuJ36teMD2OPueiHl5yLjzZWHSKJNnF2KEO6zv9DondjVrAKUJDY9sB45LJx90x-045ZKRPuXs0K2nlSfJJWhkBjX-NFWs9Y7uHEWCNY11mVIhRzYpiNqZTndpU05vHFJcYleM"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<p class="text-xs font-bold text-on-surface">Shielded Conduit 12mm</p>
+<span class="text-xs font-bold text-primary-container">294 Sold</span>
+</div>
+<div class="text-[10px] text-secondary font-medium mt-0.5">Category: Infrastructure</div>
+<div class="mt-2 w-full h-1 bg-surface-container">
+<div class="bg-primary-container h-full w-[58%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating UI Interaction Indicator (Bottom Right) -->
+<div class="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
+<div class="bg-white/80 backdrop-blur-md border border-outline/10 p-3 rounded-lg flex items-center gap-3">
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-primary-container uppercase tracking-widest">Active Link</span>
+<span class="text-xs font-bold text-on-surface">Station-Alpha-01</span>
+</div>
+<div class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+</div>
+<button class="bg-primary-container text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-2xl" data-weight="fill">add</span>
+</button>
+</div>
+</body></html>

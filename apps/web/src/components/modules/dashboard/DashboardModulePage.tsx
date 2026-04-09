@@ -7,6 +7,7 @@ import {
   PageErrorState,
   PageLoadingState,
 } from "@/components/ui/page-state";
+import ReportsModulePage from "@/components/modules/reports/ReportsModulePage";
 import type { DashboardVariant } from "@/components/modules/dashboard/types";
 import DashboardHeaderControls from "@/components/modules/dashboard/parts/DashboardHeaderControls";
 import KpiSummaryCards from "@/components/modules/dashboard/parts/KpiSummaryCards";
@@ -134,16 +135,13 @@ export default function DashboardModulePage({
         ? "today"
         : `the last ${rangeDays} days`;
 
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const isStaffVariant = variant === "staff";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-2">
       <DashboardHeaderControls
-        title={`${greeting}, ${user?.first_name}!`}
-        description={`Here's what's happening at Rayn Motorparts and accessories for ${rangeLabel}.`}
+        title={`Operational Velocity${user?.first_name ? `, ${user.first_name}` : ""}`}
+        description={`Real-time status of Rayn Motorparts for ${rangeLabel}.`}
         rangeValue={range}
         onRangeChange={setRange}
         startDate={startDate}
@@ -181,6 +179,12 @@ export default function DashboardModulePage({
       />
 
       <RecentTransactionsTable transactions={recentTransactions} />
+
+      {!isStaffVariant && (
+        <div className="border-t pt-6">
+          <ReportsModulePage embedded />
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { AlertTriangle, PackageSearch, TrendingDown, TrendingUp } from "lucide-react";
 
+import CatalogModulePage from "@/components/modules/catalog/CatalogModulePage";
 import PageHeader from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,15 +26,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDashboardSnapshot } from "@/hooks/modules/useDashboard";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type InventoryRange = "1" | "7" | "30";
+type InventoryTab = "inventory" | "products";
 
 function toValidRange(value: string | null): InventoryRange {
   if (value === "1" || value === "7" || value === "30") {
     return value;
   }
   return "7";
+}
+
+function toValidTab(value: string | null): InventoryTab {
+  if (value === "inventory" || value === "products") {
+    return value;
+  }
+  return "inventory";
 }
 
 function formatCurrency(value: number): string {
@@ -45,6 +56,8 @@ function formatCurrency(value: number): string {
 
 export default function InventoryModulePage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { canAccessCatalog } = usePermissions();
+  const tab = toValidTab(searchParams.get("tab"));
   const range = toValidRange(searchParams.get("range"));
   const days = useMemo(() => Number(range), [range]);
 
@@ -53,6 +66,12 @@ export default function InventoryModulePage() {
   const setRange = (value: InventoryRange) => {
     const next = new URLSearchParams(searchParams);
     next.set("range", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const setTab = (value: InventoryTab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
     setSearchParams(next, { replace: true });
   };
 
@@ -78,20 +97,28 @@ export default function InventoryModulePage() {
     <div className="space-y-6">
       <PageHeader
         title="Inventory"
-        description="Monitor stock health and movement trends"
-        actions={
-          <Select value={range} onValueChange={(value) => setRange(value as InventoryRange)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Today</SelectItem>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-            </SelectContent>
-          </Select>
-        }
+        description="Monitor stock health, movement trends, and product catalog"
       />
+
+      <Tabs value={tab} onValueChange={(value) => setTab(value as InventoryTab)}>
+        <TabsList>
+          <TabsTrigger value="inventory">Inventory Overview</TabsTrigger>
+          {canAccessCatalog && <TabsTrigger value="products">Products</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="inventory" className="space-y-6">
+          <div className="flex justify-end">
+            <Select value={range} onValueChange={(value) => setRange(value as InventoryRange)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Today</SelectItem>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -288,6 +315,15 @@ export default function InventoryModulePage() {
           </CardContent>
         </Card>
       </div>
+
+        </TabsContent>
+
+        {canAccessCatalog && (
+          <TabsContent value="products">
+            <CatalogModulePage embedded />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

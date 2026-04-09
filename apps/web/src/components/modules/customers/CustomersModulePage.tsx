@@ -31,7 +31,11 @@ function formatDateTime(value: string): string {
   });
 }
 
-export default function CustomersModulePage() {
+interface CustomersModulePageProps {
+  embedded?: boolean;
+}
+
+export default function CustomersModulePage({ embedded = false }: CustomersModulePageProps) {
   const [q, setQ] = useState("");
   const [active, setActive] = useState<"all" | "active" | "inactive">("all");
   const [page, setPage] = useState(1);
@@ -48,10 +52,12 @@ export default function CustomersModulePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Customers"
-        description="Customer directory from the dedicated customers API"
-      />
+      {!embedded && (
+        <PageHeader
+          title="Customers"
+          description="Customer directory from the dedicated customers API"
+        />
+      )}
 
       <Card>
         <CardContent className="space-y-4 p-4">
