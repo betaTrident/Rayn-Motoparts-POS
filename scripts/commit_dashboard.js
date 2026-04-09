@@ -1,14 +1,14 @@
 import { execSync } from 'child_process';
 import { resolve } from 'path';
 
-const projectDir = resolve(process.cwd());
+const projectDir = '/vercel/share/v0-project';
 
 try {
   console.log('[v0] Current working directory:', projectDir);
   
   // Stage all changes
   console.log('[v0] Staging changes...');
-  execSync('git add .', { cwd: projectDir, stdio: 'inherit' });
+  execSync('git', ['add', '.'], { cwd: projectDir, stdio: 'inherit' });
   
   // Create commit with detailed message
   const commitMessage = `refactor(dashboard): modernize UI with soft neutral aesthetic
@@ -36,7 +36,7 @@ All changes maintain the existing functionality while improving visual presentat
 and user experience consistency across the dashboard.`;
   
   console.log('[v0] Creating commit...');
-  execSync(`git commit -m "${commitMessage}"`, { cwd: projectDir, stdio: 'inherit' });
+  execSync('git', ['commit', '-m', commitMessage], { cwd: projectDir, stdio: 'inherit' });
   
   console.log('[v0] Commit successful!');
   process.exit(0);
