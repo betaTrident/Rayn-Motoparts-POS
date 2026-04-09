@@ -14,7 +14,7 @@ export default function UnauthorizedPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center px-4" aria-labelledby="unauthorized-title">
       <div className="text-center space-y-6 max-w-md">
         {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
@@ -24,7 +24,7 @@ export default function UnauthorizedPage() {
         {/* Heading */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">403</h1>
-          <h2 className="text-xl font-semibold text-muted-foreground">
+          <h2 id="unauthorized-title" className="text-xl font-semibold text-muted-foreground">
             Access Denied
           </h2>
         </div>
@@ -45,6 +45,6 @@ export default function UnauthorizedPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
