@@ -1,0 +1,18 @@
+{
+  "name": "rayn-motoparts-web-scripts",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "preinstall": "node -e \"console.error('Do not run npm install in apps/web. Run it at repository root: K:/Rayn-Motoparts-POS'); process.exit(1)\"",
+    "dev": "npm --prefix ../.. run dev",
+    "build": "npm --prefix ../.. run build",
+    "preview": "npm --prefix ../.. run preview",
+    "test": "npm --prefix ../.. run test",
+    "test:run": "npm --prefix ../.. run test:run",
+    "test:coverage": "npm --prefix ../.. run test:coverage",
+    "e2e": "npm --prefix ../.. run e2e",
+    "e2e:ui": "npm --prefix ../.. run e2e:ui",
+    "e2e:a11y": "npm --prefix ../.. run e2e:a11y",
+    "lint": "npm --prefix ../.. run lint"
+  }
+}

@@ -8,6 +8,7 @@ export default defineConfig({
   root: path.resolve(__dirname, "apps/web"),
   plugins: [react(), tailwindcss()],
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "apps/web/src"),
     },
