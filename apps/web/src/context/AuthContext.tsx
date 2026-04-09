@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import {
@@ -12,11 +13,14 @@ import {
 } from "@tanstack/react-query";
 import type {
   User,
+  UserRole,
+  AuthClaims,
   LoginCredentials,
   RegisterData,
   AuthResponse,
-} from "@/types/auth";
-import * as authService from "@/services/authService";
+} from "@/types/auth.types";
+import * as authService from "@/services/authService.service";
+import { queryKeys } from "@/services/query/queryKeys";
 
 // ──────────────────────────────────────────────
 // 1. DEFINE THE CONTEXT SHAPE
@@ -30,6 +34,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   /** The underlying React Query result (for advanced use) */
   userQuery: UseQueryResult<User, Error>;
+  /** Roles from JWT claims */
+  roles: UserRole[];
+  /** Full parsed auth claims if available */
+  claims: AuthClaims | null;
+  /** Check if user has any of the provided roles */
+  hasAnyRole: (requiredRoles: UserRole[]) => boolean;
   /** Log in — returns the auth response */
   login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   /** Register — returns the auth response */
@@ -42,9 +52,6 @@ interface AuthContextType {
 // 2. CREATE THE CONTEXT
 // ──────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Query key constant — used to cache & invalidate user data
-const USER_QUERY_KEY = ["auth", "user"] as const;
 
 // ──────────────────────────────────────────────
 // 3. THE PROVIDER COMPONENT
@@ -67,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // `staleTime`: keep the user data fresh for 5 minutes
   //   before re-fetching in the background.
   const userQuery = useQuery<User, Error>({
-    queryKey: USER_QUERY_KEY,
+    queryKey: queryKeys.auth.user,
     queryFn: async () => {
       return await authService.getProfile();
     },
@@ -85,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data) => {
       // Put the user directly into the query cache
       // so we don't need an extra network request.
-      queryClient.setQueryData(USER_QUERY_KEY, data.user);
+      queryClient.setQueryData(queryKeys.auth.user, data.user);
     },
   });
 
@@ -93,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation<AuthResponse, Error, RegisterData>({
     mutationFn: authService.register,
     onSuccess: (data) => {
-      queryClient.setQueryData(USER_QUERY_KEY, data.user);
+      queryClient.setQueryData(queryKeys.auth.user, data.user);
     },
   });
 
@@ -102,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: authService.logout,
     onSuccess: () => {
       // Clear the user from the cache
-      queryClient.setQueryData(USER_QUERY_KEY, null);
+      queryClient.setQueryData(queryKeys.auth.user, null);
       // Remove all cached queries (user data, etc.)
       queryClient.clear();
     },
@@ -124,11 +131,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [logoutMutation]
   );
 
+  const claims = useMemo(() => authService.getAuthClaims(), [userQuery.data]);
+  const roles = claims?.roles ?? [];
+
+  const hasAnyRole = useCallback(
+    (requiredRoles: UserRole[]) => {
+      if (!requiredRoles.length) {
+        return true;
+      }
+      return requiredRoles.some((role) => roles.includes(role));
+    },
+    [roles]
+  );
+
   const value: AuthContextType = {
     user: userQuery.data ?? null,
     isLoading: userQuery.isLoading,
     isAuthenticated: !!userQuery.data,
     userQuery,
+    roles,
+    claims,
+    hasAnyRole,
     login,
     register,
     logout,

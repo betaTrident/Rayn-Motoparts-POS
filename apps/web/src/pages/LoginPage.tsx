@@ -42,7 +42,7 @@ export default function LoginPage() {
     try {
       setServerError(null);
       await login(data);
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (error: unknown) {
       // Extract error message from the backend response
       if (
@@ -66,7 +66,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <main className="flex min-h-screen" aria-labelledby="login-page-heading">
       {/* ── Left Panel: Branding ── */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-primary via-primary/90 to-primary/70 items-center justify-center">
         {/* Decorative background circles */}
@@ -124,24 +124,32 @@ export default function LoginPage() {
 
           {/* Heading */}
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h2 id="login-page-heading" className="text-2xl font-semibold tracking-tight text-foreground">
               Welcome back
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p id="login-page-subtitle" className="text-sm text-muted-foreground">
               Sign in to your account to continue
             </p>
           </div>
 
           {/* Server error banner */}
           {serverError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
               {serverError}
             </div>
           )}
 
           {/* Login Form */}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              aria-describedby="login-page-subtitle"
+            >
               {/* Email */}
               <FormField
                 control={form.control}
@@ -241,6 +249,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

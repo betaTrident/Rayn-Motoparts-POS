@@ -18,6 +18,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.postgres',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -48,9 +56,15 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'auditlog',
     # Local
+    'core',
     'authentication',
-    'products',
+    'catalog',
+    'vehicles',
+    'inventory',
+    'pos',
+    'customers',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +74,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -173,3 +188,15 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
+
+
+# Rollout feature flags for phased v2 migration strategy.
+ROLLOUT_FLAGS = {
+    'DB_V2_READ_ENABLED': env_bool('DB_V2_READ_ENABLED', True),
+    'DB_V2_WRITE_ENABLED': env_bool('DB_V2_WRITE_ENABLED', True),
+    'DB_V2_TRIGGERS_ENABLED': env_bool('DB_V2_TRIGGERS_ENABLED', False),
+    'DB_V2_DUAL_WRITE_ENABLED': env_bool('DB_V2_DUAL_WRITE_ENABLED', False),
+    'DB_V2_POS_RECEIPT_DUAL_WRITE_ENABLED': env_bool('DB_V2_POS_RECEIPT_DUAL_WRITE_ENABLED', False),
+    'DB_V2_POS_RECEIPT_READ_ENABLED': env_bool('DB_V2_POS_RECEIPT_READ_ENABLED', False),
+    'DB_V2_RECONCILIATION_ENABLED': env_bool('DB_V2_RECONCILIATION_ENABLED', False),
+}

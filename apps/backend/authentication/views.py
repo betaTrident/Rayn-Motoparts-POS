@@ -4,15 +4,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, get_user_model
+from django.utils import timezone
 
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     UserSerializer,
     ChangePasswordSerializer,
+    CustomTokenObtainPairSerializer,
 )
 
 User = get_user_model()
+ALLOWED_SYSTEM_ROLES = {'superadmin', 'admin', 'staff'}
 
 
 class RegisterView(generics.CreateAPIView):
@@ -67,7 +70,17 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        refresh = RefreshToken.for_user(user)
+        has_system_role = user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+        if not has_system_role and not user.is_superuser:
+            return Response(
+                {'detail': 'Account has no system access role.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        user.last_login_at = timezone.now()
+        user.save(update_fields=['last_login_at', 'updated_at'])
+
+        refresh = CustomTokenObtainPairSerializer.get_token(user)
         return Response(
             {
                 'user': UserSerializer(user).data,

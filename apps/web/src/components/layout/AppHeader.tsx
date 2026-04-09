@@ -10,20 +10,46 @@ import {
 
 // Map route paths to display titles
 const pageTitles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/pos": "Point of Sale",
-  "/products": "Products",
-  "/transactions": "Transactions",
-  "/staff": "Staff Management",
-  "/settings": "Settings",
+  "/app/admin/dashboard": "Dashboard",
+  "/app/admin/pos": "Point of Sale",
+  "/app/admin/catalog": "Products",
+  "/app/admin/customers": "Customers",
+  "/app/admin/inventory": "Inventory",
+  "/app/admin/transactions": "Transactions",
+  "/app/admin/returns": "Returns",
+  "/app/admin/reports": "Reports",
+  "/app/admin/settings": "Settings",
+  "/app/staff/dashboard": "Dashboard",
+  "/app/staff/pos": "Point of Sale",
+  "/app/staff/customers": "Customers",
+  "/app/staff/inventory": "Inventory",
+  "/app/staff/transactions": "Transactions",
+  "/app/staff/returns": "Returns",
+  "/app/system/audit": "System Audit",
+  "/app/system/cutover-controls": "Cutover Controls",
+  "/app/system/health": "System Health",
+  "/app/system/rollout": "System Rollout",
+  "/app/system/reconciliation": "Reconciliation",
 };
+
+function toTitleFromPath(pathname: string): string {
+  const segment = pathname.split("/").filter(Boolean).pop();
+  if (!segment) {
+    return "Page";
+  }
+  return segment
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export default function AppHeader() {
   const location = useLocation();
-  const pageTitle = pageTitles[location.pathname] ?? "Page";
+  const pageTitle = pageTitles[location.pathname] ?? toTitleFromPath(location.pathname);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <h1 className="sr-only">{pageTitle}</h1>
       {/* Toggle sidebar on mobile */}
       <SidebarTrigger className="-ml-1 md:hidden" />
 

@@ -10,7 +10,7 @@ export default function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center px-4" aria-labelledby="not-found-title">
       <div className="text-center space-y-6 max-w-md">
         {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
@@ -20,7 +20,7 @@ export default function NotFoundPage() {
         {/* Heading */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">404</h1>
-          <h2 className="text-xl font-semibold text-muted-foreground">
+          <h2 id="not-found-title" className="text-xl font-semibold text-muted-foreground">
             Page Not Found
           </h2>
         </div>
@@ -40,6 +40,6 @@ export default function NotFoundPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

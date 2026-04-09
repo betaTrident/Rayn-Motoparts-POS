@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
@@ -12,5 +14,22 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "apps/web/src"),
     },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          framework: ["react", "react-dom", "react-router"],
+          query: ["@tanstack/react-query"],
+        },
+      },
+    },
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: [path.resolve(__dirname, "apps/web/src/test/setup.ts")],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    clearMocks: true,
   },
 })
