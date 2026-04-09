@@ -4,6 +4,13 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
+  RotateCcw,
+  BarChart3,
+  Activity,
+  ClipboardList,
+  Rocket,
+  SlidersHorizontal,
+  ShieldCheck,
   Receipt,
   Users,
   Settings,
@@ -51,7 +58,7 @@ const mainNavItems = [
     title: "Point of Sale",
     icon: ShoppingCart,
     key: "pos",
-    enabled: false,
+    enabled: true,
   },
   {
     title: "Catalog",
@@ -60,9 +67,33 @@ const mainNavItems = [
     enabled: true,
   },
   {
+    title: "Customers",
+    icon: Users,
+    key: "customers",
+    enabled: true,
+  },
+  {
+    title: "Inventory",
+    icon: Package,
+    key: "inventory",
+    enabled: true,
+  },
+  {
     title: "Transactions",
     icon: Receipt,
     key: "transactions",
+    enabled: true,
+  },
+  {
+    title: "Returns",
+    icon: RotateCcw,
+    key: "returns",
+    enabled: true,
+  },
+  {
+    title: "Reports",
+    icon: BarChart3,
+    key: "reports",
     enabled: true,
   },
 ];
@@ -78,7 +109,35 @@ const adminNavItems = [
     title: "Settings",
     icon: Settings,
     key: "settings",
-    enabled: false,
+    enabled: true,
+  },
+];
+
+const systemNavItems = [
+  {
+    title: "System Audit",
+    icon: ClipboardList,
+    path: "/app/system/audit",
+  },
+  {
+    title: "Cutover Controls",
+    icon: SlidersHorizontal,
+    path: "/app/system/cutover-controls",
+  },
+  {
+    title: "System Health",
+    icon: Activity,
+    path: "/app/system/health",
+  },
+  {
+    title: "System Rollout",
+    icon: Rocket,
+    path: "/app/system/rollout",
+  },
+  {
+    title: "Reconciliation",
+    icon: ShieldCheck,
+    path: "/app/system/reconciliation",
   },
 ];
 
@@ -110,6 +169,12 @@ export default function AppSidebar() {
           return false;
         }
         if (item.key === "pos" && !canAccessPos) {
+          return false;
+        }
+        if (item.key === "returns" && !canAccessPos) {
+          return false;
+        }
+        if (highestRole === "staff" && item.key === "reports") {
           return false;
         }
         return item.enabled || item.key === "dashboard";
@@ -201,6 +266,29 @@ export default function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   )
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {highestRole === "superadmin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {systemNavItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={location.pathname === item.path}
+                      tooltip={item.title}
+                      onClick={() => navigate(item.path)}
+                      className="cursor-pointer"
+                    >
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

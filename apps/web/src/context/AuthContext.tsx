@@ -20,6 +20,7 @@ import type {
   AuthResponse,
 } from "@/types/auth.types";
 import * as authService from "@/services/authService.service";
+import { queryKeys } from "@/services/query/queryKeys";
 
 // ──────────────────────────────────────────────
 // 1. DEFINE THE CONTEXT SHAPE
@@ -52,9 +53,6 @@ interface AuthContextType {
 // ──────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Query key constant — used to cache & invalidate user data
-const USER_QUERY_KEY = ["auth", "user"] as const;
-
 // ──────────────────────────────────────────────
 // 3. THE PROVIDER COMPONENT
 //
@@ -76,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // `staleTime`: keep the user data fresh for 5 minutes
   //   before re-fetching in the background.
   const userQuery = useQuery<User, Error>({
-    queryKey: USER_QUERY_KEY,
+    queryKey: queryKeys.auth.user,
     queryFn: async () => {
       return await authService.getProfile();
     },
@@ -94,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data) => {
       // Put the user directly into the query cache
       // so we don't need an extra network request.
-      queryClient.setQueryData(USER_QUERY_KEY, data.user);
+      queryClient.setQueryData(queryKeys.auth.user, data.user);
     },
   });
 
@@ -102,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation<AuthResponse, Error, RegisterData>({
     mutationFn: authService.register,
     onSuccess: (data) => {
-      queryClient.setQueryData(USER_QUERY_KEY, data.user);
+      queryClient.setQueryData(queryKeys.auth.user, data.user);
     },
   });
 
@@ -111,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: authService.logout,
     onSuccess: () => {
       // Clear the user from the cache
-      queryClient.setQueryData(USER_QUERY_KEY, null);
+      queryClient.setQueryData(queryKeys.auth.user, null);
       // Remove all cached queries (user data, etc.)
       queryClient.clear();
     },

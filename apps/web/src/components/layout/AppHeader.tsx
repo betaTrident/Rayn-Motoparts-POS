@@ -11,10 +11,24 @@ import {
 // Map route paths to display titles
 const pageTitles: Record<string, string> = {
   "/app/admin/dashboard": "Dashboard",
+  "/app/admin/pos": "Point of Sale",
   "/app/admin/catalog": "Catalog",
+  "/app/admin/customers": "Customers",
+  "/app/admin/inventory": "Inventory",
   "/app/admin/transactions": "Transactions",
+  "/app/admin/returns": "Returns",
+  "/app/admin/reports": "Reports",
+  "/app/admin/settings": "Settings",
   "/app/staff/dashboard": "Dashboard",
+  "/app/staff/pos": "Point of Sale",
+  "/app/staff/customers": "Customers",
+  "/app/staff/inventory": "Inventory",
   "/app/staff/transactions": "Transactions",
+  "/app/staff/returns": "Returns",
+  "/app/system/audit": "System Audit",
+  "/app/system/cutover-controls": "Cutover Controls",
+  "/app/system/health": "System Health",
+  "/app/system/rollout": "System Rollout",
   "/app/system/reconciliation": "Reconciliation",
 };
 
@@ -35,6 +49,7 @@ export default function AppHeader() {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <h1 className="sr-only">{pageTitle}</h1>
       {/* Toggle sidebar on mobile */}
       <SidebarTrigger className="-ml-1 md:hidden" />
 

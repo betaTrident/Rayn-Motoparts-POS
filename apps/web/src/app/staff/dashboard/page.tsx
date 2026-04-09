@@ -1,5 +1,5 @@
-import DashboardPage from "@/pages/DashboardPage";
+import DashboardModulePage from "@/components/modules/dashboard/DashboardModulePage";
 
 export default function StaffDashboardPage() {
-  return <DashboardPage />;
+  return <DashboardModulePage variant="staff" />;
 }

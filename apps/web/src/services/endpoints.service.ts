@@ -19,4 +19,19 @@ export const ENDPOINTS = {
     transactions: 'pos/transactions/',
     transactionById: (id: number) => `pos/transactions/${id}/`,
   },
+  customers: {
+    list: 'customers/',
+    byId: (id: number) => `customers/${id}/`,
+  },
+  returns: {
+    list: 'returns/',
+    byId: (id: number) => `returns/${id}/`,
+  },
+  system: {
+    health: 'system/health/',
+    rollout: 'system/rollout/',
+    reconciliation: 'system/reconciliation/',
+    audit: 'system/audit/',
+    cutoverControls: 'system/cutover-controls/',
+  },
 } as const;
