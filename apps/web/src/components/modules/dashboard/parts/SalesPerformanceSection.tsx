@@ -71,10 +71,10 @@ export default function SalesPerformanceSection({
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 border-slate-100 bg-gradient-to-br from-white to-slate-50/30 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader>
-            <CardTitle>Weekly Sales Overview</CardTitle>
-            <CardDescription>Revenue and orders for the selected range</CardDescription>
+            <CardTitle className="text-slate-900">Weekly Sales Overview</CardTitle>
+            <CardDescription className="text-slate-600">Revenue and orders for the selected range</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
@@ -86,16 +86,17 @@ export default function SalesPerformanceSection({
               <AreaChart data={weeklySales} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.3} />
+                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.25} />
                     <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} stroke="rgba(0,0,0,0.4)" />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   fontSize={12}
+                  stroke="rgba(0,0,0,0.4)"
                   tickFormatter={(v: number) => `PHP ${(v / 1000).toFixed(0)}k`}
                 />
                 <ChartTooltip
@@ -121,10 +122,10 @@ export default function SalesPerformanceSection({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 border-slate-100 bg-gradient-to-br from-white to-slate-50/30 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
-            <CardDescription>Revenue distribution today</CardDescription>
+            <CardTitle className="text-slate-900">Sales by Category</CardTitle>
+            <CardDescription className="text-slate-600">Revenue distribution today</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
@@ -145,8 +146,8 @@ export default function SalesPerformanceSection({
                   nameKey="category"
                   innerRadius={55}
                   outerRadius={80}
-                  strokeWidth={3}
-                  stroke="var(--color-card)"
+                  strokeWidth={2}
+                  stroke="rgba(255,255,255,0.8)"
                 >
                   {categorySales.map((entry, index) => (
                     <Cell key={index} fill={entry.fill} />
@@ -196,10 +197,10 @@ export default function SalesPerformanceSection({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 border-slate-100 bg-gradient-to-br from-white to-slate-50/30 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader>
-            <CardTitle>Top-Selling Products</CardTitle>
-            <CardDescription>Best performers today</CardDescription>
+            <CardTitle className="text-slate-900">Top-Selling Products</CardTitle>
+            <CardDescription className="text-slate-600">Best performers today</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -207,15 +208,15 @@ export default function SalesPerformanceSection({
                 <div key={product.name} className="flex items-center gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="truncate text-sm font-medium">{product.name}</span>
-                      <span className="ml-2 text-sm font-semibold whitespace-nowrap">
+                      <span className="truncate text-sm font-medium text-slate-900">{product.name}</span>
+                      <span className="ml-2 text-sm font-semibold whitespace-nowrap text-slate-700">
                         {product.sold} sold
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-2">
                       <Progress value={(product.sold / maxProductSold) * 100} className="h-2" />
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
                       <span>{product.category}</span>
                       <span>{formatCurrency(product.revenue)}</span>
                     </div>
@@ -226,13 +227,13 @@ export default function SalesPerformanceSection({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 border-slate-100 bg-gradient-to-br from-white to-slate-50/30 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="size-4 text-muted-foreground" />
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <Clock className="size-4 text-slate-500" />
               Peak Hours
             </CardTitle>
-            <CardDescription>Order distribution today</CardDescription>
+            <CardDescription className="text-slate-600">Order distribution today</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer
@@ -242,9 +243,9 @@ export default function SalesPerformanceSection({
               aria-label="Bar chart showing hourly order distribution"
             >
               <BarChart data={hourlySales} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="hour" tickLine={false} axisLine={false} fontSize={12} />
-                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="hour" tickLine={false} axisLine={false} fontSize={12} stroke="rgba(0,0,0,0.4)" />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} stroke="rgba(0,0,0,0.4)" />
                 <ChartTooltip
                   content={
                     <ChartTooltipContent formatter={(value) => [`${value} orders`, "Orders"]} />
@@ -253,7 +254,7 @@ export default function SalesPerformanceSection({
                 <Bar
                   dataKey="orders"
                   fill="var(--color-orders)"
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                   maxBarSize={40}
                 />
               </BarChart>

@@ -154,13 +154,13 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       {/* ── Sidebar Header: Logo ── */}
-      <SidebarHeader className="h-16 border-b border-sidebar-border/80 px-3 py-0">
+      <SidebarHeader className="h-16 border-b border-slate-100 px-3 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               onClick={() => navigate(`${appBasePath}/dashboard`)}
-              className="h-12 cursor-pointer rounded-xl border border-sidebar-border/80 px-3"
+              className="h-12 cursor-pointer rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white hover:bg-slate-50 px-3 transition-colors"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-slate-900 text-white">
                 <img
@@ -170,8 +170,8 @@ export default function AppSidebar() {
                 />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold text-sm text-sidebar-foreground">Rayn Motorparts</span>
-                <span className="text-xs text-sidebar-foreground/60">Operations Console</span>
+                <span className="font-semibold text-sm text-slate-900">Rayn Motorparts</span>
+                <span className="text-xs text-slate-500">Operations Console</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -191,7 +191,7 @@ export default function AppSidebar() {
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
                     onClick={() => navigate(item.path)}
-                    className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
+                    className="h-10 cursor-pointer rounded-lg border border-transparent px-3 text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 data-[active=true]:border-slate-200 data-[active=true]:bg-slate-100 data-[active=true]:text-slate-900"
                   >
                     <item.icon className="size-4" />
                     <span>{item.title}</span>
@@ -215,7 +215,7 @@ export default function AppSidebar() {
                       isActive={location.pathname === item.path}
                       tooltip={item.title}
                       onClick={() => navigate(item.path)}
-                      className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
+                      className="h-10 cursor-pointer rounded-lg border border-transparent px-3 text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 data-[active=true]:border-slate-200 data-[active=true]:bg-slate-100 data-[active=true]:text-slate-900"
                     >
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -239,7 +239,7 @@ export default function AppSidebar() {
                       isActive={location.pathname === item.path}
                       tooltip={item.title}
                       onClick={() => navigate(item.path)}
-                      className="h-10 cursor-pointer rounded-xl border border-transparent px-3 text-slate-600 transition-colors hover:border-sidebar-border hover:bg-slate-100 hover:text-slate-900 data-[active=true]:border-slate-900 data-[active=true]:bg-slate-900 data-[active=true]:text-white"
+                      className="h-10 cursor-pointer rounded-lg border border-transparent px-3 text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 data-[active=true]:border-slate-200 data-[active=true]:bg-slate-100 data-[active=true]:text-slate-900"
                     >
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
@@ -253,12 +253,12 @@ export default function AppSidebar() {
       </SidebarContent>
 
       {/* ── Sidebar Footer: User Menu ── */}
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-slate-100">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="h-10 cursor-pointer rounded-xl border border-sidebar-border/80 px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              className="h-10 cursor-pointer rounded-lg border border-slate-100 bg-gradient-to-br from-slate-50 to-white hover:bg-slate-50 px-3 text-slate-600 hover:text-slate-900 transition-all duration-200"
             >
               <LogOut className="size-4" />
               <span>Logout</span>

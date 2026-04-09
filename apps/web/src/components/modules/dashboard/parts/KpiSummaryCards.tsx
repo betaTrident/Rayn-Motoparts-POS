@@ -29,27 +29,34 @@ function KpiCard({
 }) {
   const isPositive = change >= 0;
   return (
-    <Card>
-      <CardHeader className="pb-0">
-        <div className="flex items-center justify-between">
-          <CardDescription className="text-sm font-medium">{title}</CardDescription>
-          <div className="rounded-md bg-primary/10 p-2 text-primary">
-            <Icon className="size-4" />
+    <Card className="border-slate-100 bg-gradient-to-br from-white to-slate-50/30 shadow-sm hover:shadow-md transition-all duration-300">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {title}
+            </CardDescription>
+          </div>
+          <div className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 p-2.5 text-primary">
+            <Icon className="size-5" />
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <div className="mt-1 flex items-center gap-1 text-xs">
+        <div className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{value}</div>
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-medium">
           {isPositive ? (
-            <ArrowUpRight className="size-3.5 text-green-600" />
+            <>
+              <ArrowUpRight className="size-4 text-emerald-600" />
+              <span className="text-emerald-600">{Math.abs(change)}%</span>
+            </>
           ) : (
-            <ArrowDownRight className="size-3.5 text-red-500" />
+            <>
+              <ArrowDownRight className="size-4 text-red-500" />
+              <span className="text-red-500">{Math.abs(change)}%</span>
+            </>
           )}
-          <span className={isPositive ? "text-green-600" : "text-red-500"}>
-            {Math.abs(change)}%
-          </span>
-          <span className="text-muted-foreground">vs yesterday</span>
+          <span className="text-slate-500">vs yesterday</span>
         </div>
       </CardContent>
     </Card>

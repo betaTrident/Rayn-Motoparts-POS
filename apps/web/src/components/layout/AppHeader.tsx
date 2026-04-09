@@ -60,34 +60,34 @@ export default function AppHeader() {
     : "RM";
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/90 bg-white/85 px-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white/90 px-4 backdrop-blur-sm md:px-6">
       <h1 className="sr-only">{pageTitle}</h1>
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <SidebarTrigger className="-ml-1 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 md:hidden" />
+        <SidebarTrigger className="-ml-1 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors rounded-lg md:hidden" />
         <div className="relative w-full max-w-lg">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
             placeholder={`Search in ${pageTitle}`}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none transition-colors focus:border-slate-300 focus:bg-white"
+            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none transition-all focus:border-slate-300 focus:shadow-sm focus:ring-1 focus:ring-primary/20"
           />
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2 md:gap-3">
-        <div className="hidden text-xs text-slate-500 lg:block">{formattedDate}</div>
-        <button className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:flex">
+        <div className="hidden text-xs font-medium text-slate-500 lg:block">{formattedDate}</div>
+        <button className="hidden h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-300 sm:flex">
           <Store className="size-4 text-slate-500" />
           <span>Main Branch</span>
           <ChevronDown className="size-4 text-slate-400" />
         </button>
-        <button className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+        <button className="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:border-slate-300 hover:text-slate-600">
           <Bell className="size-4" />
         </button>
-        <button className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+        <button className="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 hover:border-slate-300 hover:text-slate-600">
           <Settings className="size-4" />
         </button>
-        <div className="flex size-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-semibold text-slate-700">
+        <div className="flex size-10 items-center justify-center rounded-full border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-50 text-xs font-semibold text-slate-700 transition-all">
           {userInitials}
         </div>
       </div>

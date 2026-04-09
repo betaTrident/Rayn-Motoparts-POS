@@ -31,24 +31,24 @@ export default function DashboardHeaderControls({
   const isCustomRange = rangeValue === "custom";
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <section className="rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50/50 px-6 py-6 shadow-sm">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
             Dashboard
           </p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-900">{title}</h1>
+          <p className="mt-2 text-sm text-slate-600">{description}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Select
             value={rangeValue}
             onValueChange={(value) =>
               onRangeChange(value as "1" | "7" | "30" | "custom")
             }
           >
-            <SelectTrigger className="h-10 w-44 cursor-pointer rounded-xl border-slate-200 bg-white">
+            <SelectTrigger className="h-10 w-44 cursor-pointer rounded-xl border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 focus:ring-primary/20">
               <SelectValue placeholder="Range" />
             </SelectTrigger>
             <SelectContent>
@@ -63,7 +63,7 @@ export default function DashboardHeaderControls({
             type="date"
             value={startDate}
             onChange={(event) => onStartDateChange(event.target.value)}
-            className="h-10 w-40 rounded-xl border-slate-200 bg-white"
+            className="h-10 w-40 rounded-xl border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 focus:ring-primary/20"
             disabled={!isCustomRange}
             aria-label="Start date"
           />
@@ -71,7 +71,7 @@ export default function DashboardHeaderControls({
             type="date"
             value={endDate}
             onChange={(event) => onEndDateChange(event.target.value)}
-            className="h-10 w-40 rounded-xl border-slate-200 bg-white"
+            className="h-10 w-40 rounded-xl border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 focus:ring-primary/20"
             disabled={!isCustomRange}
             aria-label="End date"
           />
