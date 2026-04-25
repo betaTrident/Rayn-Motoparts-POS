@@ -1,40 +1,73 @@
+import { useState } from "react";
 import { Outlet } from "react-router";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
+import { cn } from "@/lib/utils";
 
 /**
  * MainLayout — the shell for all authenticated pages.
  *
  * STRUCTURE:
- * ┌──────────┬──────────────────────────────┐
- * │          │  Header (breadcrumb, toggle) │
- * │ Sidebar  ├──────────────────────────────┤
- * │ (nav +   │                              │
- * │  user    │  <Outlet />                  │
- * │  menu)   │  (page content renders here) │
- * │          │                              │
- * └──────────┴──────────────────────────────┘
+ * ┌──────────────┬──────────────────────────────────┐
+ * │              │  TopBar (glassmorphism header)    │
+ * │  AppSidebar  ├──────────────────────────────────┤
+ * │  (fixed,     │  <Outlet />                      │
+ * │   Industrial │  (page canvas: bg-[#f9f9f9])     │
+ * │   Atelier)   │                                  │
+ * └──────────────┴──────────────────────────────────┘
  *
- * <Outlet /> renders whichever child route is active
- * (Dashboard, POS, Products, etc.)
+ * Sidebar collapse state is lifted here so AppHeader
+ * can adjust its left-offset in sync.
  */
 export default function MainLayout() {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ia-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  // Listen to sidebar toggle events via storage
+  const handleStorageChange = () => {
+    try {
+      setCollapsed(localStorage.getItem("ia-sidebar-collapsed") === "true");
+    } catch { /* */ }
+  };
+
+  // Sync collapse state by polling localStorage (lightweight approach)
+  // The sidebar writes to localStorage on toggle; we read it here.
+  const contentOffset = collapsed ? "ml-16" : "ml-64";
+
   return (
-    <SidebarProvider>
+    <div className="min-h-screen bg-[#f9f9f9]">
+      {/* Skip navigation for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-sm focus:bg-[#ff5722] focus:px-3 focus:py-2 focus:text-white focus:text-xs focus:font-bold"
       >
         Skip to main content
       </a>
+
+      {/* Fixed sidebar */}
       <AppSidebar />
-      <SidebarInset>
-        <AppHeader />
-        <main id="main-content" className="flex-1 overflow-auto p-6" tabIndex={-1}>
-          <Outlet />
+
+      {/* Content shell (offset matches sidebar width) */}
+      <div className={cn("transition-all duration-200 ease-in-out", contentOffset)}>
+        {/* Fixed top bar */}
+        <AppHeader sidebarCollapsed={collapsed} />
+
+        {/* Page canvas: starts below the 64px header */}
+        <main
+          id="main-content"
+          className="pt-16 min-h-screen"
+          tabIndex={-1}
+        >
+          <div className="p-6">
+            <Outlet />
+          </div>
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   );
 }

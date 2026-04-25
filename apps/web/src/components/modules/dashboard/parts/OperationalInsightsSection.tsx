@@ -1,5 +1,3 @@
-import { AlertTriangle, Flame, PackageX, Turtle, UserRound, WalletCards } from "lucide-react";
-
 import { formatCurrency } from "@/components/modules/dashboard/formatters";
 import type {
   InventoryAlerts,
@@ -7,13 +5,68 @@ import type {
   PaymentMix,
   TopCashiers,
 } from "@/components/modules/dashboard/types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+// ── Section card shell ──
+function SectionCard({
+  title,
+  badge,
+  children,
+  className,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`bg-white border border-[rgba(228,190,180,0.2)] rounded-lg overflow-hidden ${className ?? ""}`}>
+      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(228,190,180,0.15)] flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
+          {title}
+        </h3>
+        {badge}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+// ── Alert item row ──
+function AlertRow({
+  name,
+  sku,
+  count,
+  countColor,
+  label,
+  borderColor,
+}: {
+  name: string;
+  sku: string;
+  count: string;
+  countColor: string;
+  label: string;
+  borderColor: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between px-3 py-2.5 rounded-md",
+        "border-l-4 bg-white border border-[rgba(228,190,180,0.15)]",
+      )}
+      style={{ borderLeftColor: borderColor }}
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-bold text-[#1a1c1c] truncate">{name}</p>
+        <p className="text-[10px] text-[#546067] font-medium">{sku}</p>
+      </div>
+      <div className="text-right text-xs shrink-0 ml-3">
+        <p className="font-bold" style={{ color: borderColor }}>{count}</p>
+        <p className="text-[10px] text-[#546067]">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 interface OperationalInsightsSectionProps {
   inventoryAlerts: InventoryAlerts;
@@ -30,213 +83,229 @@ export default function OperationalInsightsSection({
   paymentMix,
   showManagementInsights,
 }: OperationalInsightsSectionProps) {
+  const lowCount = inventoryAlerts.lowStock.length;
+  const oosCount = inventoryAlerts.outOfStock.length;
+
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-7">
-          <CardHeader>
-            <CardTitle>Inventory Health Alerts</CardTitle>
-            <CardDescription>Critical stock conditions for the selected filters</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
-                <AlertTriangle className="size-4" />
-                Low Stock
-              </div>
-              {inventoryAlerts.lowStock.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No low-stock alerts.</p>
-              ) : (
-                <div className="space-y-2">
-                  {inventoryAlerts.lowStock.map((item) => (
-                    <div
-                      key={`${item.variantSku}-low`}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.productName}</p>
-                        <p className="text-xs text-muted-foreground">{item.variantSku}</p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p className="font-semibold text-amber-700 dark:text-amber-400">
-                          {item.qtyAvailable} left
-                        </p>
-                        <p className="text-muted-foreground">RP {item.reorderPoint}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* ── Inventory Health Alerts ── */}
+      <SectionCard
+        title="Inventory Health Alerts"
+        badge={
+          (lowCount + oosCount) > 0 ? (
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold uppercase rounded-sm tracking-wide">
+              {lowCount + oosCount} alerts
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold uppercase rounded-sm tracking-wide">
+              All clear
+            </span>
+          )
+        }
+      >
+        <div className="grid gap-5 md:grid-cols-2">
+          {/* Low stock */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="material-symbols-outlined text-amber-600"
+                style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20" }}
+              >
+                warning
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                Low Stock — {lowCount} items
+              </span>
             </div>
+            {inventoryAlerts.lowStock.length === 0 ? (
+              <p className="text-sm text-[#546067]">No low-stock alerts.</p>
+            ) : (
+              inventoryAlerts.lowStock.map((item) => (
+                <AlertRow
+                  key={`${item.variantSku}-low`}
+                  name={item.productName}
+                  sku={item.variantSku}
+                  count={`${item.qtyAvailable} left`}
+                  countColor="#d97706"
+                  label={`RP: ${item.reorderPoint}`}
+                  borderColor="#d97706"
+                />
+              ))
+            )}
+          </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-red-700 dark:text-red-400">
-                <PackageX className="size-4" />
-                Out of Stock
-              </div>
-              {inventoryAlerts.outOfStock.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No out-of-stock alerts.</p>
-              ) : (
-                <div className="space-y-2">
-                  {inventoryAlerts.outOfStock.map((item) => (
-                    <div
-                      key={`${item.variantSku}-oos`}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.productName}</p>
-                        <p className="text-xs text-muted-foreground">{item.variantSku}</p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p className="font-semibold text-red-700 dark:text-red-400">0 left</p>
-                        <p className="text-muted-foreground">RP {item.reorderPoint}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* Out of stock */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="material-symbols-outlined text-[#ba1a1a]"
+                style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20" }}
+              >
+                inventory
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ba1a1a]">
+                Out of Stock — {oosCount} items
+              </span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            {inventoryAlerts.outOfStock.length === 0 ? (
+              <p className="text-sm text-[#546067]">No out-of-stock alerts.</p>
+            ) : (
+              inventoryAlerts.outOfStock.map((item) => (
+                <AlertRow
+                  key={`${item.variantSku}-oos`}
+                  name={item.productName}
+                  sku={item.variantSku}
+                  count="0 left"
+                  countColor="#ba1a1a"
+                  label={`RP: ${item.reorderPoint}`}
+                  borderColor="#ba1a1a"
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </SectionCard>
 
-      <div className="grid gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-7">
-          <CardHeader>
-            <CardTitle>Movement Insights</CardTitle>
-            <CardDescription>Fast-moving and slow-moving items for the selected range</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                <Flame className="size-4" />
+      {/* ── Movement Insights ── */}
+      <SectionCard title="Movement Insights — Fast &amp; Slow Movers">
+        <div className="grid gap-5 md:grid-cols-2">
+          {/* Fast moving */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="material-symbols-outlined text-emerald-600"
+                style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20" }}
+              >
+                local_fire_department
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
                 Fast Moving
-              </div>
-              {movementInsights.fastMoving.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No movement data yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {movementInsights.fastMoving.map((item) => (
-                    <div
-                      key={`${item.variantSku}-fast`}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.productName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.variantSku} · {item.category}
-                        </p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p className="font-semibold text-emerald-700 dark:text-emerald-400">
-                          {item.sold} sold
-                        </p>
-                        <p className="text-muted-foreground">{formatCurrency(item.revenue)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              </span>
             </div>
+            {movementInsights.fastMoving.length === 0 ? (
+              <p className="text-sm text-[#546067]">No movement data yet.</p>
+            ) : (
+              movementInsights.fastMoving.map((item) => (
+                <AlertRow
+                  key={`${item.variantSku}-fast`}
+                  name={item.productName}
+                  sku={`${item.variantSku} · ${item.category}`}
+                  count={`${item.sold} sold`}
+                  countColor="#059669"
+                  label={formatCurrency(item.revenue)}
+                  borderColor="#059669"
+                />
+              ))
+            )}
+          </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-sky-700 dark:text-sky-400">
-                <Turtle className="size-4" />
+          {/* Slow moving */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="material-symbols-outlined text-sky-600"
+                style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20" }}
+              >
+                hourglass_empty
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-sky-700">
                 Slow Moving
-              </div>
-              {movementInsights.slowMoving.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No movement data yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {movementInsights.slowMoving.map((item) => (
-                    <div
-                      key={`${item.variantSku}-slow`}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.productName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.variantSku} · {item.category}
-                        </p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p className="font-semibold text-sky-700 dark:text-sky-400">
-                          {item.sold} sold
-                        </p>
-                        <p className="text-muted-foreground">{formatCurrency(item.revenue)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              </span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            {movementInsights.slowMoving.length === 0 ? (
+              <p className="text-sm text-[#546067]">No movement data yet.</p>
+            ) : (
+              movementInsights.slowMoving.map((item) => (
+                <AlertRow
+                  key={`${item.variantSku}-slow`}
+                  name={item.productName}
+                  sku={`${item.variantSku} · ${item.category}`}
+                  count={`${item.sold} sold`}
+                  countColor="#0284c7"
+                  label={formatCurrency(item.revenue)}
+                  borderColor="#0284c7"
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </SectionCard>
 
+      {/* ── Management Insights (admin only) ── */}
       {showManagementInsights && (
-        <div className="grid gap-4 lg:grid-cols-7">
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle>Top Cashiers</CardTitle>
-              <CardDescription>Best cashier performance by revenue in selected range</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {topCashiers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No cashier activity yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {topCashiers.map((cashier) => (
-                    <div
-                      key={cashier.cashierId}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <UserRound className="size-4 text-muted-foreground" />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{cashier.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {cashier.orders} orders · AOV {formatCurrency(cashier.avgOrderValue)}
-                          </p>
-                        </div>
+        <div className="grid gap-5 lg:grid-cols-7">
+          {/* Top Cashiers */}
+          <SectionCard title="Top Cashier Performance" className="lg:col-span-4">
+            {topCashiers.length === 0 ? (
+              <p className="text-sm text-[#546067]">No cashier activity yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {topCashiers.map((cashier, i) => (
+                  <div
+                    key={cashier.cashierId}
+                    className="flex items-center justify-between px-3 py-2.5 border border-[rgba(228,190,180,0.18)] hover:bg-[#f9f9f9] transition-colors rounded-md"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Rank badge */}
+                      <div className={cn(
+                        "w-6 h-6 flex items-center justify-center rounded-sm text-[10px] font-bold shrink-0",
+                        i === 0 ? "bg-[#ff5722] text-white" : "bg-[#f3f3f3] text-[#546067]"
+                      )}>
+                        {i + 1}
                       </div>
-                      <p className="text-sm font-semibold">{formatCurrency(cashier.revenue)}</p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#1a1c1c] truncate">{cashier.name}</p>
+                        <p className="text-[10px] text-[#546067] font-medium">
+                          {cashier.orders} orders · AOV {formatCurrency(cashier.avgOrderValue)}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <p className="text-sm font-extrabold text-[#1a1c1c] shrink-0 ml-3">
+                      {formatCurrency(cashier.revenue)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
 
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Payment Mix</CardTitle>
-              <CardDescription>Revenue distribution by payment method</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {paymentMix.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No payment data yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {paymentMix.map((item) => (
-                    <div
-                      key={item.method}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
-                    >
+          {/* Payment Mix */}
+          <SectionCard title="Payment Method Distribution" className="lg:col-span-3">
+            {paymentMix.length === 0 ? (
+              <p className="text-sm text-[#546067]">No payment data yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {paymentMix.map((item) => (
+                  <div key={item.method} className="space-y-1.5">
+                    <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <WalletCards className="size-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{item.method}</span>
+                        <span
+                          className="material-symbols-outlined text-[#546067]"
+                          style={{ fontSize: "16px" }}
+                        >
+                          {item.method === "Cash" ? "payments"
+                            : item.method === "GCash" ? "smartphone"
+                            : "credit_card"}
+                        </span>
+                        <span className="text-xs font-bold text-[#1a1c1c]">{item.method}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{formatCurrency(item.amount)}</p>
-                        <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
+                        <span className="text-xs font-bold text-[#1a1c1c]">{formatCurrency(item.amount)}</span>
+                        <span className="text-[10px] text-[#546067] ml-2">{item.percentage.toFixed(1)}%</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {/* Progress bar */}
+                    <div className="w-full h-1 bg-[#e8e8e8] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#ff5722] rounded-full"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
       )}
     </>

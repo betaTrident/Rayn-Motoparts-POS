@@ -1,152 +1,117 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
-  RotateCcw,
-  BarChart3,
-  Activity,
-  ClipboardList,
-  Rocket,
-  SlidersHorizontal,
-  ShieldCheck,
-  Receipt,
-  Users,
-  Settings,
-  LogOut,
-  ChevronUp,
-  ChevronLeft,
-} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+// ═══════════════════════════════════════════════════════
+//  INDUSTRIAL ATELIER — AppSidebar
+//  Crisp light sidebar with Racing Orange active states
+// ═══════════════════════════════════════════════════════
 
-import RaynLogo from "@/assets/RaynLogo.svg";
-
-// ── Navigation Items ──
 const mainNavItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    key: "dashboard",
-    enabled: true,
-  },
-  {
-    title: "Point of Sale",
-    icon: ShoppingCart,
-    key: "pos",
-    enabled: true,
-  },
-  {
-    title: "Catalog",
-    icon: Package,
-    key: "catalog",
-    enabled: true,
-  },
-  {
-    title: "Customers",
-    icon: Users,
-    key: "customers",
-    enabled: true,
-  },
-  {
-    title: "Inventory",
-    icon: Package,
-    key: "inventory",
-    enabled: true,
-  },
-  {
-    title: "Transactions",
-    icon: Receipt,
-    key: "transactions",
-    enabled: true,
-  },
-  {
-    title: "Returns",
-    icon: RotateCcw,
-    key: "returns",
-    enabled: true,
-  },
-  {
-    title: "Reports",
-    icon: BarChart3,
-    key: "reports",
-    enabled: true,
-  },
+  { title: "Dashboard",     icon: "dashboard",         key: "dashboard",    enabled: true  },
+  { title: "Point of Sale", icon: "point_of_sale",     key: "pos",          enabled: true  },
+  { title: "Catalog",       icon: "inventory_2",        key: "catalog",      enabled: true  },
+  { title: "Customers",     icon: "groups",             key: "customers",    enabled: true  },
+  { title: "Inventory",     icon: "warehouse",          key: "inventory",    enabled: true  },
+  { title: "Transactions",  icon: "receipt_long",       key: "transactions", enabled: true  },
+  { title: "Returns",       icon: "assignment_return",  key: "returns",      enabled: true  },
+  { title: "Reports",       icon: "bar_chart",          key: "reports",      enabled: true  },
 ];
 
 const adminNavItems = [
-  {
-    title: "Staff Management",
-    icon: Users,
-    key: "staff",
-    enabled: false,
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    key: "settings",
-    enabled: true,
-  },
+  { title: "Settings", icon: "settings", key: "settings", enabled: true },
 ];
 
 const systemNavItems = [
-  {
-    title: "System Audit",
-    icon: ClipboardList,
-    path: "/app/system/audit",
-  },
-  {
-    title: "Cutover Controls",
-    icon: SlidersHorizontal,
-    path: "/app/system/cutover-controls",
-  },
-  {
-    title: "System Health",
-    icon: Activity,
-    path: "/app/system/health",
-  },
-  {
-    title: "System Rollout",
-    icon: Rocket,
-    path: "/app/system/rollout",
-  },
-  {
-    title: "Reconciliation",
-    icon: ShieldCheck,
-    path: "/app/system/reconciliation",
-  },
+  { title: "System Audit",     icon: "fact_check",    path: "/app/system/audit"            },
+  { title: "Cutover Controls", icon: "tune",          path: "/app/system/cutover-controls" },
+  { title: "System Health",    icon: "monitor_heart", path: "/app/system/health"           },
+  { title: "System Rollout",   icon: "rocket_launch", path: "/app/system/rollout"          },
+  { title: "Reconciliation",   icon: "verified_user", path: "/app/system/reconciliation"   },
 ];
 
+// ── Single nav row ──
+function NavItem({
+  icon,
+  title,
+  isActive,
+  onClick,
+  collapsed,
+}: {
+  icon: string;
+  title: string;
+  isActive: boolean;
+  onClick: () => void;
+  collapsed: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={collapsed ? title : undefined}
+      className={cn(
+        "w-full flex items-center text-sm font-medium tracking-tight",
+        "transition-colors duration-150 ease-in-out cursor-pointer relative",
+        "border-r-2",
+        isActive
+          ? "text-[#ff5722] bg-[#f3f3f3] border-[#ff5722]"
+          : "text-[#546067] hover:bg-[#f3f3f3] hover:text-[#1a1c1c] border-transparent",
+        collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-2.5"
+      )}
+    >
+      <span
+        className="material-symbols-outlined text-xl shrink-0"
+        style={{
+          fontVariationSettings: isActive
+            ? "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24"
+            : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+        }}
+      >
+        {icon}
+      </span>
+      {!collapsed && <span className="truncate">{title}</span>}
+    </button>
+  );
+}
+
+// ── Section divider / label ──
+function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) {
+    return <div className="h-px bg-[rgba(228,190,180,0.25)] mx-2 my-2" />;
+  }
+  return (
+    <div className="px-4 pt-4 pb-1.5">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-[#907067]">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  Main Component
+// ═══════════════════════════════════════════════════════
 export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { canAccessAdmin, canAccessCatalog, canAccessPos, highestRole } = usePermissions();
-  const { state, toggleSidebar } = useSidebar();
+
+  // Collapse state with localStorage persistence
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ia-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem("ia-sidebar-collapsed", String(next)); } catch { /* */ }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -157,214 +122,205 @@ export default function AppSidebar() {
 
   const resolvedMainItems = useMemo(() => {
     return mainNavItems
-      .map((item) => ({
-        ...item,
-        path: `${appBasePath}/${item.key}`,
-      }))
+      .map((item) => ({ ...item, path: `${appBasePath}/${item.key}` }))
       .filter((item) => {
-        if (highestRole === "staff" && item.key === "catalog") {
-          return false;
-        }
-        if (item.key === "catalog" && !canAccessCatalog) {
-          return false;
-        }
-        if (item.key === "pos" && !canAccessPos) {
-          return false;
-        }
-        if (item.key === "returns" && !canAccessPos) {
-          return false;
-        }
-        if (highestRole === "staff" && item.key === "reports") {
-          return false;
-        }
+        if (highestRole === "staff" && item.key === "catalog") return false;
+        if (highestRole === "staff" && item.key === "reports") return false;
+        if (item.key === "catalog" && !canAccessCatalog)       return false;
+        if (item.key === "pos"     && !canAccessPos)           return false;
+        if (item.key === "returns" && !canAccessPos)           return false;
         return item.enabled || item.key === "dashboard";
       });
   }, [appBasePath, canAccessCatalog, canAccessPos, highestRole]);
 
-  const resolvedAdminItems = useMemo(() => {
-    return adminNavItems.map((item) => ({
-      ...item,
-      path: `${appBasePath}/${item.key}`,
-    }));
-  }, [appBasePath]);
+  const resolvedAdminItems = useMemo(() =>
+    adminNavItems
+      .filter((i) => i.enabled)
+      .map((item) => ({ ...item, path: `${appBasePath}/${item.key}` })),
+    [appBasePath]
+  );
 
-  // Get user initials for the avatar fallback
   const initials = user
     ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
     : "??";
 
   return (
-    <Sidebar collapsible="icon">
-      {/* ── Sidebar Header: Logo ── */}
-      <SidebarHeader className="h-14 border-b border-sidebar-border py-0 justify-center">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              onClick={() => navigate(`${appBasePath}/dashboard`)}
-              className="cursor-pointer"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white/15">
-                <img
-                  src={RaynLogo}
-                  alt="Rayn Motorparts and accessories"
-                  className="size-5 object-contain"
-                />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold text-sm">Admin</span>
-                <span className="text-xs text-sidebar-foreground/60">
-                  Ansel Ray Tapales
-                </span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen flex flex-col bg-white z-50",
+        "border-r border-[rgba(228,190,180,0.22)] transition-all duration-200 ease-in-out",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      {/* ── Brand header ── */}
+      <div
+        className={cn(
+          "h-16 flex items-center shrink-0",
+          "border-b border-[rgba(228,190,180,0.22)]",
+          collapsed ? "justify-center px-2" : "px-4 gap-3"
+        )}
+      >
+        <div className="w-8 h-8 bg-[#ff5722] flex items-center justify-center rounded-sm shrink-0">
+          <span
+            className="material-symbols-outlined text-white"
+            style={{ fontSize: "18px", fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}
+          >
+            precision_manufacturing
+          </span>
+        </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <h1 className="text-sm font-semibold text-[#1a1c1c] tracking-tight leading-none truncate">
+              Rayn Motoparts
+            </h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#546067] mt-0.5">
+              Precision POS
+            </p>
+          </div>
+        )}
+      </div>
 
-      {/* ── Sidebar Content: Navigation ── */}
-      <SidebarContent>
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {resolvedMainItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    isActive={location.pathname === item.path}
-                    tooltip={item.title}
-                    onClick={() => navigate(item.path)}
-                    className="cursor-pointer"
-                  >
-                    <item.icon className="size-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      {/* ── Navigation ── */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2" style={{ scrollbarWidth: "none" }}>
+        <SectionLabel label="Main Menu" collapsed={collapsed} />
+        {resolvedMainItems.map((item) => (
+          <NavItem
+            key={item.path}
+            icon={item.icon}
+            title={item.title}
+            isActive={location.pathname === item.path || location.pathname.startsWith(item.path + "/")}
+            onClick={() => navigate(item.path)}
+            collapsed={collapsed}
+          />
+        ))}
 
-        {/* Admin Navigation */}
         {canAccessAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {resolvedAdminItems.map((item) => (
-                  !item.enabled ? null : (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={location.pathname === item.path}
-                      tooltip={item.title}
-                      onClick={() => navigate(item.path)}
-                      className="cursor-pointer"
-                    >
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  )
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <SectionLabel label="Administration" collapsed={collapsed} />
+            {resolvedAdminItems.map((item) => (
+              <NavItem
+                key={item.path}
+                icon={item.icon}
+                title={item.title}
+                isActive={location.pathname === item.path}
+                onClick={() => navigate(item.path)}
+                collapsed={collapsed}
+              />
+            ))}
+          </>
         )}
 
         {highestRole === "superadmin" && (
-          <SidebarGroup>
-            <SidebarGroupLabel>System</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {systemNavItems.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={location.pathname === item.path}
-                      tooltip={item.title}
-                      onClick={() => navigate(item.path)}
-                      className="cursor-pointer"
-                    >
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <SectionLabel label="System" collapsed={collapsed} />
+            {systemNavItems.map((item) => (
+              <NavItem
+                key={item.path}
+                icon={item.icon}
+                title={item.title}
+                isActive={location.pathname === item.path}
+                onClick={() => navigate(item.path)}
+                collapsed={collapsed}
+              />
+            ))}
+          </>
         )}
-      </SidebarContent>
+      </nav>
 
-      {/* ── Sidebar Footer: User Menu ── */}
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="cursor-pointer data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="size-8">
-                    <AvatarFallback className="bg-white/20 text-white text-xs font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-0.5 leading-none text-left">
-                    <span className="truncate text-sm font-medium">
-                      {user?.first_name} {user?.last_name}
-                    </span>
-                    <span className="truncate text-xs text-sidebar-foreground/60">
-                      {user?.email}
-                    </span>
-                  </div>
-                  <ChevronUp className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                align="start"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
-              >
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">
-                    {user?.first_name} {user?.last_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(`${appBasePath}/dashboard`)}>
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                >
-                  <LogOut className="mr-2 size-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      {/* ── New Sale CTA (only expanded) ── */}
+      {!collapsed && (
+        <div className="px-3 pt-2 pb-0 border-t border-[rgba(228,190,180,0.22)]">
+          <button
+            onClick={() => navigate(`${appBasePath}/pos`)}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 py-2 px-4 rounded-sm",
+              "bg-[#ff5722] text-white",
+              "text-[10px] font-bold uppercase tracking-widest",
+              "hover:bg-[#e04a1e] active:scale-[0.97] transition-all duration-150"
+            )}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20" }}>
+              add_circle
+            </span>
+            New Sale
+          </button>
+        </div>
+      )}
 
-      {/* ── Edge Toggle Button ── */}
-      <button
-        onClick={toggleSidebar}
-        aria-label="Toggle Sidebar"
-        className="absolute -right-3 top-4 z-20 hidden size-6 items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground md:flex"
+      {/* ── User row ── */}
+      <div
+        className={cn(
+          "border-t border-[rgba(228,190,180,0.22)] shrink-0",
+          collapsed ? "p-2" : "p-3"
+        )}
       >
-        <ChevronLeft
+        <div
           className={cn(
-            "size-3 transition-transform duration-200",
-            state === "collapsed" && "rotate-180"
+            "flex items-center gap-3 rounded-sm",
+            "hover:bg-[#f3f3f3] transition-colors duration-150 group",
+            collapsed ? "justify-center p-2" : "px-2 py-2"
           )}
-        />
+          title={collapsed ? `${user?.first_name} ${user?.last_name}\n${user?.email}` : undefined}
+        >
+          {/* Initials avatar */}
+          <div className="w-7 h-7 rounded-full bg-[#ff5722] flex items-center justify-center text-white text-xs font-bold shrink-0 select-none">
+            {initials}
+          </div>
+
+          {!collapsed && (
+            <>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-[#1a1c1c] truncate leading-none">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-[10px] text-[#546067] truncate mt-0.5">{user?.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Sign out"
+                className={cn(
+                  "opacity-0 group-hover:opacity-100 transition-opacity",
+                  "text-[#546067] hover:text-[#ba1a1a] cursor-pointer"
+                )}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+                  logout
+                </span>
+              </button>
+            </>
+          )}
+        </div>
+
+        {collapsed && (
+          <button
+            onClick={handleLogout}
+            title="Sign out"
+            className="w-full flex justify-center py-1.5 mt-1 text-[#546067] hover:text-[#ba1a1a] transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>logout</span>
+          </button>
+        )}
+      </div>
+
+      {/* ── Collapse toggle pin ── */}
+      <button
+        onClick={toggleCollapse}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className={cn(
+          "absolute -right-3 top-[4.75rem] z-20",
+          "w-6 h-6 bg-white border border-[rgba(228,190,180,0.3)] rounded-full",
+          "flex items-center justify-center shadow-sm cursor-pointer",
+          "text-[#546067] hover:text-[#ff5722] hover:border-[#ff5722]",
+          "transition-colors duration-150"
+        )}
+      >
+        <span
+          className={cn("material-symbols-outlined transition-transform duration-200", collapsed && "rotate-180")}
+          style={{ fontSize: "14px" }}
+        >
+          chevron_left
+        </span>
       </button>
-    </Sidebar>
+    </aside>
   );
 }

@@ -595,7 +595,7 @@ export default function CatalogModulePage() {
 
           {/* View toggle (products only) */}
           {activeTab === "products" && (
-            <div className="hidden items-center gap-1 rounded-lg border p-0.5 sm:flex">
+            <div className="hidden items-center gap-1 rounded-md border p-0.5 sm:flex">
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
@@ -785,7 +785,7 @@ export default function CatalogModulePage() {
                       <TableRow key={product.id} className="group">
                         <TableCell className="pl-4">
                           <div className="flex items-center gap-3">
-                            <div className="bg-primary/8 text-primary flex size-9 items-center justify-center rounded-lg">
+                            <div className="bg-primary/8 text-primary flex size-9 items-center justify-center rounded-md">
                               <Wrench className="size-4" />
                             </div>
                             <div className="min-w-0">
@@ -950,7 +950,7 @@ export default function CatalogModulePage() {
                   <div
                     key={cat.id}
                     className={cn(
-                      "group relative rounded-xl border p-4 transition-all hover:shadow-md",
+                      "group relative rounded-lg border p-4 transition-all hover:shadow-md",
                       cat.is_active
                         ? "hover:border-primary/30 bg-card"
                         : "bg-muted/30 opacity-75"
@@ -961,7 +961,7 @@ export default function CatalogModulePage() {
                       <div className="flex items-center gap-3">
                         <div
                           className={cn(
-                            "flex size-10 items-center justify-center rounded-lg",
+                            "flex size-10 items-center justify-center rounded-md",
                             cat.is_active
                               ? "bg-primary/10 text-primary"
                               : "bg-muted text-muted-foreground"
@@ -1046,7 +1046,7 @@ export default function CatalogModulePage() {
                 <button
                   type="button"
                   onClick={openCreateCategory}
-                  className="text-muted-foreground hover:border-primary/40 hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 transition-colors"
+                  className="text-muted-foreground hover:border-primary/40 hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors"
                 >
                   <Plus className="size-6" />
                   <span className="text-sm font-medium">Add Category</span>
@@ -1504,7 +1504,7 @@ function StatCard({
       <CardContent className="flex items-center gap-3 pb-0">
         <div
           className={cn(
-            "flex size-9 items-center justify-center rounded-lg",
+            "flex size-9 items-center justify-center rounded-md",
             colors[accent]
           )}
         >
@@ -1573,11 +1573,11 @@ function ProductCard({
   onToggle: (p: Product) => void;
 }) {
   return (
-    <div className="hover:border-primary/20 group relative rounded-xl border bg-card p-4 transition-all hover:shadow-md">
+    <div className="hover:border-primary/20 group relative rounded-lg border bg-card p-4 transition-all hover:shadow-md">
       {/* Top row */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/8 text-primary flex size-10 items-center justify-center rounded-lg">
+          <div className="bg-primary/8 text-primary flex size-10 items-center justify-center rounded-md">
             <Wrench className="size-5" />
           </div>
           <div className="min-w-0">

@@ -1,15 +1,4 @@
-import { Loader2 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 
 type PageLoadingStateProps = {
   label?: string;
@@ -30,16 +19,22 @@ export function PageLoadingState({
       aria-live="polite"
       aria-label={label}
     >
-      <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <Loader2 className="text-primary size-5 animate-spin" />
-        <span>{label}</span>
+      <div className="flex flex-col items-center gap-4">
+        {/* Industrial spinner: 3 concentric rings */}
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 border-2 border-[rgba(228,190,180,0.3)] rounded-full" />
+          <div className="absolute inset-0 border-2 border-transparent border-t-[#ff5722] rounded-full animate-spin" />
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#546067]">
+          {label}
+        </span>
       </div>
     </div>
   );
 }
 
 type PageEmptyStateProps = {
-  icon: React.ElementType;
+  icon?: string;
   title: string;
   description: string;
   action?: React.ReactNode;
@@ -47,23 +42,33 @@ type PageEmptyStateProps = {
 };
 
 export function PageEmptyState({
-  icon: Icon,
+  icon = "inbox",
   title,
   description,
   action,
   className,
 }: PageEmptyStateProps) {
   return (
-    <Empty className={cn("border-0 rounded-none py-14", className)}>
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Icon className="size-5" />
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
-      </EmptyHeader>
-      {action ? <EmptyContent>{action}</EmptyContent> : null}
-    </Empty>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-16 text-center",
+        className
+      )}
+    >
+      <div className="w-16 h-16 bg-[#f3f3f3] border border-[rgba(228,190,180,0.3)] flex items-center justify-center mb-4">
+        <span
+          className="material-symbols-outlined text-[#546067]"
+          style={{ fontSize: "28px" }}
+        >
+          {icon}
+        </span>
+      </div>
+      <h3 className="text-sm font-bold text-[#1a1c1c] mb-1">{title}</h3>
+      <p className="text-xs text-[#546067] font-medium max-w-xs leading-relaxed">
+        {description}
+      </p>
+      {action && <div className="mt-4">{action}</div>}
+    </div>
   );
 }
 
@@ -83,21 +88,36 @@ export function PageErrorState({
   className,
 }: PageErrorStateProps) {
   return (
-    <Empty className={cn("border-0 rounded-none py-14", className)}>
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <span className="text-destructive text-lg font-semibold">!</span>
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
-      </EmptyHeader>
-      {onRetry ? (
-        <EmptyContent>
-          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            {retryLabel}
-          </Button>
-        </EmptyContent>
-      ) : null}
-    </Empty>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-16 text-center",
+        className
+      )}
+    >
+      <div className="w-16 h-16 bg-[#ffdad6]/30 border-l-4 border-[#ba1a1a] flex items-center justify-center mb-4">
+        <span
+          className="material-symbols-outlined text-[#ba1a1a]"
+          style={{
+            fontSize: "28px",
+            fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 28",
+          }}
+        >
+          error
+        </span>
+      </div>
+      <h3 className="text-sm font-bold text-[#1a1c1c] mb-1">{title}</h3>
+      <p className="text-xs text-[#546067] font-medium max-w-xs leading-relaxed">
+        {description}
+      </p>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 px-4 py-2 border border-[rgba(228,190,180,0.4)] text-[#1a1c1c] text-[10px] font-bold uppercase tracking-widest hover:bg-[#f3f3f3] transition-colors"
+        >
+          {retryLabel}
+        </button>
+      )}
+    </div>
   );
 }
