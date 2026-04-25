@@ -30,7 +30,7 @@
   --ia-primary:            #b02f00;
   --ia-primary-container:  #ff5722;
   --ia-on-primary:         #ffffff;
-  --ia-surface:            #f2f2f2;
+  --ia-surface:            #e1e1e1;
   --ia-surface-low:        #f3f3f3;
   --ia-surface-high:       #e8e8e8;
   --ia-surface-card:       #ffffff;
@@ -43,7 +43,7 @@
   --ia-error-container:    #ffdad6;
 
   /* ── shadcn/ui CSS variable remapping ── */
-  --background:            #f2f2f2;
+  --background:            #e1e1e1;
   --foreground:            #1a1c1c;
   --card:                  #ffffff;
   --card-foreground:       #1a1c1c;
@@ -86,7 +86,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #f2f2f2;
+  background-color: #e1e1e1;
   color: #1a1c1c;
 }
 
@@ -168,7 +168,7 @@ body {
   /* Card header "well" - surface-container-high */
   .ia-well {
     background-color: #e8e8e8;
-    border-bottom: 1px solid rgba(228, 190, 180, 0.15);
+    border-bottom: 1px solid rgba(84, 96, 103, 0.15);
     padding: 1rem 1.5rem;
   }
 
@@ -210,5 +210,5 @@ body {
 /* ── Scrollbar: thin industrial style ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #f3f3f3; }
-::-webkit-scrollbar-thumb { background: #e4beb4; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #907067; }
+::-webkit-scrollbar-thumb { background: #8a8f94; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #6c7277; }

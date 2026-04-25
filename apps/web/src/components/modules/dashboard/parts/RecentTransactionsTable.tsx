@@ -40,9 +40,9 @@ export default function RecentTransactionsTable({
   transactions,
 }: RecentTransactionsTableProps) {
   return (
-    <div className="bg-white border border-[rgba(228,190,180,0.2)] rounded-lg overflow-hidden">
+    <div className="bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden">
       {/* ── Header well ── */}
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(228,190,180,0.15)] flex justify-between items-center">
+      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex justify-between items-center">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
           Recent Transaction Log
         </h3>
@@ -71,7 +71,7 @@ export default function RecentTransactionsTable({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(228,190,180,0.12)]">
+          <tbody className="divide-y divide-[rgba(84,96,103,0.12)]">
             {transactions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-5 py-8 text-center text-sm text-[#546067]">

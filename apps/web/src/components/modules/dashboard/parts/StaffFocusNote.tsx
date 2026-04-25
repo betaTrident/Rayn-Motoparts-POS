@@ -1,8 +1,8 @@
 export default function StaffFocusNote() {
   return (
-    <div className="bg-white border border-[rgba(228,190,180,0.2)] rounded-lg overflow-hidden">
+    <div className="bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden">
       {/* Header well */}
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(228,190,180,0.15)]">
+      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)]">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
           Shift Focus
         </h3>

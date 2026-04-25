@@ -12,11 +12,11 @@ export default function NotFoundPage() {
       aria-labelledby="not-found-title"
       style={{
         backgroundImage:
-          "linear-gradient(rgba(228,190,180,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(228,190,180,0.15) 1px, transparent 1px)",
+          "linear-gradient(rgba(84,96,103,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(84,96,103,0.15) 1px, transparent 1px)",
         backgroundSize: "32px 32px",
       }}
     >
-      <div className="text-center space-y-6 max-w-sm bg-white border border-[rgba(228,190,180,0.25)] p-10 shadow-[0_2px_12px_rgba(84,96,103,0.08)]">
+      <div className="text-center space-y-6 max-w-sm bg-white border border-[rgba(84,96,103,0.25)] p-10 shadow-[0_2px_12px_rgba(84,96,103,0.08)]">
         {/* Error code */}
         <div>
           <div className="text-[80px] font-extrabold leading-none tracking-tighter text-[#e8e8e8]">
@@ -39,7 +39,7 @@ export default function NotFoundPage() {
         <div className="flex gap-2 justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="px-4 py-2 border border-[rgba(228,190,180,0.4)] text-[#1a1c1c] text-[10px] font-bold uppercase tracking-widest hover:bg-[#f3f3f3] transition-colors"
+            className="px-4 py-2 border border-[rgba(84,96,103,0.4)] text-[#1a1c1c] text-[10px] font-bold uppercase tracking-widest hover:bg-[#f3f3f3] transition-colors"
           >
             Go Back
           </button>

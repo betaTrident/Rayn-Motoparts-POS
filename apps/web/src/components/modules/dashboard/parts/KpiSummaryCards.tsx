@@ -18,7 +18,7 @@ function KpiCard({
   progressPct: number;
 }) {
   return (
-    <div className="bg-white border border-[rgba(228,190,180,0.2)] p-5 rounded-lg">
+    <div className="bg-white border border-[rgba(84,96,103,0.2)] p-5 rounded-lg shadow-sm">
       {/* Header row */}
       <div className="flex justify-between items-start mb-4">
         <span className="text-[10px] font-bold uppercase tracking-widest text-[#546067]">

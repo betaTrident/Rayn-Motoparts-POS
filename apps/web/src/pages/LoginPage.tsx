@@ -163,9 +163,9 @@ export default function LoginPage() {
         </div>
 
         {/* Form card */}
-        <div className="w-full max-w-sm bg-white border border-[rgba(228,190,180,0.22)] shadow-[0_2px_12px_rgba(84,96,103,0.08)]">
+        <div className="w-full max-w-sm bg-white border border-[rgba(84,96,103,0.22)] shadow-[0_2px_12px_rgba(84,96,103,0.08)]">
           {/* Card header well */}
-          <div className="bg-[#e8e8e8] border-b border-[rgba(228,190,180,0.2)] px-6 py-4">
+          <div className="bg-[#e8e8e8] border-b border-[rgba(84,96,103,0.2)] px-6 py-4">
             <h2
               id="login-page-heading"
               className="text-xs font-bold uppercase tracking-widest text-[#1a1c1c]"
@@ -218,7 +218,7 @@ export default function LoginPage() {
                           disabled={isSubmitting}
                           className={cn(
                             "w-full px-3 py-2.5 text-sm text-[#1a1c1c] bg-[#f9f9f9]",
-                            "border border-[rgba(228,190,180,0.35)]",
+                            "border border-[rgba(84,96,103,0.35)]",
                             "focus:outline-none focus:border-[#ff5722] focus:border-2 focus:bg-white",
                             "disabled:opacity-50 disabled:cursor-not-allowed",
                             "transition-all duration-150 placeholder:text-[#546067]/60"
@@ -249,7 +249,7 @@ export default function LoginPage() {
                             disabled={isSubmitting}
                             className={cn(
                               "w-full px-3 py-2.5 pr-10 text-sm text-[#1a1c1c] bg-[#f9f9f9]",
-                              "border border-[rgba(228,190,180,0.35)]",
+                              "border border-[rgba(84,96,103,0.35)]",
                               "focus:outline-none focus:border-[#ff5722] focus:border-2 focus:bg-white",
                               "disabled:opacity-50 disabled:cursor-not-allowed",
                               "transition-all duration-150 placeholder:text-[#546067]/60"

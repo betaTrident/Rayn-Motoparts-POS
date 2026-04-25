@@ -188,8 +188,8 @@ export default function ReportsModulePage() {
               <CardTitle>Payment Mix</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {snapshot.dashboard.paymentMix.map((item) => (
-                <div key={item.method} className="space-y-1">
+              {snapshot.dashboard.paymentMix.map((item, index) => (
+                <div key={`${item.method}-${index}`} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span>{item.method}</span>
                     <span>

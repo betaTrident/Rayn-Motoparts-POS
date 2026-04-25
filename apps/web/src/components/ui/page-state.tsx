@@ -119,7 +119,7 @@ export function PageErrorState({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 px-4 py-2 border border-[rgba(228,190,180,0.4)] text-[#1a1c1c] text-[10px] font-bold uppercase tracking-widest hover:bg-[#f3f3f3] transition-colors"
+          className="mt-4 px-4 py-2 border border-[rgba(84,96,103,0.4)] text-[#1a1c1c] text-[10px] font-bold uppercase tracking-widest hover:bg-[#f3f3f3] transition-colors"
         >
           {retryLabel}
         </button>

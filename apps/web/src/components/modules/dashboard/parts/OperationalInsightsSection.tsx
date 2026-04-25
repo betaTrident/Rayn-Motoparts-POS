@@ -20,8 +20,8 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-white border border-[rgba(228,190,180,0.2)] rounded-lg overflow-hidden ${className ?? ""}`}>
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(228,190,180,0.15)] flex items-center justify-between">
+    <div className={`bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
+      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex items-center justify-between">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
           {title}
         </h3>
@@ -52,7 +52,7 @@ function AlertRow({
     <div
       className={cn(
         "flex items-center justify-between px-3 py-2.5 rounded-md",
-        "border-l-4 bg-white border border-[rgba(228,190,180,0.15)]",
+        "border-l-4 bg-white border border-[rgba(84,96,103,0.15)]",
       )}
       style={{ borderLeftColor: borderColor }}
     >
@@ -243,7 +243,7 @@ export default function OperationalInsightsSection({
                 {topCashiers.map((cashier, i) => (
                   <div
                     key={cashier.cashierId}
-                    className="flex items-center justify-between px-3 py-2.5 border border-[rgba(228,190,180,0.18)] hover:bg-[#f9f9f9] transition-colors rounded-md"
+                    className="flex items-center justify-between px-3 py-2.5 border border-[rgba(84,96,103,0.18)] hover:bg-[#f9f9f9] transition-colors rounded-md"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Rank badge */}

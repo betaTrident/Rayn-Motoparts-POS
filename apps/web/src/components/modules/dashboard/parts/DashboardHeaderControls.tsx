@@ -40,7 +40,7 @@ export default function DashboardHeaderControls({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {/* Range tab pills */}
-          <div className="flex border border-[rgba(228,190,180,0.3)] rounded-md overflow-hidden">
+          <div className="flex border border-[rgba(84,96,103,0.3)] rounded-md overflow-hidden">
             {rangeOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -50,7 +50,7 @@ export default function DashboardHeaderControls({
                   rangeValue === opt.value
                     ? "bg-[#ff5722] text-white"
                     : "bg-white text-[#546067] hover:bg-[#f3f3f3] hover:text-[#1a1c1c]",
-                  opt.value !== "1" && "border-l border-[rgba(228,190,180,0.3)]"
+                  opt.value !== "1" && "border-l border-[rgba(84,96,103,0.3)]"
                 )}
               >
                 {opt.label}
@@ -68,7 +68,7 @@ export default function DashboardHeaderControls({
                 aria-label="Start date"
                 className={cn(
                   "px-2 py-1.5 text-xs text-[#1a1c1c] bg-white rounded-md",
-                  "border border-[rgba(228,190,180,0.35)]",
+                  "border border-[rgba(84,96,103,0.35)]",
                   "focus:outline-none focus:border-[#ff5722] focus:border-2",
                   "transition-all duration-150"
                 )}
@@ -81,7 +81,7 @@ export default function DashboardHeaderControls({
                 aria-label="End date"
                 className={cn(
                   "px-2 py-1.5 text-xs text-[#1a1c1c] bg-white rounded-md",
-                  "border border-[rgba(228,190,180,0.35)]",
+                  "border border-[rgba(84,96,103,0.35)]",
                   "focus:outline-none focus:border-[#ff5722] focus:border-2",
                   "transition-all duration-150"
                 )}
@@ -92,7 +92,7 @@ export default function DashboardHeaderControls({
           {/* Export button */}
           <button
             className={cn(
-              "px-4 py-2 border border-[rgba(228,190,180,0.4)] text-[#1a1c1c]",
+              "px-4 py-2 border border-[rgba(84,96,103,0.4)] text-[#1a1c1c]",
               "text-[10px] font-bold uppercase tracking-widest rounded-md",
               "hover:bg-[#f3f3f3] transition-colors duration-150"
             )}

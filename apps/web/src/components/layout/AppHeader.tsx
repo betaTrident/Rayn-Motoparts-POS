@@ -53,7 +53,7 @@ export default function AppHeader({ sidebarCollapsed }: AppHeaderProps) {
     <header
       className={cn(
         "fixed top-0 right-0 h-16 z-40 flex items-center",
-        "bg-white/85 backdrop-blur-md border-b border-[rgba(228,190,180,0.22)]",
+        "bg-white/85 backdrop-blur-md border-b border-[rgba(84,96,103,0.22)]",
         "px-5 gap-4 transition-all duration-200",
         leftOffset
       )}

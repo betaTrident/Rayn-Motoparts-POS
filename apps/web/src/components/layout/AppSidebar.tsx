@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const mainNavItems = [
   { title: "Dashboard",     icon: "dashboard",         key: "dashboard",    enabled: true  },
   { title: "Point of Sale", icon: "point_of_sale",     key: "pos",          enabled: true  },
-  { title: "Catalog",       icon: "inventory_2",        key: "catalog",      enabled: true  },
+  { title: "Products",       icon: "inventory_2",        key: "catalog",      enabled: true  },
   { title: "Customers",     icon: "groups",             key: "customers",    enabled: true  },
   { title: "Inventory",     icon: "warehouse",          key: "inventory",    enabled: true  },
   { title: "Transactions",  icon: "receipt_long",       key: "transactions", enabled: true  },
@@ -78,7 +78,7 @@ function NavItem({
 // ── Section divider / label ──
 function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
   if (collapsed) {
-    return <div className="h-px bg-[rgba(228,190,180,0.25)] mx-2 my-2" />;
+    return <div className="h-px bg-[rgba(84,96,103,0.25)] mx-2 my-2" />;
   }
   return (
     <div className="px-4 pt-4 pb-1.5">
@@ -148,7 +148,7 @@ export default function AppSidebar() {
     <aside
       className={cn(
         "fixed left-0 top-0 h-screen flex flex-col bg-white z-50",
-        "border-r border-[rgba(228,190,180,0.22)] transition-all duration-200 ease-in-out",
+        "border-r border-[rgba(84,96,103,0.22)] transition-all duration-200 ease-in-out",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -156,7 +156,7 @@ export default function AppSidebar() {
       <div
         className={cn(
           "h-16 flex items-center shrink-0",
-          "border-b border-[rgba(228,190,180,0.22)]",
+          "border-b border-[rgba(84,96,103,0.22)]",
           collapsed ? "justify-center px-2" : "px-4 gap-3"
         )}
       >
@@ -229,7 +229,7 @@ export default function AppSidebar() {
 
       {/* ── New Sale CTA (only expanded) ── */}
       {!collapsed && (
-        <div className="px-3 pt-2 pb-0 border-t border-[rgba(228,190,180,0.22)]">
+        <div className="px-3 pt-2 pb-0 border-t border-[rgba(84,96,103,0.22)]">
           <button
             onClick={() => navigate(`${appBasePath}/pos`)}
             className={cn(
@@ -250,7 +250,7 @@ export default function AppSidebar() {
       {/* ── User row ── */}
       <div
         className={cn(
-          "border-t border-[rgba(228,190,180,0.22)] shrink-0",
+          "border-t border-[rgba(84,96,103,0.22)] shrink-0",
           collapsed ? "p-2" : "p-3"
         )}
       >
@@ -308,7 +308,7 @@ export default function AppSidebar() {
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className={cn(
           "absolute -right-3 top-[4.75rem] z-20",
-          "w-6 h-6 bg-white border border-[rgba(228,190,180,0.3)] rounded-full",
+          "w-6 h-6 bg-white border border-[rgba(84,96,103,0.3)] rounded-full",
           "flex items-center justify-center shadow-sm cursor-pointer",
           "text-[#546067] hover:text-[#ff5722] hover:border-[#ff5722]",
           "transition-colors duration-150"
