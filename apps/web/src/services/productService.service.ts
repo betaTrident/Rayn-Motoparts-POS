@@ -16,7 +16,17 @@ const toCategory = (dto: CategoryDto): Category => ({
 
 const toProduct = (dto: ProductDto): Product => ({
   ...dto,
+  part_number: dto.part_number ?? "",
   description: dto.description ?? "",
+  cost_price: dto.cost_price ?? dto.price,
+  selling_price: dto.selling_price ?? dto.price,
+  is_active: dto.is_active ?? dto.is_available,
+  is_taxable: dto.is_taxable ?? true,
+  is_serialized: dto.is_serialized ?? false,
+  variant_sku: dto.variant_sku ?? "",
+  variant_name: dto.variant_name ?? "",
+  price: dto.selling_price ?? dto.price,
+  is_available: dto.is_active ?? dto.is_available,
 });
 
 // ════════════════════════════════════════════════

@@ -12,10 +12,21 @@ export interface CategoryDto {
 
 export interface ProductDto {
   id: number;
+  sku: string;
+  part_number: string | null;
   name: string;
   category: number;
   category_name: string;
+  uom_code: string;
+  tax_rate_name: string;
   description: string | null;
+  cost_price: string;
+  selling_price: string;
+  is_active: boolean;
+  is_taxable: boolean;
+  is_serialized: boolean;
+  variant_sku: string | null;
+  variant_name: string | null;
   price: string;
   size: ProductSizeDto;
   size_display: string;

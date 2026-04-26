@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Outlet } from "react-router";
 import AppSidebar from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
@@ -20,20 +19,13 @@ import { cn } from "@/lib/utils";
  * can adjust its left-offset in sync.
  */
 export default function MainLayout() {
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
+  const collapsed = (() => {
     try {
       return localStorage.getItem("ia-sidebar-collapsed") === "true";
     } catch {
       return false;
     }
-  });
-
-  // Listen to sidebar toggle events via storage
-  const handleStorageChange = () => {
-    try {
-      setCollapsed(localStorage.getItem("ia-sidebar-collapsed") === "true");
-    } catch { /* */ }
-  };
+  })();
 
   // Sync collapse state by polling localStorage (lightweight approach)
   // The sidebar writes to localStorage on toggle; we read it here.

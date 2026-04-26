@@ -37,14 +37,12 @@ function AlertRow({
   name,
   sku,
   count,
-  countColor,
   label,
   borderColor,
 }: {
   name: string;
   sku: string;
   count: string;
-  countColor: string;
   label: string;
   borderColor: string;
 }) {
@@ -126,7 +124,6 @@ export default function OperationalInsightsSection({
                   name={item.productName}
                   sku={item.variantSku}
                   count={`${item.qtyAvailable} left`}
-                  countColor="#d97706"
                   label={`RP: ${item.reorderPoint}`}
                   borderColor="#d97706"
                 />
@@ -156,7 +153,6 @@ export default function OperationalInsightsSection({
                   name={item.productName}
                   sku={item.variantSku}
                   count="0 left"
-                  countColor="#ba1a1a"
                   label={`RP: ${item.reorderPoint}`}
                   borderColor="#ba1a1a"
                 />
@@ -191,7 +187,6 @@ export default function OperationalInsightsSection({
                   name={item.productName}
                   sku={`${item.variantSku} · ${item.category}`}
                   count={`${item.sold} sold`}
-                  countColor="#059669"
                   label={formatCurrency(item.revenue)}
                   borderColor="#059669"
                 />
@@ -221,7 +216,6 @@ export default function OperationalInsightsSection({
                   name={item.productName}
                   sku={`${item.variantSku} · ${item.category}`}
                   count={`${item.sold} sold`}
-                  countColor="#0284c7"
                   label={formatCurrency(item.revenue)}
                   borderColor="#0284c7"
                 />

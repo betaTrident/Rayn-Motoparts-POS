@@ -22,10 +22,21 @@ export interface CategoryFormData {
 
 export interface Product {
   id: number;
+  sku: string;
+  part_number: string;
   name: string;
   category: number;
   category_name: string;
+  uom_code: string;
+  tax_rate_name: string;
   description: string;
+  cost_price: string;
+  selling_price: string;
+  is_active: boolean;
+  is_taxable: boolean;
+  is_serialized: boolean;
+  variant_sku: string;
+  variant_name: string;
   price: string;            // Django DecimalField → string
   size: ProductSize;
   size_display: string;
@@ -36,12 +47,21 @@ export interface Product {
 }
 
 export interface ProductFormData {
+  sku?: string;
   name: string;
+  part_number?: string;
   category: number;
   description: string;
-  price: number;
+  cost_price: number;
+  selling_price: number;
+  price?: number;
+  variant_sku?: string;
+  variant_name?: string;
   size: ProductSize;
-  is_available: boolean;
+  is_active: boolean;
+  is_available?: boolean;
+  is_taxable: boolean;
+  is_serialized: boolean;
   image?: File | null;
 }
 

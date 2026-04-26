@@ -13,8 +13,6 @@ import {
   Archive,
   ArchiveRestore,
   Wrench,
-  Grid3X3,
-  LayoutList,
   X,
 } from "lucide-react";
 
@@ -88,7 +86,7 @@ import {
 import PageHeader from "@/components/layout/PageHeader";
 
 // ── Constants ──────────────────────────────────────────
-const SIZE_OPTIONS: { value: ProductSize; label: string }[] = [
+const DEFAULT_SIZE_OPTIONS: { value: ProductSize; label: string }[] = [
   { value: "solo", label: "Solo" },
   { value: "small", label: "Small" },
   { value: "medium", label: "Medium" },
@@ -96,12 +94,19 @@ const SIZE_OPTIONS: { value: ProductSize; label: string }[] = [
 ];
 
 const EMPTY_PRODUCT: ProductFormData = {
+  sku: "",
   name: "",
+  part_number: "",
   category: 0,
   description: "",
-  price: 0,
+  cost_price: 0,
+  selling_price: 0,
+  variant_sku: "",
+  variant_name: "",
   size: "medium",
-  is_available: true,
+  is_active: true,
+  is_taxable: true,
+  is_serialized: false,
 };
 
 const EMPTY_CATEGORY: CategoryFormData = {
@@ -125,12 +130,20 @@ function validateProductForm(data: ProductFormData): ProductFormErrors {
     errors.name = "Product name is required.";
   }
 
+  if (data.sku && data.sku.length > 80) {
+    errors.sku = "SKU must be 80 characters or fewer.";
+  }
+
   if (!data.category) {
     errors.category = "Select a category.";
   }
 
-  if (!Number.isFinite(data.price) || data.price <= 0) {
-    errors.price = "Price must be greater than 0.";
+  if (!Number.isFinite(data.selling_price) || data.selling_price <= 0) {
+    errors.selling_price = "Selling price must be greater than 0.";
+  }
+
+  if (!Number.isFinite(data.cost_price) || data.cost_price < 0) {
+    errors.cost_price = "Cost price cannot be negative.";
   }
 
   return errors;
@@ -156,7 +169,6 @@ export default function CatalogModulePage() {
   const [activeTab, setActiveTab] = useState<"products" | "categories">(
     "products"
   );
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   // ── Filter state ──
   const [search, setSearch] = useState("");
@@ -200,6 +212,11 @@ export default function CatalogModulePage() {
     queryFn: () => productService.getProducts(),
   });
 
+  const sizesQuery = useQuery({
+    queryKey: queryKeys.catalog.sizes,
+    queryFn: () => productService.getSizes(),
+  });
+
   // ── Mutations ──
   const createProductMut = useMutation({
     mutationFn: (data: ProductFormData) => productService.createProduct(data),
@@ -218,9 +235,17 @@ export default function CatalogModulePage() {
       setProductServerError(parsed.message);
       setProductFormErrors((prev) => ({
         ...prev,
+        sku: parsed.fieldErrors.sku ?? prev.sku,
         name: parsed.fieldErrors.name ?? prev.name,
+        part_number: parsed.fieldErrors.part_number ?? prev.part_number,
         category: parsed.fieldErrors.category ?? prev.category,
-        price: parsed.fieldErrors.price ?? prev.price,
+        cost_price: parsed.fieldErrors.cost_price ?? prev.cost_price,
+        selling_price: parsed.fieldErrors.selling_price ?? parsed.fieldErrors.price ?? prev.selling_price,
+        variant_sku: parsed.fieldErrors.variant_sku ?? prev.variant_sku,
+        variant_name: parsed.fieldErrors.variant_name ?? prev.variant_name,
+        is_active: parsed.fieldErrors.is_active ?? parsed.fieldErrors.is_available ?? prev.is_active,
+        is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
+        is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
         description: parsed.fieldErrors.description ?? prev.description,
       }));
@@ -251,9 +276,17 @@ export default function CatalogModulePage() {
       setProductServerError(parsed.message);
       setProductFormErrors((prev) => ({
         ...prev,
+        sku: parsed.fieldErrors.sku ?? prev.sku,
         name: parsed.fieldErrors.name ?? prev.name,
+        part_number: parsed.fieldErrors.part_number ?? prev.part_number,
         category: parsed.fieldErrors.category ?? prev.category,
-        price: parsed.fieldErrors.price ?? prev.price,
+        cost_price: parsed.fieldErrors.cost_price ?? prev.cost_price,
+        selling_price: parsed.fieldErrors.selling_price ?? parsed.fieldErrors.price ?? prev.selling_price,
+        variant_sku: parsed.fieldErrors.variant_sku ?? prev.variant_sku,
+        variant_name: parsed.fieldErrors.variant_name ?? prev.variant_name,
+        is_active: parsed.fieldErrors.is_active ?? parsed.fieldErrors.is_available ?? prev.is_active,
+        is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
+        is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
         description: parsed.fieldErrors.description ?? prev.description,
       }));
@@ -268,23 +301,27 @@ export default function CatalogModulePage() {
     }: {
       id: number;
       nextAvailability: boolean;
-    }) => productService.updateProduct(id, { is_available: nextAvailability }),
+    }) => productService.updateProduct(id, { is_active: nextAvailability, is_available: nextAvailability }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       toast.success(
         vars.nextAvailability
-          ? "Product marked as available."
-          : "Product marked as unavailable."
+          ? "Product marked as active."
+          : "Product marked as inactive."
       );
     },
     onError: (error) => {
       const parsed = parseApiError(
         error,
-        "Unable to update availability. Please try again."
+        "Unable to update product status. Please try again."
       );
       toast.error(parsed.message);
     },
   });
+
+  const sizeOptions = sizesQuery.data?.length
+    ? sizesQuery.data
+    : DEFAULT_SIZE_OPTIONS;
 
   const deleteProductMut = useMutation({
     mutationFn: (id: number) => productService.deleteProduct(id),
@@ -379,21 +416,37 @@ export default function CatalogModulePage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      if (search && !p.name.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      if (search) {
+        const keyword = search.toLowerCase();
+        const matches =
+          p.name.toLowerCase().includes(keyword) ||
+          p.sku.toLowerCase().includes(keyword) ||
+          p.part_number.toLowerCase().includes(keyword);
+        if (!matches) return false;
+      }
       if (categoryFilter !== "all" && p.category !== Number(categoryFilter))
         return false;
-      if (availabilityFilter === "available" && !p.is_available) return false;
-      if (availabilityFilter === "unavailable" && p.is_available) return false;
+      if (availabilityFilter === "available" && !p.is_active) return false;
+      if (availabilityFilter === "unavailable" && p.is_active) return false;
       return true;
     });
   }, [products, search, categoryFilter, availabilityFilter]);
 
   const stats = useMemo(() => {
     const total = products.length;
-    const available = products.filter((p) => p.is_available).length;
-    const unavailable = total - available;
-    return { total, available, unavailable, categories: categories.length };
+    const active = products.filter((p) => p.is_active).length;
+    const inactive = total - active;
+    const avgSellingPrice =
+      total > 0
+        ? products.reduce((sum, p) => sum + parseFloat(p.selling_price || "0"), 0) / total
+        : 0;
+    return {
+      total,
+      active,
+      inactive,
+      categories: categories.length,
+      avgSellingPrice,
+    };
   }, [products, categories]);
 
   const hasActiveFilters =
@@ -419,12 +472,19 @@ export default function CatalogModulePage() {
     setProductFormErrors({});
     setProductServerError(null);
     setProductForm({
+      sku: product.sku,
       name: product.name,
+      part_number: product.part_number,
       category: product.category,
       description: product.description,
-      price: parseFloat(product.price),
+      cost_price: parseFloat(product.cost_price),
+      selling_price: parseFloat(product.selling_price),
+      variant_sku: product.variant_sku,
+      variant_name: product.variant_name,
       size: product.size,
-      is_available: product.is_available,
+      is_active: product.is_active,
+      is_taxable: product.is_taxable,
+      is_serialized: product.is_serialized,
     });
     setProductDialogOpen(true);
   }
@@ -471,10 +531,17 @@ export default function CatalogModulePage() {
       return;
     }
 
+    const payload: ProductFormData = {
+      ...productForm,
+      price: productForm.selling_price,
+      is_available: productForm.is_active,
+      cost_price: productForm.cost_price || productForm.selling_price,
+    };
+
     if (editingProduct) {
-      updateProductMut.mutate({ id: editingProduct.id, data: productForm });
+      updateProductMut.mutate({ id: editingProduct.id, data: payload });
     } else {
-      createProductMut.mutate(productForm);
+      createProductMut.mutate(payload);
     }
   }
 
@@ -511,7 +578,7 @@ export default function CatalogModulePage() {
   function toggleProductAvailability(product: Product) {
     toggleAvailabilityMut.mutate({
       id: product.id,
-      nextAvailability: !product.is_available,
+      nextAvailability: !product.is_active,
     });
   }
 
@@ -553,20 +620,20 @@ export default function CatalogModulePage() {
           accent="primary"
         />
         <StatCard
-          label="Available"
-          value={stats.available}
+          label="Active Listings"
+          value={stats.active}
           icon={Wrench}
           accent="green"
         />
         <StatCard
-          label="Unavailable"
-          value={stats.unavailable}
+          label="Inactive Listings"
+          value={stats.inactive}
           icon={Archive}
           accent="amber"
         />
         <StatCard
-          label="Categories"
-          value={stats.categories}
+          label="Avg Sell Price"
+          value={formatCurrency(stats.avgSellingPrice)}
           icon={Tag}
           accent="blue"
         />
@@ -593,53 +660,20 @@ export default function CatalogModulePage() {
             />
           </div>
 
-          {/* View toggle (products only) */}
-          {activeTab === "products" && (
-            <div className="hidden items-center gap-1 rounded-md border p-0.5 sm:flex">
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                aria-label="Switch to table view"
-                aria-pressed={viewMode === "table"}
-                className={cn(
-                  "cursor-pointer rounded-md p-1.5 transition-colors",
-                  viewMode === "table"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <LayoutList className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                aria-label="Switch to grid view"
-                aria-pressed={viewMode === "grid"}
-                className={cn(
-                  "cursor-pointer rounded-md p-1.5 transition-colors",
-                  viewMode === "grid"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Grid3X3 className="size-4" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* ══════════ PRODUCTS TAB ══════════ */}
         {activeTab === "products" && (
           <>
             {/* Toolbar */}
-            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center">
               <div className="relative flex-1">
                 <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Search by name, SKU, or part number..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-9 pl-9 pr-9"
+                  className="pl-9 pr-9"
                 />
                 {search && (
                   <button
@@ -658,7 +692,7 @@ export default function CatalogModulePage() {
                   value={categoryFilter}
                   onValueChange={setCategoryFilter}
                 >
-                  <SelectTrigger className="h-9 w-40 cursor-pointer text-xs">
+                  <SelectTrigger className="w-40 cursor-pointer text-xs">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -675,7 +709,7 @@ export default function CatalogModulePage() {
                   value={availabilityFilter}
                   onValueChange={setAvailabilityFilter}
                 >
-                  <SelectTrigger className="h-9 w-36 cursor-pointer text-xs">
+                  <SelectTrigger className="w-36 cursor-pointer text-xs">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -688,9 +722,8 @@ export default function CatalogModulePage() {
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
-                    size="sm"
                     onClick={clearFilters}
-                    className="text-muted-foreground h-9 cursor-pointer text-xs"
+                    className="text-muted-foreground cursor-pointer text-xs"
                   >
                     <X className="mr-1 size-3" />
                     Clear
@@ -753,77 +786,83 @@ export default function CatalogModulePage() {
                   )
                 }
               />
-            ) : viewMode === "grid" ? (
-              /* ── Grid View ── */
-              <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onEdit={openEditProduct}
-                    onDelete={openDeleteProduct}
-                    onToggle={toggleProductAvailability}
-                  />
-                ))}
-              </div>
             ) : (
-              /* ── Table View ── */
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto px-1 py-2">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="pl-4">Product</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="w-10 pr-4" />
+                      <TableHead className="pl-4 text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Product
+                      </TableHead>
+                      <TableHead className="w-[170px] text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Category
+                      </TableHead>
+                      <TableHead className="w-[110px] text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Size
+                      </TableHead>
+                      <TableHead className="w-[150px] text-right text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Sell Price
+                      </TableHead>
+                      <TableHead className="w-[130px] text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Status
+                      </TableHead>
+                      <TableHead className="w-[220px] pr-4 text-right text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredProducts.map((product) => (
-                      <TableRow key={product.id} className="group">
+                      <TableRow key={product.id} className="group h-16">
                         <TableCell className="pl-4">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-primary/8 text-primary flex size-9 items-center justify-center rounded-md">
+                          <div className="flex min-w-[280px] items-center gap-3">
+                            <div className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
                               <Wrench className="size-4" />
                             </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">
+                            <div className="min-w-0 space-y-1">
+                              <p className="truncate text-sm font-semibold leading-tight">
                                 {product.name}
                               </p>
-                              {product.description && (
-                                <p className="text-muted-foreground max-w-48 truncate text-xs">
-                                  {product.description}
-                                </p>
-                              )}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                <span className="font-mono font-semibold text-foreground/80">
+                                  {product.sku}
+                                </span>
+                                <span className="max-w-[200px] truncate">
+                                  Part #{product.part_number || "-"}
+                                </span>
+                                {product.description ? (
+                                  <span className="max-w-[260px] truncate">
+                                    {product.description}
+                                  </span>
+                                ) : null}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Badge
                             variant="secondary"
-                            className="text-xs font-normal"
+                            className="max-w-[150px] truncate text-xs font-normal"
                           >
                             {product.category_name}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <span className="text-muted-foreground text-sm">
+                        <TableCell className="align-middle">
+                          <span className="text-sm text-muted-foreground">
                             {product.size_display}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <span className="text-sm font-semibold">
-                            {formatCurrency(product.price)}
+                        <TableCell className="text-right align-middle">
+                          <span className="text-base font-bold tabular-nums">
+                            {formatCurrency(product.selling_price)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center align-middle">
                           <Badge
                             variant="outline"
                             className={cn(
-                              "text-xs font-normal",
-                              product.is_available
+                              "text-xs font-medium",
+                              product.is_active
                                 ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
                                 : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
                             )}
@@ -831,53 +870,57 @@ export default function CatalogModulePage() {
                             <span
                               className={cn(
                                 "mr-1.5 inline-block size-1.5 rounded-full",
-                                product.is_available
+                                product.is_active
                                   ? "bg-green-500"
                                   : "bg-amber-500"
                               )}
                             />
-                            {product.is_available ? "Available" : "Unavailable"}
+                            {product.is_active ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="pr-4">
+                        <TableCell className="pr-4 align-middle">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditProduct(product)}
+                              className="h-8 cursor-pointer px-2 text-xs"
+                              aria-label={`Edit ${product.name}`}
+                            >
+                              <Pencil className="mr-1 size-3.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleProductAvailability(product)}
+                              className="h-8 cursor-pointer px-2 text-xs"
+                              aria-label={`${product.is_active ? "Mark inactive" : "Mark active"} for ${product.name}`}
+                            >
+                              {product.is_active ? (
+                                <>
+                                  <Archive className="mr-1 size-3.5" />
+                                  Inactive
+                                </>
+                              ) : (
+                                <>
+                                  <ArchiveRestore className="mr-1 size-3.5" />
+                                  Activate
+                                </>
+                              )}
+                            </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 aria-label={`Open actions for ${product.name}`}
-                                className="size-8 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
+                                className="size-8 cursor-pointer"
                               >
                                 <MoreHorizontal className="size-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem
-                                onClick={() => openEditProduct(product)}
-                                className="cursor-pointer"
-                              >
-                                <Pencil className="mr-2 size-4" />
-                                Edit Product
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  toggleProductAvailability(product)
-                                }
-                                className="cursor-pointer"
-                              >
-                                {product.is_available ? (
-                                  <>
-                                    <Archive className="mr-2 size-4" />
-                                    Mark Unavailable
-                                  </>
-                                ) : (
-                                  <>
-                                    <ArchiveRestore className="mr-2 size-4" />
-                                    Mark Available
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                            <DropdownMenuContent align="end" className="w-40">
                               <DropdownMenuItem
                                 onClick={() => openDeleteProduct(product)}
                                 variant="destructive"
@@ -888,6 +931,7 @@ export default function CatalogModulePage() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1108,6 +1152,54 @@ export default function CatalogModulePage() {
             {/* Category + Size */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-sku"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  SKU
+                </Label>
+                <Input
+                  id="product-sku"
+                  placeholder="Auto-generated if blank"
+                  value={productForm.sku ?? ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({ ...f, sku: e.target.value }));
+                    setProductFormErrors((prev) => ({ ...prev, sku: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.sku}
+                  className={cn(productFormErrors.sku && "border-destructive")}
+                />
+                {productFormErrors.sku ? (
+                  <p className="text-destructive text-xs">{productFormErrors.sku}</p>
+                ) : null}
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-part-number"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Part Number
+                </Label>
+                <Input
+                  id="product-part-number"
+                  placeholder="Optional"
+                  value={productForm.part_number ?? ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({ ...f, part_number: e.target.value }));
+                    setProductFormErrors((prev) => ({ ...prev, part_number: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.part_number}
+                  className={cn(productFormErrors.part_number && "border-destructive")}
+                />
+                {productFormErrors.part_number ? (
+                  <p className="text-destructive text-xs">{productFormErrors.part_number}</p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Category + Size */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <Label className="text-muted-foreground text-xs font-medium">
                   Category <span className="text-destructive">*</span>
                 </Label>
@@ -1165,7 +1257,7 @@ export default function CatalogModulePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SIZE_OPTIONS.map((s) => (
+                    {sizeOptions.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
                         {s.label}
                       </SelectItem>
@@ -1175,41 +1267,107 @@ export default function CatalogModulePage() {
               </div>
             </div>
 
-            {/* Price */}
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="product-price"
-                className="text-muted-foreground text-xs font-medium"
-              >
-                Price (₱) <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="product-price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={productForm.price || ""}
-                onChange={(e) => {
-                  setProductForm((f) => ({
-                    ...f,
-                    price: parseFloat(e.target.value) || 0,
-                  }));
-                  setProductFormErrors((prev) => ({ ...prev, price: undefined }));
-                }}
-                aria-invalid={!!productFormErrors.price}
-                aria-describedby="product-price-hint product-price-error"
-                className={cn(productFormErrors.price && "border-destructive")}
-                required
-              />
-              <p id="product-price-hint" className="text-muted-foreground text-xs">
-                Enter the final selling price.
-              </p>
-              {productFormErrors.price ? (
-                <p id="product-price-error" className="text-destructive text-xs">
-                  {productFormErrors.price}
-                </p>
-              ) : null}
+            {/* Cost + Sell Price */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-cost-price"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Cost Price (₱)
+                </Label>
+                <Input
+                  id="product-cost-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={productForm.cost_price || ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({
+                      ...f,
+                      cost_price: parseFloat(e.target.value) || 0,
+                    }));
+                    setProductFormErrors((prev) => ({ ...prev, cost_price: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.cost_price}
+                  className={cn(productFormErrors.cost_price && "border-destructive")}
+                />
+                {productFormErrors.cost_price ? (
+                  <p className="text-destructive text-xs">{productFormErrors.cost_price}</p>
+                ) : null}
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-selling-price"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Selling Price (₱) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="product-selling-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={productForm.selling_price || ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({
+                      ...f,
+                      selling_price: parseFloat(e.target.value) || 0,
+                    }));
+                    setProductFormErrors((prev) => ({ ...prev, selling_price: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.selling_price}
+                  className={cn(productFormErrors.selling_price && "border-destructive")}
+                  required
+                />
+                {productFormErrors.selling_price ? (
+                  <p className="text-destructive text-xs">{productFormErrors.selling_price}</p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Variant */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-variant-sku"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Variant SKU
+                </Label>
+                <Input
+                  id="product-variant-sku"
+                  placeholder="Auto-generated if blank"
+                  value={productForm.variant_sku ?? ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({ ...f, variant_sku: e.target.value }));
+                    setProductFormErrors((prev) => ({ ...prev, variant_sku: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.variant_sku}
+                  className={cn(productFormErrors.variant_sku && "border-destructive")}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="product-variant-name"
+                  className="text-muted-foreground text-xs font-medium"
+                >
+                  Variant Name
+                </Label>
+                <Input
+                  id="product-variant-name"
+                  placeholder="Optional"
+                  value={productForm.variant_name ?? ""}
+                  onChange={(e) => {
+                    setProductForm((f) => ({ ...f, variant_name: e.target.value }));
+                    setProductFormErrors((prev) => ({ ...prev, variant_name: undefined }));
+                  }}
+                  aria-invalid={!!productFormErrors.variant_name}
+                  className={cn(productFormErrors.variant_name && "border-destructive")}
+                />
+              </div>
             </div>
 
             {/* Description */}
@@ -1236,20 +1394,44 @@ export default function CatalogModulePage() {
               />
             </div>
 
-            {/* Availability */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Available for sale</p>
-                <p className="text-muted-foreground text-xs">
-                  Show on the POS screen
-                </p>
+            {/* Product flags */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">Active</p>
+                  <p className="text-muted-foreground text-xs">Visible in catalog/POS</p>
+                </div>
+                <Switch
+                  checked={productForm.is_active}
+                  onCheckedChange={(checked) =>
+                    setProductForm((f) => ({ ...f, is_active: checked }))
+                  }
+                />
               </div>
-              <Switch
-                checked={productForm.is_available}
-                onCheckedChange={(checked) =>
-                  setProductForm((f) => ({ ...f, is_available: checked }))
-                }
-              />
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">Taxable</p>
+                  <p className="text-muted-foreground text-xs">Apply configured tax rate</p>
+                </div>
+                <Switch
+                  checked={productForm.is_taxable}
+                  onCheckedChange={(checked) =>
+                    setProductForm((f) => ({ ...f, is_taxable: checked }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">Serialized</p>
+                  <p className="text-muted-foreground text-xs">Track per unique serial</p>
+                </div>
+                <Switch
+                  checked={productForm.is_serialized}
+                  onCheckedChange={(checked) =>
+                    setProductForm((f) => ({ ...f, is_serialized: checked }))
+                  }
+                />
+              </div>
             </div>
 
             {/* Error */}
@@ -1486,7 +1668,7 @@ function StatCard({
   accent,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: React.ElementType;
   accent: "primary" | "green" | "amber" | "blue";
 }) {
@@ -1560,117 +1742,4 @@ function TabButton({
   );
 }
 
-/** Product grid card */
-function ProductCard({
-  product,
-  onEdit,
-  onDelete,
-  onToggle,
-}: {
-  product: Product;
-  onEdit: (p: Product) => void;
-  onDelete: (p: Product) => void;
-  onToggle: (p: Product) => void;
-}) {
-  return (
-    <div className="hover:border-primary/20 group relative rounded-lg border bg-card p-4 transition-all hover:shadow-md">
-      {/* Top row */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/8 text-primary flex size-10 items-center justify-center rounded-md">
-            <Wrench className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{product.name}</p>
-            <p className="text-muted-foreground text-xs">
-              {product.category_name}
-            </p>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Open actions for ${product.name}`}
-              className="size-7 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem
-              onClick={() => onEdit(product)}
-              className="cursor-pointer"
-            >
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onToggle(product)}
-              className="cursor-pointer"
-            >
-              {product.is_available ? (
-                <>
-                  <Archive className="mr-2 size-4" />
-                  Mark Unavailable
-                </>
-              ) : (
-                <>
-                  <ArchiveRestore className="mr-2 size-4" />
-                  Mark Available
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(product)}
-              variant="destructive"
-              className="cursor-pointer"
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Description */}
-      {product.description && (
-        <p className="text-muted-foreground mt-3 line-clamp-2 text-xs">
-          {product.description}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold">
-            {formatCurrency(product.price)}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            / {product.size_display}
-          </span>
-        </div>
-        <Badge
-          variant="outline"
-          className={cn(
-            "text-xs font-normal",
-            product.is_available
-              ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
-              : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-          )}
-        >
-          <span
-            className={cn(
-              "mr-1 inline-block size-1.5 rounded-full",
-              product.is_available ? "bg-green-500" : "bg-amber-500"
-            )}
-          />
-          {product.is_available ? "Available" : "Unavailable"}
-        </Badge>
-      </div>
-    </div>
-  );
-}
 
