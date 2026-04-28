@@ -1,26 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useDeferredValue, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  Package,
-  Tag,
-  MoreHorizontal,
-  Loader2,
-  Archive,
-  ArchiveRestore,
-  Wrench,
-  X,
-} from "lucide-react";
+import { Archive, Loader2, Package, Plus, Tag, Wrench } from "lucide-react";
 
 import type {
-  Product,
-  ProductFormData,
   Category,
   CategoryFormData,
+  Product,
+  ProductFormData,
   ProductSize,
 } from "@/types/product.types";
 import * as productService from "@/services/productService.service";
@@ -29,31 +16,9 @@ import { queryKeys } from "@/services/query/queryKeys";
 import { cn } from "@/lib/utils";
 import { parseApiError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,28 +29,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  PageEmptyState,
-  PageErrorState,
-  PageLoadingState,
-} from "@/components/ui/page-state";
+import { PageEmptyState, PageErrorState } from "@/components/ui/page-state";
 import PageHeader from "@/components/layout/PageHeader";
+import CatalogCategoriesPanel from "@/components/modules/catalog/CatalogCategoriesPanel";
+import CatalogCategoryDialog from "@/components/modules/catalog/CatalogCategoryDialog";
+import CatalogProductDialog from "@/components/modules/catalog/CatalogProductDialog";
+import CatalogProductsTable from "@/components/modules/catalog/CatalogProductsTable";
+import CatalogProductsToolbar from "@/components/modules/catalog/CatalogProductsToolbar";
+import { createCatalogProductColumns } from "@/components/modules/catalog/catalog-product-columns";
 
-// ── Constants ──────────────────────────────────────────
 const DEFAULT_SIZE_OPTIONS: { value: ProductSize; label: string }[] = [
   { value: "solo", label: "Solo" },
   { value: "small", label: "Small" },
@@ -115,12 +67,19 @@ const EMPTY_CATEGORY: CategoryFormData = {
   is_active: true,
 };
 
+const EMPTY_PRODUCTS: Product[] = [];
+const EMPTY_CATEGORIES: Category[] = [];
+
 type ProductFormErrors = Partial<Record<keyof ProductFormData, string>>;
 type CategoryFormErrors = Partial<Record<keyof CategoryFormData, string>>;
 
 function formatCurrency(amount: string | number) {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  return `₱${num.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  }).format(num);
 }
 
 function validateProductForm(data: ProductFormData): ProductFormErrors {
@@ -159,23 +118,18 @@ function validateCategoryForm(data: CategoryFormData): CategoryFormErrors {
   return errors;
 }
 
-// ════════════════════════════════════════════════════════
-// CatalogModulePage
-// ════════════════════════════════════════════════════════
 export default function CatalogModulePage() {
   const queryClient = useQueryClient();
 
-  // ── View & Tab state ──
   const [activeTab, setActiveTab] = useState<"products" | "categories">(
     "products"
   );
 
-  // ── Filter state ──
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
+  const deferredSearch = useDeferredValue(search);
 
-  // ── Dialog state ──
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -201,7 +155,6 @@ export default function CatalogModulePage() {
   const [categoryServerError, setCategoryServerError] =
     useState<string | null>(null);
 
-  // ── Queries ──
   const categoriesQuery = useQuery({
     queryKey: queryKeys.catalog.categories,
     queryFn: () => productService.getCategories(),
@@ -217,7 +170,6 @@ export default function CatalogModulePage() {
     queryFn: () => productService.getSizes(),
   });
 
-  // ── Mutations ──
   const createProductMut = useMutation({
     mutationFn: (data: ProductFormData) => productService.createProduct(data),
     onSuccess: () => {
@@ -240,10 +192,16 @@ export default function CatalogModulePage() {
         part_number: parsed.fieldErrors.part_number ?? prev.part_number,
         category: parsed.fieldErrors.category ?? prev.category,
         cost_price: parsed.fieldErrors.cost_price ?? prev.cost_price,
-        selling_price: parsed.fieldErrors.selling_price ?? parsed.fieldErrors.price ?? prev.selling_price,
+        selling_price:
+          parsed.fieldErrors.selling_price ??
+          parsed.fieldErrors.price ??
+          prev.selling_price,
         variant_sku: parsed.fieldErrors.variant_sku ?? prev.variant_sku,
         variant_name: parsed.fieldErrors.variant_name ?? prev.variant_name,
-        is_active: parsed.fieldErrors.is_active ?? parsed.fieldErrors.is_available ?? prev.is_active,
+        is_active:
+          parsed.fieldErrors.is_active ??
+          parsed.fieldErrors.is_available ??
+          prev.is_active,
         is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
         is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
@@ -281,10 +239,16 @@ export default function CatalogModulePage() {
         part_number: parsed.fieldErrors.part_number ?? prev.part_number,
         category: parsed.fieldErrors.category ?? prev.category,
         cost_price: parsed.fieldErrors.cost_price ?? prev.cost_price,
-        selling_price: parsed.fieldErrors.selling_price ?? parsed.fieldErrors.price ?? prev.selling_price,
+        selling_price:
+          parsed.fieldErrors.selling_price ??
+          parsed.fieldErrors.price ??
+          prev.selling_price,
         variant_sku: parsed.fieldErrors.variant_sku ?? prev.variant_sku,
         variant_name: parsed.fieldErrors.variant_name ?? prev.variant_name,
-        is_active: parsed.fieldErrors.is_active ?? parsed.fieldErrors.is_available ?? prev.is_active,
+        is_active:
+          parsed.fieldErrors.is_active ??
+          parsed.fieldErrors.is_available ??
+          prev.is_active,
         is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
         is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
@@ -301,7 +265,11 @@ export default function CatalogModulePage() {
     }: {
       id: number;
       nextAvailability: boolean;
-    }) => productService.updateProduct(id, { is_active: nextAvailability, is_available: nextAvailability }),
+    }) =>
+      productService.updateProduct(id, {
+        is_active: nextAvailability,
+        is_available: nextAvailability,
+      }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       toast.success(
@@ -340,8 +308,7 @@ export default function CatalogModulePage() {
   });
 
   const createCategoryMut = useMutation({
-    mutationFn: (data: CategoryFormData) =>
-      productService.createCategory(data),
+    mutationFn: (data: CategoryFormData) => productService.createCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
       setCategoryDialogOpen(false);
@@ -410,14 +377,13 @@ export default function CatalogModulePage() {
     },
   });
 
-  // ── Derived data ──
-  const categories = categoriesQuery.data ?? [];
-  const products = productsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? EMPTY_CATEGORIES;
+  const products = productsQuery.data ?? EMPTY_PRODUCTS;
 
   const filteredProducts = useMemo(() => {
+    const keyword = deferredSearch.trim().toLowerCase();
     return products.filter((p) => {
-      if (search) {
-        const keyword = search.toLowerCase();
+      if (keyword) {
         const matches =
           p.name.toLowerCase().includes(keyword) ||
           p.sku.toLowerCase().includes(keyword) ||
@@ -430,7 +396,7 @@ export default function CatalogModulePage() {
       if (availabilityFilter === "unavailable" && p.is_active) return false;
       return true;
     });
-  }, [products, search, categoryFilter, availabilityFilter]);
+  }, [products, deferredSearch, categoryFilter, availabilityFilter]);
 
   const stats = useMemo(() => {
     const total = products.length;
@@ -438,7 +404,10 @@ export default function CatalogModulePage() {
     const inactive = total - active;
     const avgSellingPrice =
       total > 0
-        ? products.reduce((sum, p) => sum + parseFloat(p.selling_price || "0"), 0) / total
+        ? products.reduce(
+            (sum, p) => sum + parseFloat(p.selling_price || "0"),
+            0
+          ) / total
         : 0;
     return {
       total,
@@ -450,7 +419,7 @@ export default function CatalogModulePage() {
   }, [products, categories]);
 
   const hasActiveFilters =
-    search || categoryFilter !== "all" || availabilityFilter !== "all";
+    !!search || categoryFilter !== "all" || availabilityFilter !== "all";
 
   function clearFilters() {
     setSearch("");
@@ -458,16 +427,15 @@ export default function CatalogModulePage() {
     setAvailabilityFilter("all");
   }
 
-  // ── Handlers ──
-  function openCreateProduct() {
+  const openCreateProduct = useCallback(() => {
     setEditingProduct(null);
     setProductForm(EMPTY_PRODUCT);
     setProductFormErrors({});
     setProductServerError(null);
     setProductDialogOpen(true);
-  }
+  }, []);
 
-  function openEditProduct(product: Product) {
+  const openEditProduct = useCallback((product: Product) => {
     setEditingProduct(product);
     setProductFormErrors({});
     setProductServerError(null);
@@ -487,22 +455,22 @@ export default function CatalogModulePage() {
       is_serialized: product.is_serialized,
     });
     setProductDialogOpen(true);
-  }
+  }, []);
 
-  function openDeleteProduct(product: Product) {
+  const openDeleteProduct = useCallback((product: Product) => {
     setDeletingProduct(product);
     setDeleteDialogOpen(true);
-  }
+  }, []);
 
-  function openCreateCategory() {
+  const openCreateCategory = useCallback(() => {
     setEditingCategory(null);
     setCategoryForm(EMPTY_CATEGORY);
     setCategoryFormErrors({});
     setCategoryServerError(null);
     setCategoryDialogOpen(true);
-  }
+  }, []);
 
-  function openEditCategory(category: Category) {
+  const openEditCategory = useCallback((category: Category) => {
     setEditingCategory(category);
     setCategoryFormErrors({});
     setCategoryServerError(null);
@@ -512,12 +480,12 @@ export default function CatalogModulePage() {
       is_active: category.is_active,
     });
     setCategoryDialogOpen(true);
-  }
+  }, []);
 
-  function openDeleteCategory(category: Category) {
+  const openDeleteCategory = useCallback((category: Category) => {
     setDeletingCategory(category);
     setDeleteCategoryDialogOpen(true);
-  }
+  }, []);
 
   function handleProductSubmit(e?: React.FormEvent | React.MouseEvent) {
     e?.preventDefault();
@@ -575,24 +543,80 @@ export default function CatalogModulePage() {
     if (deletingCategory) deleteCategoryMut.mutate(deletingCategory.id);
   }
 
-  function toggleProductAvailability(product: Product) {
-    toggleAvailabilityMut.mutate({
-      id: product.id,
-      nextAvailability: !product.is_active,
-    });
-  }
+  const toggleProductAvailability = useCallback(
+    (product: Product) => {
+      toggleAvailabilityMut.mutate({
+        id: product.id,
+        nextAvailability: !product.is_active,
+      });
+    },
+    [toggleAvailabilityMut]
+  );
+
+  const productColumns = useMemo(
+    () =>
+      createCatalogProductColumns({
+        onEdit: openEditProduct,
+        onToggleAvailability: toggleProductAvailability,
+        onDelete: openDeleteProduct,
+      }),
+    [openEditProduct, openDeleteProduct, toggleProductAvailability]
+  );
+
+  const productsToolbar = (
+    <CatalogProductsToolbar
+      search={search}
+      onSearchChange={setSearch}
+      categories={categories}
+      categoryFilter={categoryFilter}
+      onCategoryChange={setCategoryFilter}
+      availabilityFilter={availabilityFilter}
+      onAvailabilityChange={setAvailabilityFilter}
+      hasActiveFilters={hasActiveFilters}
+      onClearFilters={clearFilters}
+    />
+  );
+
+  const productsEmptyState = (
+    <PageEmptyState
+      icon={Package}
+      title={hasActiveFilters ? "No matching products" : "No products yet"}
+      description={
+        hasActiveFilters
+          ? "Try adjusting your search or filters"
+          : "Create your first product to get started"
+      }
+      action={
+        hasActiveFilters ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearFilters}
+            className="cursor-pointer"
+          >
+            Clear Filters
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={openCreateProduct}
+            className="cursor-pointer"
+          >
+            <Plus className="mr-2 size-4" />
+            Add Product
+          </Button>
+        )
+      }
+    />
+  );
 
   const isProductSaving =
     createProductMut.isPending || updateProductMut.isPending;
   const isCategorySaving =
     createCategoryMut.isPending || updateCategoryMut.isPending;
 
-  // ════════════════════════════════════════════════════
-  // RENDER
-  // ════════════════════════════════════════════════════
   return (
     <div className="space-y-6">
-      {/* ── Page Header ── */}
       <PageHeader
         title="Products"
         description="Manage your motorparts and accessory categories"
@@ -611,7 +635,6 @@ export default function CatalogModulePage() {
         }
       />
 
-      {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Total Products"
@@ -639,957 +662,99 @@ export default function CatalogModulePage() {
         />
       </div>
 
-      {/* ── Tab Switcher + Toolbar ── */}
       <Card>
-        {/* Tab Bar */}
-        <div className="flex items-center justify-between border-b px-4">
-          <div className="flex">
-            <TabButton
-              active={activeTab === "products"}
-              onClick={() => setActiveTab("products")}
-              icon={Package}
-              label="Products"
-              count={stats.total}
-            />
-            <TabButton
-              active={activeTab === "categories"}
-              onClick={() => setActiveTab("categories")}
-              icon={Tag}
-              label="Categories"
-              count={stats.categories}
-            />
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(value as "products" | "categories")
+          }
+          className="gap-0"
+        >
+          <div className="border-b px-4 pt-3">
+            <TabsList variant="line" className="flex w-fit flex-wrap gap-5">
+              <TabsTrigger value="products" className="gap-2.5">
+                <Package className="size-4" />
+                <span>Products</span>
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-2 py-0.5 text-[11px]"
+                >
+                  {stats.total}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="gap-2.5">
+                <Tag className="size-4" />
+                <span>Categories</span>
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-2 py-0.5 text-[11px]"
+                >
+                  {stats.categories}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-        </div>
-
-        {/* ══════════ PRODUCTS TAB ══════════ */}
-        {activeTab === "products" && (
-          <>
-            {/* Toolbar */}
-            <div className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center">
-              <div className="relative flex-1">
-                <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Search by name, SKU, or part number..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-9"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    aria-label="Clear product search"
-                    className="text-muted-foreground hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Select
-                  value={categoryFilter}
-                  onValueChange={setCategoryFilter}
-                >
-                  <SelectTrigger className="w-40 cursor-pointer text-xs">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={String(cat.id)}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={availabilityFilter}
-                  onValueChange={setAvailabilityFilter}
-                >
-                  <SelectTrigger className="w-36 cursor-pointer text-xs">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="available">Available</SelectItem>
-                    <SelectItem value="unavailable">Unavailable</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    onClick={clearFilters}
-                    className="text-muted-foreground cursor-pointer text-xs"
-                  >
-                    <X className="mr-1 size-3" />
-                    Clear
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Results count */}
-            {hasActiveFilters && (
-              <div className="px-4 pb-2">
-                <p className="text-muted-foreground text-xs">
-                  Showing {filteredProducts.length} of {products.length}{" "}
-                  products
-                </p>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Content */}
-            {productsQuery.isLoading ? (
-              <PageLoadingState label="Loading products..." />
-            ) : productsQuery.isError ? (
+          <TabsContent value="products" className="p-4 pt-3">
+            {productsQuery.isError ? (
               <PageErrorState
                 title="Unable to load products"
                 description="Please check your connection and try again."
                 onRetry={() => productsQuery.refetch()}
               />
-            ) : filteredProducts.length === 0 ? (
-              <PageEmptyState
-                icon={Package}
-                title={
-                  hasActiveFilters ? "No matching products" : "No products yet"
-                }
-                description={
-                  hasActiveFilters
-                    ? "Try adjusting your search or filters"
-                    : "Create your first product to get started"
-                }
-                action={
-                  hasActiveFilters ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="cursor-pointer"
-                    >
-                      Clear Filters
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={openCreateProduct}
-                      className="cursor-pointer"
-                    >
-                      <Plus className="mr-2 size-4" />
-                      Add Product
-                    </Button>
-                  )
-                }
-              />
             ) : (
-              <div className="overflow-x-auto px-1 py-2">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="pl-4 text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Product
-                      </TableHead>
-                      <TableHead className="w-[170px] text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Category
-                      </TableHead>
-                      <TableHead className="w-[110px] text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Size
-                      </TableHead>
-                      <TableHead className="w-[150px] text-right text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Sell Price
-                      </TableHead>
-                      <TableHead className="w-[130px] text-center text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Status
-                      </TableHead>
-                      <TableHead className="w-[220px] pr-4 text-right text-[11px] uppercase tracking-wide text-muted-foreground">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProducts.map((product) => (
-                      <TableRow key={product.id} className="group h-16">
-                        <TableCell className="pl-4">
-                          <div className="flex min-w-[280px] items-center gap-3">
-                            <div className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
-                              <Wrench className="size-4" />
-                            </div>
-                            <div className="min-w-0 space-y-1">
-                              <p className="truncate text-sm font-semibold leading-tight">
-                                {product.name}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                <span className="font-mono font-semibold text-foreground/80">
-                                  {product.sku}
-                                </span>
-                                <span className="max-w-[200px] truncate">
-                                  Part #{product.part_number || "-"}
-                                </span>
-                                {product.description ? (
-                                  <span className="max-w-[260px] truncate">
-                                    {product.description}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-middle">
-                          <Badge
-                            variant="secondary"
-                            className="max-w-[150px] truncate text-xs font-normal"
-                          >
-                            {product.category_name}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="align-middle">
-                          <span className="text-sm text-muted-foreground">
-                            {product.size_display}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right align-middle">
-                          <span className="text-base font-bold tabular-nums">
-                            {formatCurrency(product.selling_price)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-xs font-medium",
-                              product.is_active
-                                ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
-                                : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "mr-1.5 inline-block size-1.5 rounded-full",
-                                product.is_active
-                                  ? "bg-green-500"
-                                  : "bg-amber-500"
-                              )}
-                            />
-                            {product.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="pr-4 align-middle">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditProduct(product)}
-                              className="h-8 cursor-pointer px-2 text-xs"
-                              aria-label={`Edit ${product.name}`}
-                            >
-                              <Pencil className="mr-1 size-3.5" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleProductAvailability(product)}
-                              className="h-8 cursor-pointer px-2 text-xs"
-                              aria-label={`${product.is_active ? "Mark inactive" : "Mark active"} for ${product.name}`}
-                            >
-                              {product.is_active ? (
-                                <>
-                                  <Archive className="mr-1 size-3.5" />
-                                  Inactive
-                                </>
-                              ) : (
-                                <>
-                                  <ArchiveRestore className="mr-1 size-3.5" />
-                                  Activate
-                                </>
-                              )}
-                            </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label={`Open actions for ${product.name}`}
-                                className="size-8 cursor-pointer"
-                              >
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem
-                                onClick={() => openDeleteProduct(product)}
-                                variant="destructive"
-                                className="cursor-pointer"
-                              >
-                                <Trash2 className="mr-2 size-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {/* Footer */}
-            {filteredProducts.length > 0 && (
-              <div className="flex items-center justify-between border-t px-4 py-3">
-                <p className="text-muted-foreground text-xs">
-                  {filteredProducts.length} product
-                  {filteredProducts.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ══════════ CATEGORIES TAB ══════════ */}
-        {activeTab === "categories" && (
-          <>
-            <div className="p-4">
-              <p className="text-muted-foreground text-sm">
-                Organize your products into categories. Only active categories
-                appear on the POS.
-              </p>
-            </div>
-
-            <Separator />
-
-            {categoriesQuery.isLoading ? (
-              <PageLoadingState label="Loading categories..." />
-            ) : categoriesQuery.isError ? (
-              <PageErrorState
-                title="Unable to load categories"
-                description="Please refresh the data and try again."
-                onRetry={() => categoriesQuery.refetch()}
+              <CatalogProductsTable
+                columns={productColumns}
+                data={filteredProducts}
+                isLoading={productsQuery.isLoading}
+                emptyState={productsEmptyState}
+                toolbar={productsToolbar}
               />
-            ) : categories.length === 0 ? (
-              <PageEmptyState
-                icon={Tag}
-                title="No categories yet"
-                description="Create categories to organize your motorparts and accessories"
-                action={
-                  <Button
-                    size="sm"
-                    onClick={openCreateCategory}
-                    className="cursor-pointer"
-                  >
-                    <Plus className="mr-2 size-4" />
-                    Add Category
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className={cn(
-                      "group relative rounded-lg border p-4 transition-all hover:shadow-md",
-                      cat.is_active
-                        ? "hover:border-primary/30 bg-card"
-                        : "bg-muted/30 opacity-75"
-                    )}
-                  >
-                    {/* Header row */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "flex size-10 items-center justify-center rounded-md",
-                            cat.is_active
-                              ? "bg-primary/10 text-primary"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          <Tag className="size-5" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold">{cat.name}</h3>
-                          {cat.description && (
-                            <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-                              {cat.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Open actions for category ${cat.name}`}
-                            className="size-7 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onClick={() => openEditCategory(cat)}
-                            className="cursor-pointer"
-                          >
-                            <Pencil className="mr-2 size-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => openDeleteCategory(cat)}
-                            variant="destructive"
-                            className="cursor-pointer"
-                          >
-                            <Trash2 className="mr-2 size-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                        <Package className="size-3.5" />
-                        <span>
-                          {cat.product_count} product
-                          {cat.product_count !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-xs font-normal",
-                          cat.is_active
-                            ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
-                            : "text-muted-foreground border-muted-foreground/20"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "mr-1.5 inline-block size-1.5 rounded-full",
-                            cat.is_active
-                              ? "bg-green-500"
-                              : "bg-muted-foreground/50"
-                          )}
-                        />
-                        {cat.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Add category card */}
-                <button
-                  type="button"
-                  onClick={openCreateCategory}
-                  className="text-muted-foreground hover:border-primary/40 hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors"
-                >
-                  <Plus className="size-6" />
-                  <span className="text-sm font-medium">Add Category</span>
-                </button>
-              </div>
             )}
-          </>
-        )}
+          </TabsContent>
+
+          <TabsContent value="categories" className="p-4 pt-3">
+            <CatalogCategoriesPanel
+              categories={categories}
+              isLoading={categoriesQuery.isLoading}
+              isError={categoriesQuery.isError}
+              onRetry={() => categoriesQuery.refetch()}
+              onCreateCategory={openCreateCategory}
+              onEditCategory={openEditCategory}
+              onDeleteCategory={openDeleteCategory}
+            />
+          </TabsContent>
+        </Tabs>
       </Card>
 
-      {/* ══════════ PRODUCT DIALOG ══════════ */}
-      <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
-        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
-          <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="text-lg">
-              {editingProduct ? "Edit Product" : "New Product"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingProduct
-                ? "Update the product details below."
-                : "Add a new motorpart or accessory."}
-            </DialogDescription>
-          </DialogHeader>
+      <CatalogProductDialog
+        open={productDialogOpen}
+        onOpenChange={setProductDialogOpen}
+        editingProduct={editingProduct}
+        productForm={productForm}
+        setProductForm={setProductForm}
+        productFormErrors={productFormErrors}
+        setProductFormErrors={setProductFormErrors}
+        productServerError={productServerError}
+        categories={categories}
+        sizeOptions={sizeOptions}
+        isSaving={isProductSaving}
+        onSubmit={handleProductSubmit}
+      />
 
-          <Separator />
+      <CatalogCategoryDialog
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+        editingCategory={editingCategory}
+        categoryForm={categoryForm}
+        setCategoryForm={setCategoryForm}
+        categoryFormErrors={categoryFormErrors}
+        setCategoryFormErrors={setCategoryFormErrors}
+        categoryServerError={categoryServerError}
+        isSaving={isCategorySaving}
+        onSubmit={handleCategorySubmit}
+      />
 
-          <form onSubmit={handleProductSubmit} className="space-y-4 px-6 py-5">
-            {/* Name */}
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="product-name"
-                className="text-muted-foreground text-xs font-medium"
-              >
-                Product Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="product-name"
-                placeholder="e.g. Brake Pad Set"
-                value={productForm.name}
-                onChange={(e) => {
-                  setProductForm((f) => ({ ...f, name: e.target.value }));
-                  setProductFormErrors((prev) => ({ ...prev, name: undefined }));
-                }}
-                aria-invalid={!!productFormErrors.name}
-                aria-describedby="product-name-hint product-name-error"
-                className={cn(productFormErrors.name && "border-destructive")}
-                required
-              />
-              <p id="product-name-hint" className="text-muted-foreground text-xs">
-                Use a clear, customer-facing name.
-              </p>
-              {productFormErrors.name ? (
-                <p id="product-name-error" className="text-destructive text-xs">
-                  {productFormErrors.name}
-                </p>
-              ) : null}
-            </div>
-
-            {/* Category + Size */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-sku"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  SKU
-                </Label>
-                <Input
-                  id="product-sku"
-                  placeholder="Auto-generated if blank"
-                  value={productForm.sku ?? ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({ ...f, sku: e.target.value }));
-                    setProductFormErrors((prev) => ({ ...prev, sku: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.sku}
-                  className={cn(productFormErrors.sku && "border-destructive")}
-                />
-                {productFormErrors.sku ? (
-                  <p className="text-destructive text-xs">{productFormErrors.sku}</p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-part-number"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  Part Number
-                </Label>
-                <Input
-                  id="product-part-number"
-                  placeholder="Optional"
-                  value={productForm.part_number ?? ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({ ...f, part_number: e.target.value }));
-                    setProductFormErrors((prev) => ({ ...prev, part_number: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.part_number}
-                  className={cn(productFormErrors.part_number && "border-destructive")}
-                />
-                {productFormErrors.part_number ? (
-                  <p className="text-destructive text-xs">{productFormErrors.part_number}</p>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Category + Size */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-xs font-medium">
-                  Category <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={
-                    productForm.category ? String(productForm.category) : ""
-                  }
-                  onValueChange={(val) => {
-                    setProductForm((f) => ({ ...f, category: Number(val) }));
-                    setProductFormErrors((prev) => ({
-                      ...prev,
-                      category: undefined,
-                    }));
-                  }}
-                >
-                  <SelectTrigger
-                    className={cn(
-                      "w-full cursor-pointer",
-                      productFormErrors.category && "border-destructive"
-                    )}
-                    aria-invalid={!!productFormErrors.category}
-                  >
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories
-                      .filter((c) => c.is_active)
-                      .map((cat) => (
-                        <SelectItem key={cat.id} value={String(cat.id)}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {productFormErrors.category ? (
-                  <p className="text-destructive text-xs">
-                    {productFormErrors.category}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-xs font-medium">
-                  Size
-                </Label>
-                <Select
-                  value={productForm.size}
-                  onValueChange={(val) =>
-                    setProductForm((f) => ({
-                      ...f,
-                      size: val as ProductSize,
-                    }))
-                  }
-                >
-                  <SelectTrigger className="w-full cursor-pointer">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sizeOptions.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Cost + Sell Price */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-cost-price"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  Cost Price (₱)
-                </Label>
-                <Input
-                  id="product-cost-price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={productForm.cost_price || ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({
-                      ...f,
-                      cost_price: parseFloat(e.target.value) || 0,
-                    }));
-                    setProductFormErrors((prev) => ({ ...prev, cost_price: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.cost_price}
-                  className={cn(productFormErrors.cost_price && "border-destructive")}
-                />
-                {productFormErrors.cost_price ? (
-                  <p className="text-destructive text-xs">{productFormErrors.cost_price}</p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-selling-price"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  Selling Price (₱) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="product-selling-price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={productForm.selling_price || ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({
-                      ...f,
-                      selling_price: parseFloat(e.target.value) || 0,
-                    }));
-                    setProductFormErrors((prev) => ({ ...prev, selling_price: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.selling_price}
-                  className={cn(productFormErrors.selling_price && "border-destructive")}
-                  required
-                />
-                {productFormErrors.selling_price ? (
-                  <p className="text-destructive text-xs">{productFormErrors.selling_price}</p>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Variant */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-variant-sku"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  Variant SKU
-                </Label>
-                <Input
-                  id="product-variant-sku"
-                  placeholder="Auto-generated if blank"
-                  value={productForm.variant_sku ?? ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({ ...f, variant_sku: e.target.value }));
-                    setProductFormErrors((prev) => ({ ...prev, variant_sku: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.variant_sku}
-                  className={cn(productFormErrors.variant_sku && "border-destructive")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="product-variant-name"
-                  className="text-muted-foreground text-xs font-medium"
-                >
-                  Variant Name
-                </Label>
-                <Input
-                  id="product-variant-name"
-                  placeholder="Optional"
-                  value={productForm.variant_name ?? ""}
-                  onChange={(e) => {
-                    setProductForm((f) => ({ ...f, variant_name: e.target.value }));
-                    setProductFormErrors((prev) => ({ ...prev, variant_name: undefined }));
-                  }}
-                  aria-invalid={!!productFormErrors.variant_name}
-                  className={cn(productFormErrors.variant_name && "border-destructive")}
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="product-desc"
-                className="text-muted-foreground text-xs font-medium"
-              >
-                Description{" "}
-                <span className="text-muted-foreground/50">(optional)</span>
-              </Label>
-              <Textarea
-                id="product-desc"
-                placeholder="Brief description of this item..."
-                value={productForm.description}
-                onChange={(e) =>
-                  setProductForm((f) => ({
-                    ...f,
-                    description: e.target.value,
-                  }))
-                }
-                rows={2}
-                className="resize-none"
-              />
-            </div>
-
-            {/* Product flags */}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">Active</p>
-                  <p className="text-muted-foreground text-xs">Visible in catalog/POS</p>
-                </div>
-                <Switch
-                  checked={productForm.is_active}
-                  onCheckedChange={(checked) =>
-                    setProductForm((f) => ({ ...f, is_active: checked }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">Taxable</p>
-                  <p className="text-muted-foreground text-xs">Apply configured tax rate</p>
-                </div>
-                <Switch
-                  checked={productForm.is_taxable}
-                  onCheckedChange={(checked) =>
-                    setProductForm((f) => ({ ...f, is_taxable: checked }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">Serialized</p>
-                  <p className="text-muted-foreground text-xs">Track per unique serial</p>
-                </div>
-                <Switch
-                  checked={productForm.is_serialized}
-                  onCheckedChange={(checked) =>
-                    setProductForm((f) => ({ ...f, is_serialized: checked }))
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Error */}
-            {productServerError && (
-              <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                {productServerError}
-              </div>
-            )}
-          </form>
-
-          <Separator />
-
-          <div className="flex items-center justify-end gap-2 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setProductDialogOpen(false)}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleProductSubmit}
-              disabled={isProductSaving}
-              className="cursor-pointer"
-            >
-              {isProductSaving && (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              )}
-              {editingProduct ? "Save Changes" : "Add Product"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ══════════ CATEGORY DIALOG ══════════ */}
-      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-sm">
-          <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="text-lg">
-              {editingCategory ? "Edit Category" : "New Category"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingCategory
-                ? "Update the category details."
-                : "Create a new product category."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <Separator />
-
-          <form
-            onSubmit={handleCategorySubmit}
-            className="space-y-4 px-6 py-5"
-          >
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="cat-name"
-                className="text-muted-foreground text-xs font-medium"
-              >
-                Category Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="cat-name"
-                placeholder="e.g. Engine Parts"
-                value={categoryForm.name}
-                onChange={(e) => {
-                  setCategoryForm((f) => ({ ...f, name: e.target.value }));
-                  setCategoryFormErrors((prev) => ({ ...prev, name: undefined }));
-                }}
-                aria-invalid={!!categoryFormErrors.name}
-                aria-describedby="cat-name-hint cat-name-error"
-                className={cn(categoryFormErrors.name && "border-destructive")}
-                required
-              />
-              <p id="cat-name-hint" className="text-muted-foreground text-xs">
-                Keep it short and easy to scan.
-              </p>
-              {categoryFormErrors.name ? (
-                <p id="cat-name-error" className="text-destructive text-xs">
-                  {categoryFormErrors.name}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="cat-desc"
-                className="text-muted-foreground text-xs font-medium"
-              >
-                Description{" "}
-                <span className="text-muted-foreground/50">(optional)</span>
-              </Label>
-              <Textarea
-                id="cat-desc"
-                placeholder="Brief description..."
-                value={categoryForm.description}
-                onChange={(e) =>
-                  setCategoryForm((f) => ({
-                    ...f,
-                    description: e.target.value,
-                  }))
-                }
-                rows={2}
-                className="resize-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Active</p>
-                <p className="text-muted-foreground text-xs">
-                  Inactive categories are hidden from POS
-                </p>
-              </div>
-              <Switch
-                checked={categoryForm.is_active}
-                onCheckedChange={(checked) =>
-                  setCategoryForm((f) => ({ ...f, is_active: checked }))
-                }
-              />
-            </div>
-
-            {categoryServerError && (
-              <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                {categoryServerError}
-              </div>
-            )}
-          </form>
-
-          <Separator />
-
-          <div className="flex items-center justify-end gap-2 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCategoryDialogOpen(false)}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleCategorySubmit}
-              disabled={isCategorySaving}
-              className="cursor-pointer"
-            >
-              {isCategorySaving && (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              )}
-              {editingCategory ? "Save Changes" : "Add Category"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ══════════ DELETE PRODUCT DIALOG ══════════ */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1610,16 +775,15 @@ export default function CatalogModulePage() {
               onClick={handleDeleteProduct}
               className="bg-destructive hover:bg-destructive/90 cursor-pointer text-white"
             >
-              {deleteProductMut.isPending && (
+              {deleteProductMut.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
-              )}
+              ) : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ══════════ DELETE CATEGORY DIALOG ══════════ */}
       <AlertDialog
         open={deleteCategoryDialogOpen}
         onOpenChange={setDeleteCategoryDialogOpen}
@@ -1644,9 +808,9 @@ export default function CatalogModulePage() {
               onClick={handleDeleteCategory}
               className="bg-destructive hover:bg-destructive/90 cursor-pointer text-white"
             >
-              {deleteCategoryMut.isPending && (
+              {deleteCategoryMut.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
-              )}
+              ) : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1656,11 +820,6 @@ export default function CatalogModulePage() {
   );
 }
 
-// ════════════════════════════════════════════════════════
-// Sub‑components
-// ════════════════════════════════════════════════════════
-
-/** Mini stat card for the top row */
 function StatCard({
   label,
   value,
@@ -1700,46 +859,3 @@ function StatCard({
     </Card>
   );
 }
-
-/** Custom tab button (underline style) */
-function TabButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ElementType;
-  label: string;
-  count: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
-        active
-          ? "text-primary after:bg-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full"
-          : "text-muted-foreground hover:text-foreground"
-      )}
-    >
-      <Icon className="size-4" />
-      {label}
-      <span
-        className={cn(
-          "ml-0.5 rounded-full px-1.5 py-0.5 text-xs",
-          active
-            ? "bg-primary/10 text-primary"
-            : "bg-muted text-muted-foreground"
-        )}
-      >
-        {count}
-      </span>
-    </button>
-  );
-}
-
-
