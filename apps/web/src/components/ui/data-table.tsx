@@ -115,7 +115,7 @@ export function DataTable<TData, TValue>({
       {toolbar}
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm",
+          "overflow-hidden rounded-md border border-border/70 bg-card shadow-sm",
           tableClassName
         )}
       >
@@ -250,7 +250,7 @@ export function DataTable<TData, TValue>({
         )}
       </div>
       {showPagination ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-xl bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-muted-foreground text-xs sm:text-sm">
             Showing{" "}
             <span className="text-foreground font-medium">
@@ -269,7 +269,7 @@ export function DataTable<TData, TValue>({
             <label className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
               Rows per page
               <select
-                className="border-input bg-background text-foreground h-8 rounded-md border px-2 text-xs outline-none"
+                className="border-input bg-white text-foreground h-8 rounded-md border px-2 text-xs outline-none"
                 value={currentPageSize}
                 onChange={(event) =>
                   table.setPageSize(Number(event.target.value))

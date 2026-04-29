@@ -48,8 +48,8 @@ function SectionCard({
   return (
     <div className={`bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
       {/* Header well */}
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)]">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
+      <div className="bg-[#ff5722] px-6 py-4 border-b border-[rgba(84,96,103,0.15)]">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-white">
           {title}
         </h3>
       </div>
@@ -82,11 +82,11 @@ export default function SalesPerformanceSection({
         <SectionCard title="Revenue Velocity — Selected Range" className="lg:col-span-4">
           <ChartContainer
             config={weeklySalesConfig}
-            className="h-64 w-full"
+            className="h-52 sm:h-64 w-full"
             role="img"
             aria-label="Revenue trend area chart"
           >
-            <AreaChart data={weeklySales} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={weeklySales} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#ff5722" stopOpacity={0.25} />

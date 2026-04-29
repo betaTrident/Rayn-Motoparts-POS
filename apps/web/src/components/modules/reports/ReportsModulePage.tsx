@@ -38,7 +38,7 @@ export default function ReportsModulePage() {
         title="Reports"
         description="Consolidated analytics for revenue, operations, and sales performance"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant={days === 7 ? "default" : "outline"}
@@ -130,7 +130,7 @@ export default function ReportsModulePage() {
               <CardHeader>
                 <CardTitle>Top Products</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -158,7 +158,7 @@ export default function ReportsModulePage() {
               <CardHeader>
                 <CardTitle>Top Cashiers</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

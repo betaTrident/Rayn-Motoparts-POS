@@ -49,7 +49,7 @@
   --card-foreground:       #1a1c1c;
   --popover:               #ffffff;
   --popover-foreground:    #1a1c1c;
-  --primary:               #b02f00;
+  --primary:               #ff5722;
   --primary-foreground:    #ffffff;
   --secondary:             #f3f3f3;
   --secondary-foreground:  #546067;
@@ -212,3 +212,18 @@ body {
 ::-webkit-scrollbar-track { background: #f3f3f3; }
 ::-webkit-scrollbar-thumb { background: #8a8f94; border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #6c7277; }
+
+@layer utilities {
+  /* Prevent iOS Safari auto-zoom on inputs */
+  .ia-mobile-input-zoom-fix input,
+  .ia-mobile-input-zoom-fix select,
+  .ia-mobile-input-zoom-fix textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Standard 44px mobile touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

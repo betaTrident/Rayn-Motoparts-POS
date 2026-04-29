@@ -36,14 +36,14 @@ export default function CatalogProductsToolbar({
 }: CatalogProductsToolbarProps) {
   return (
     <div className="space-y-2">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-3">
+        <div className="relative min-w-0 flex-1">
           <Search className="text-muted-foreground absolute left-3.5 top-1/2 size-4 -translate-y-1/2" />
           <Input
             placeholder="Search by name, SKU, or part number..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-10 rounded-lg border-border/70 bg-card pl-10 pr-10 text-sm shadow-xs placeholder:text-muted-foreground/80"
+            className="h-9 rounded-md border-border/70 bg-card pl-10 pr-10 text-xs shadow-xs placeholder:text-muted-foreground/80"
           />
           {search ? (
             <button
@@ -57,10 +57,10 @@ export default function CatalogProductsToolbar({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
+        <div className="flex items-center gap-2">
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
             <SelectTrigger
-              className="h-10 w-full rounded-lg border-border/70 bg-card text-sm shadow-xs lg:min-w-44"
+              className="h-10 w-44 rounded-lg border-border/70 bg-card text-sm shadow-xs"
             >
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -79,7 +79,7 @@ export default function CatalogProductsToolbar({
             onValueChange={onAvailabilityChange}
           >
             <SelectTrigger
-              className="h-10 w-full rounded-lg border-border/70 bg-card text-sm shadow-xs lg:min-w-40"
+              className="h-10 w-40 rounded-lg border-border/70 bg-card text-sm shadow-xs"
             >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -94,7 +94,7 @@ export default function CatalogProductsToolbar({
             <Button
               variant="outline"
               onClick={onClearFilters}
-              className="h-10 w-full rounded-lg border-border/70 bg-card px-3 text-sm sm:col-span-2 lg:w-auto"
+              className="h-10 rounded-lg border-border/70 bg-card px-3 text-sm"
             >
               <X className="mr-1.5 size-3.5" />
               Clear filters

@@ -40,13 +40,14 @@ export default function DashboardHeaderControls({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {/* Range tab pills */}
-          <div className="flex border border-[rgba(84,96,103,0.3)] rounded-md overflow-hidden">
+          <div className="flex border border-[rgba(84,96,103,0.3)] rounded-md overflow-hidden overflow-x-auto">
             {rangeOptions.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => onRangeChange(opt.value)}
                 className={cn(
-                  "px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors duration-150",
+                  "h-9 px-3 text-[10px] font-bold uppercase tracking-widest transition-colors duration-150",
+                  "flex items-center justify-center",
                   rangeValue === opt.value
                     ? "bg-[#ff5722] text-white"
                     : "bg-white text-[#546067] hover:bg-[#f3f3f3] hover:text-[#1a1c1c]",
@@ -60,14 +61,14 @@ export default function DashboardHeaderControls({
 
           {/* Custom date range inputs */}
           {isCustom && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => onStartDateChange(e.target.value)}
                 aria-label="Start date"
                 className={cn(
-                  "px-2 py-1.5 text-xs text-[#1a1c1c] bg-white rounded-md",
+                  "h-9 px-2 text-xs text-[#1a1c1c] bg-white rounded-md",
                   "border border-[rgba(84,96,103,0.35)]",
                   "focus:outline-none focus:border-[#ff5722] focus:border-2",
                   "transition-all duration-150"
@@ -80,7 +81,7 @@ export default function DashboardHeaderControls({
                 onChange={(e) => onEndDateChange(e.target.value)}
                 aria-label="End date"
                 className={cn(
-                  "px-2 py-1.5 text-xs text-[#1a1c1c] bg-white rounded-md",
+                  "h-9 px-2 text-xs text-[#1a1c1c] bg-white rounded-md",
                   "border border-[rgba(84,96,103,0.35)]",
                   "focus:outline-none focus:border-[#ff5722] focus:border-2",
                   "transition-all duration-150"
@@ -92,9 +93,10 @@ export default function DashboardHeaderControls({
           {/* Export button */}
           <button
             className={cn(
-              "px-4 py-2 border border-[rgba(84,96,103,0.4)] text-[#1a1c1c]",
+              "w-full sm:w-auto h-9 px-4 bg-[#ff5722] text-white",
               "text-[10px] font-bold uppercase tracking-widest rounded-md",
-              "hover:bg-[#f3f3f3] transition-colors duration-150"
+              "hover:bg-[#e04a1e] active:scale-[0.98] transition-all duration-150",
+              "flex items-center justify-center shadow-sm"
             )}
           >
             Export Report

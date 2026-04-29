@@ -42,18 +42,18 @@ export default function RecentTransactionsTable({
   return (
     <div className="bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden">
       {/* ── Header well ── */}
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex justify-between items-center">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
+      <div className="bg-[#ff5722] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex justify-between items-center">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-white">
           Recent Transaction Log
         </h3>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#546067]">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">
           {transactions.length} entries
         </span>
       </div>
 
       {/* ── Table ── */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[600px] text-left border-collapse">
           <thead className="bg-[#f3f3f3]">
             <tr>
               {["TRX ID", "Time", "Items", "Payment", "Status", "Amount"].map(
@@ -62,6 +62,7 @@ export default function RecentTransactionsTable({
                     key={col}
                     className={cn(
                       "px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-[#546067]",
+                      (col === "Items" || col === "Payment") && "hidden sm:table-cell",
                       i === 5 && "text-right"
                     )}
                   >
@@ -90,10 +91,10 @@ export default function RecentTransactionsTable({
                   <td className="px-5 py-3.5 text-xs font-medium text-[#546067]">
                     {txn.time}
                   </td>
-                  <td className="px-5 py-3.5 text-xs font-medium text-[#1a1c1c] text-center">
+                  <td className="px-5 py-3.5 text-xs font-medium text-[#1a1c1c] text-center hidden sm:table-cell">
                     {txn.items}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-3.5 hidden sm:table-cell">
                     <div className="flex items-center gap-1.5">
                       <PaymentIcon method={txn.paymentMethod} />
                       <span className="text-xs font-medium text-[#546067]">

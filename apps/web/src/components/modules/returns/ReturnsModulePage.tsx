@@ -203,7 +203,7 @@ export default function ReturnsModulePage() {
             </div>
 
             {pagination && (
-              <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t px-4 py-3 text-sm">
                 <p className="text-muted-foreground">
                   Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total)
                 </p>

@@ -21,8 +21,8 @@ function SectionCard({
 }) {
   return (
     <div className={`bg-white border border-[rgba(84,96,103,0.2)] rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
-      <div className="bg-[#e8e8e8] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a1c1c]">
+      <div className="bg-[#ff5722] px-6 py-4 border-b border-[rgba(84,96,103,0.15)] flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-white">
           {title}
         </h3>
         {badge}
@@ -248,9 +248,10 @@ export default function OperationalInsightsSection({
                         {i + 1}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1a1c1c] truncate">{cashier.name}</p>
+                        <p className="text-xs font-bold text-[#1a1c1c] truncate max-w-[120px] sm:max-w-none">{cashier.name}</p>
                         <p className="text-[10px] text-[#546067] font-medium">
-                          {cashier.orders} orders · AOV {formatCurrency(cashier.avgOrderValue)}
+                          {cashier.orders} orders
+                          <span className="hidden sm:inline"> · AOV {formatCurrency(cashier.avgOrderValue)}</span>
                         </p>
                       </div>
                     </div>

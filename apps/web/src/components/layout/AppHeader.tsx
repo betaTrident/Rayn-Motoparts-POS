@@ -36,9 +36,10 @@ function toTitleFromPath(pathname: string): string {
 
 interface AppHeaderProps {
   sidebarCollapsed: boolean;
+  onToggleMobileSidebar?: () => void;
 }
 
-export default function AppHeader({ sidebarCollapsed }: AppHeaderProps) {
+export default function AppHeader({ sidebarCollapsed, onToggleMobileSidebar }: AppHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function AppHeader({ sidebarCollapsed }: AppHeaderProps) {
 
   const pageTitle = pageTitles[location.pathname] ?? toTitleFromPath(location.pathname);
   const appBasePath = highestRole === "staff" ? "/app/staff" : "/app/admin";
-  const leftOffset = sidebarCollapsed ? "left-16" : "left-64";
+  const leftOffset = sidebarCollapsed ? "left-0 lg:left-16" : "left-0 lg:left-64";
 
   return (
     <header
@@ -58,8 +59,17 @@ export default function AppHeader({ sidebarCollapsed }: AppHeaderProps) {
         leftOffset
       )}
     >
+      {/* ── Hamburger Menu ── */}
+      <button
+        onClick={onToggleMobileSidebar}
+        className="lg:hidden w-10 h-10 -ml-2 flex items-center justify-center text-[#546067] hover:text-[#ff5722] rounded-sm shrink-0"
+        aria-label="Open navigation"
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>menu</span>
+      </button>
+
       {/* ── Search bar ── */}
-      <div className="relative flex-1 max-w-md">
+      <div className="hidden sm:flex relative flex-1 max-w-md">
         <span
           className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#546067]"
           style={{ fontSize: "18px" }}
@@ -79,6 +89,11 @@ export default function AppHeader({ sidebarCollapsed }: AppHeaderProps) {
           )}
         />
       </div>
+
+      {/* Search icon fallback on very small screens */}
+      <button className="sm:hidden w-10 h-10 -ml-2 flex items-center justify-center text-[#546067] hover:text-[#ff5722] rounded-sm shrink-0 mr-auto" aria-label="Search">
+        <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>search</span>
+      </button>
 
       {/* ── Right controls ── */}
       <div className="flex items-center gap-2 ml-auto">

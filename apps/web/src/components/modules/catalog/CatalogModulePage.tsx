@@ -662,7 +662,7 @@ export default function CatalogModulePage() {
         />
       </div>
 
-      <Card>
+      <Card className="pt-0 pb-0">
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
