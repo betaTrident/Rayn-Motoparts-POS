@@ -24,20 +24,22 @@ export default function PageHeader({
   return (
     <header
       className={cn(
-        "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6",
+        "mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
         className
       )}
     >
-      <div>
-        <h2 className="text-2xl font-extrabold text-[#1a1c1c] tracking-tight leading-none">
+      <div className="min-w-0">
+        <h2 className="text-2xl leading-none font-extrabold tracking-tight text-[#1a1c1c] sm:text-[1.75rem]">
           {title}
         </h2>
         {description ? (
-          <p className="text-[#546067] text-sm font-medium mt-1">{description}</p>
+          <p className="mt-1 text-sm font-medium text-[#546067]">{description}</p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-2 [&>*]:w-full sm:[&>*]:w-auto">
+          {actions}
+        </div>
       ) : null}
     </header>
   );

@@ -70,7 +70,42 @@ export default function TransactionsTable({
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-3 md:hidden">
+          {results.map((row) => (
+            <div key={row.id} className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{row.transactionNumber}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {formatDateTime(row.transactionDate)}
+                  </p>
+                </div>
+                <Badge variant={row.status === "refunded" ? "destructive" : "secondary"}>
+                  {row.status.replaceAll("_", " ")}
+                </Badge>
+              </div>
+              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                <p>Staff: {row.cashierName}</p>
+                <p>Payments: {row.paymentMethods.join(", ")}</p>
+                <p>Items: {row.itemsQty}</p>
+                <p className="font-semibold text-foreground">
+                  Total: {formatCurrency(row.totalAmount)}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onViewDetail(row)}
+                className="mt-4 w-full"
+              >
+                <Eye className="mr-2 size-4" />
+                View Transaction
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -113,7 +148,7 @@ export default function TransactionsTable({
         </div>
 
         {pagination && (
-          <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
+          <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground">
               Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total)
             </p>
@@ -123,6 +158,7 @@ export default function TransactionsTable({
                 size="sm"
                 disabled={!pagination.hasPrevious}
                 onClick={onPreviousPage}
+                className="flex-1 sm:flex-none"
               >
                 Previous
               </Button>
@@ -131,6 +167,7 @@ export default function TransactionsTable({
                 size="sm"
                 disabled={!pagination.hasNext}
                 onClick={onNextPage}
+                className="flex-1 sm:flex-none"
               >
                 Next
               </Button>

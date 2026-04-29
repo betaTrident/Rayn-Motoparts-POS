@@ -121,14 +121,14 @@ export default function PosModulePage() {
         description="Build a cart from available catalog products"
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(20rem,1fr)]">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>Product Browser</CardTitle>
             <CardDescription>Search and add sellable products to cart</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -164,7 +164,7 @@ export default function PosModulePage() {
                 description="Adjust search/category filters or activate products in catalog."
               />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                 {products.map((product) => (
                   <div key={product.id} className="rounded-lg border p-3">
                     <div className="mb-3 space-y-1">
@@ -186,7 +186,7 @@ export default function PosModulePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="xl:sticky xl:top-20 xl:self-start">
           <CardHeader className="pb-3">
             <CardTitle>Cart</CardTitle>
             <CardDescription>
@@ -220,7 +220,7 @@ export default function PosModulePage() {
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -240,7 +240,7 @@ export default function PosModulePage() {
                           <Plus className="size-3.5" />
                         </Button>
                       </div>
-                      <p className="text-sm font-semibold">
+                      <p className="text-sm font-semibold sm:text-right">
                         {formatCurrency(Number(line.product.price) * line.qty)}
                       </p>
                     </div>
@@ -263,6 +263,22 @@ export default function PosModulePage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="fixed inset-x-4 bottom-4 z-30 xl:hidden">
+        <div className="rounded-xl border border-border/70 bg-white/95 p-3 shadow-lg backdrop-blur">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Cart Summary</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {totalItems} item{totalItems === 1 ? "" : "s"} • {formatCurrency(subtotal)}
+              </p>
+            </div>
+            <Button className="shrink-0" disabled>
+              Checkout
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

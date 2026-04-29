@@ -635,7 +635,7 @@ export default function CatalogModulePage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total Products"
           value={stats.total}
@@ -709,6 +709,9 @@ export default function CatalogModulePage() {
                 isLoading={productsQuery.isLoading}
                 emptyState={productsEmptyState}
                 toolbar={productsToolbar}
+                onEdit={openEditProduct}
+                onToggleAvailability={toggleProductAvailability}
+                onDelete={openDeleteProduct}
               />
             )}
           </TabsContent>

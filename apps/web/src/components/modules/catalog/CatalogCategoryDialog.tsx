@@ -62,7 +62,7 @@ export default function CatalogCategoryDialog({
 
         <Separator />
 
-        <form onSubmit={onSubmit} className="space-y-4 px-6 py-5">
+        <form onSubmit={onSubmit} className="max-h-[70vh] space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
           <div className="space-y-1.5">
             <Label
               htmlFor="cat-name"
@@ -142,12 +142,12 @@ export default function CatalogCategoryDialog({
 
         <Separator />
 
-        <div className="flex items-center justify-end gap-2 px-6 py-4">
+        <div className="flex flex-col-reverse gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="cursor-pointer"
+            className="w-full cursor-pointer sm:w-auto"
           >
             Cancel
           </Button>
@@ -155,7 +155,7 @@ export default function CatalogCategoryDialog({
             type="button"
             onClick={onSubmit}
             disabled={isSaving}
-            className="cursor-pointer"
+            className="w-full cursor-pointer sm:w-auto"
           >
             {isSaving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             {editingCategory ? "Save Changes" : "Add Category"}

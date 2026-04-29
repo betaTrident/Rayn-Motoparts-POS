@@ -57,10 +57,10 @@ export default function CatalogProductsToolbar({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
           <Select value={categoryFilter} onValueChange={onCategoryChange}>
             <SelectTrigger
-              className="h-10 min-w-44 rounded-lg border-border/70 bg-card text-sm shadow-xs"
+              className="h-10 w-full rounded-lg border-border/70 bg-card text-sm shadow-xs lg:min-w-44"
             >
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -79,7 +79,7 @@ export default function CatalogProductsToolbar({
             onValueChange={onAvailabilityChange}
           >
             <SelectTrigger
-              className="h-10 min-w-40 rounded-lg border-border/70 bg-card text-sm shadow-xs"
+              className="h-10 w-full rounded-lg border-border/70 bg-card text-sm shadow-xs lg:min-w-40"
             >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -94,7 +94,7 @@ export default function CatalogProductsToolbar({
             <Button
               variant="outline"
               onClick={onClearFilters}
-              className="h-10 rounded-lg border-border/70 bg-card px-3 text-sm"
+              className="h-10 w-full rounded-lg border-border/70 bg-card px-3 text-sm sm:col-span-2 lg:w-auto"
             >
               <X className="mr-1.5 size-3.5" />
               Clear filters

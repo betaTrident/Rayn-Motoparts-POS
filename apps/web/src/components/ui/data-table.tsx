@@ -14,6 +14,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Pagination,
   PaginationContent,
@@ -46,6 +47,7 @@ interface DataTableProps<TData, TValue> {
   pageSize?: number
   pageSizeOptions?: number[]
   enablePagination?: boolean
+  mobileCardRenderer?: (row: TData) => React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -62,7 +64,9 @@ export function DataTable<TData, TValue>({
   pageSize = 10,
   pageSizeOptions = [10, 20, 50],
   enablePagination = true,
+  mobileCardRenderer,
 }: DataTableProps<TData, TValue>) {
+  const isMobile = useIsMobile()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -104,6 +108,7 @@ export function DataTable<TData, TValue>({
 
   const paginationItems = buildPaginationItems(currentPage, pageCount)
   const showPagination = enablePagination && !isLoading && totalRows > currentPageSize
+  const showMobileCards = Boolean(isMobile && mobileCardRenderer)
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -114,115 +119,135 @@ export function DataTable<TData, TValue>({
           tableClassName
         )}
       >
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="hover:bg-transparent"
-              >
-                {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort()
-                  const isSorted = header.column.getIsSorted()
-                  const meta = header.column.columnDef.meta as
-                    | { headerClassName?: string }
-                    | undefined
-
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        "h-12 bg-muted/10 px-4 text-sm font-semibold tracking-tight text-foreground/90",
-                        canSort && "cursor-pointer select-none",
-                        meta?.headerClassName
-                      )}
-                    >
-                      {header.isPlaceholder ? null : canSort ? (
-                        <button
-                          type="button"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1"
-                        >
-                          <span>
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                          </span>
-                          {isSorted === "asc" ? (
-                            <ChevronUp className="size-3.5" />
-                          ) : isSorted === "desc" ? (
-                            <ChevronDown className="size-3.5" />
-                          ) : (
-                            <ArrowUpDown className="size-3.5 opacity-40" />
-                          )}
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )
-                      )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
+        {showMobileCards ? (
+          <div className="space-y-3 p-3">
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {loadingState ?? defaultLoadingState}
-                </TableCell>
-              </TableRow>
+              <div className="rounded-lg border border-dashed p-6 text-center">
+                {loadingState ?? defaultLoadingState}
+              </div>
             ) : rows.length ? (
               rows.map((row) => (
+                <div key={row.id}>
+                  {mobileCardRenderer?.(row.original)}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-dashed p-6 text-center">
+                {emptyState ?? defaultEmptyState}
+              </div>
+            )}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
-                  key={row.id}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    "odd:bg-card even:bg-muted/10 hover:bg-muted/25",
-                    onRowClick && "cursor-pointer"
-                  )}
+                  key={headerGroup.id}
+                  className="hover:bg-transparent"
                 >
-                  {row.getVisibleCells().map((cell) => {
-                    const meta = cell.column.columnDef.meta as
-                      | { cellClassName?: string }
+                  {headerGroup.headers.map((header) => {
+                    const canSort = header.column.getCanSort()
+                    const isSorted = header.column.getIsSorted()
+                    const meta = header.column.columnDef.meta as
+                      | { headerClassName?: string }
                       | undefined
 
                     return (
-                      <TableCell
-                        key={cell.id}
+                      <TableHead
+                        key={header.id}
                         className={cn(
-                          "px-4 py-3 align-middle text-[13px]",
-                          meta?.cellClassName
+                          "h-12 bg-muted/10 px-4 text-sm font-semibold tracking-tight text-foreground/90",
+                          canSort && "cursor-pointer select-none",
+                          meta?.headerClassName
                         )}
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
+                        {header.isPlaceholder ? null : canSort ? (
+                          <button
+                            type="button"
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="inline-flex items-center gap-1"
+                          >
+                            <span>
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                            </span>
+                            {isSorted === "asc" ? (
+                              <ChevronUp className="size-3.5" />
+                            ) : isSorted === "desc" ? (
+                              <ChevronDown className="size-3.5" />
+                            ) : (
+                              <ArrowUpDown className="size-3.5 opacity-40" />
+                            )}
+                          </button>
+                        ) : (
+                          flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )
                         )}
-                      </TableCell>
+                      </TableHead>
                     )
                   })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {emptyState ?? defaultEmptyState}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {loadingState ?? defaultLoadingState}
+                  </TableCell>
+                </TableRow>
+              ) : rows.length ? (
+                rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={cn(
+                      "odd:bg-card even:bg-muted/10 hover:bg-muted/25",
+                      onRowClick && "cursor-pointer"
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const meta = cell.column.columnDef.meta as
+                        | { cellClassName?: string }
+                        | undefined
+
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            "px-4 py-3 align-middle text-[13px]",
+                            meta?.cellClassName
+                          )}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {emptyState ?? defaultEmptyState}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
       {showPagination ? (
         <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -258,7 +283,7 @@ export function DataTable<TData, TValue>({
               </select>
             </label>
 
-            <Pagination className="mx-0 w-auto justify-start sm:justify-end">
+            <Pagination className="mx-0 w-full justify-start sm:w-auto sm:justify-end">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious

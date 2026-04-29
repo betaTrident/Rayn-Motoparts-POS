@@ -120,7 +120,7 @@ export default function CatalogCategoriesPanel({
                     variant="ghost"
                     size="icon"
                     aria-label={`Open actions for category ${cat.name}`}
-                    className="size-7 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
+                    className="size-7 cursor-pointer opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     <MoreHorizontal className="size-4" />
                   </Button>
