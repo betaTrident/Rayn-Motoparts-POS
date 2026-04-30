@@ -42,6 +42,7 @@ class SalesTransaction(TimeStampedModel):
         PARTIALLY_REFUNDED = 'partially_refunded', 'Partially Refunded'
 
     transaction_number = models.CharField(max_length=30, unique=True)
+    warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT)
     cash_session = models.ForeignKey(CashSession, on_delete=models.PROTECT)
     customer = models.ForeignKey(
         'customers.Customer',
@@ -77,7 +78,7 @@ class SalesTransaction(TimeStampedModel):
         db_table = 'sales_transactions'
         indexes = [
             models.Index(
-                fields=['transaction_date', 'status'],
+                fields=['warehouse', 'transaction_date', 'status'],
                 name='idx_sales_txn_reporting',
             ),
             models.Index(fields=['status'], name='idx_sales_txn_status'),
@@ -152,6 +153,7 @@ class SalesReturn(TimeStampedModel):
         on_delete=models.PROTECT,
         related_name='returns',
     )
+    warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT)
     cashier = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     reason = models.CharField(max_length=255, null=True, blank=True)
 

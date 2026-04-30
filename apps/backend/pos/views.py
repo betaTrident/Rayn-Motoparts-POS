@@ -14,8 +14,50 @@ from core.rollout_flags import pos_receipt_read_enabled
 from inventory.models import InventoryStock
 
 from .models import ReceiptPayment, SalesTransaction, SalesTransactionItem, TransactionPayment
+from inventory.models import get_default_warehouse
+
+from .serializers import (
+    CurrentCashSessionSerializer,
+    OpenCashSessionRequestSerializer,
+    PaymentMethodSerializer,
+    PosCheckoutRequestSerializer,
+)
+from .services import create_and_complete_sale, open_cash_session
 
 ALLOWED_SYSTEM_ROLES = {"superadmin", "admin", "staff"}
+
+
+def _user_has_pos_access(user) -> bool:
+    return user.is_superuser or user.groups.filter(name__in=ALLOWED_SYSTEM_ROLES).exists()
+
+
+def _serialize_cash_session(session) -> dict:
+    cash_collected = (
+        TransactionPayment.objects.filter(
+            sales_transaction__cash_session=session,
+            sales_transaction__status=SalesTransaction.Status.COMPLETED,
+            payment_method__code__iexact="CASH",
+        ).aggregate(v=Coalesce(Sum("amount"), Decimal("0")))["v"]
+    )
+    change_given = (
+        SalesTransaction.objects.filter(
+            cash_session=session,
+            status=SalesTransaction.Status.COMPLETED,
+        ).aggregate(v=Coalesce(Sum("change_given"), Decimal("0")))["v"]
+    )
+    expected_cash_balance = (
+        (session.opening_balance or Decimal("0"))
+        + (cash_collected or Decimal("0"))
+        - (change_given or Decimal("0"))
+    )
+    return {
+        "id": session.id,
+        "sessionCode": session.session_code or str(session.id),
+        "status": session.status,
+        "openingBalance": _to_float(session.opening_balance),
+        "expectedCashBalance": _to_float(expected_cash_balance),
+        "openedAt": timezone.localtime(session.opened_at).isoformat(),
+    }
 
 
 def _to_float(value: Decimal | None) -> float:
@@ -445,6 +487,153 @@ class PosDashboardView(APIView):
             ]
 
         return Response(payload, status=status.HTTP_200_OK)
+
+
+class CurrentCashSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _user_has_pos_access(request.user):
+            return Response(
+                {"detail": "You do not have access to POS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        from .models import CashSession
+
+        get_default_warehouse()
+
+        session = (
+            CashSession.objects.filter(cashier=request.user, status=CashSession.Status.OPEN)
+            .order_by("-opened_at")
+            .first()
+        )
+        if session is None:
+            return Response({"cashSession": None}, status=status.HTTP_200_OK)
+
+        serializer = CurrentCashSessionSerializer(_serialize_cash_session(session))
+        return Response({"cashSession": serializer.data}, status=status.HTTP_200_OK)
+
+
+class PaymentMethodListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _user_has_pos_access(request.user):
+            return Response(
+                {"detail": "You do not have access to POS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        from .models import PaymentMethod
+
+        payment_methods = [
+            {"id": method.id, "code": method.code, "name": method.name}
+            for method in PaymentMethod.objects.filter(is_active=True).order_by("name")
+        ]
+        serializer = PaymentMethodSerializer(payment_methods, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PosBootstrapView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _user_has_pos_access(request.user):
+            return Response(
+                {"detail": "You do not have access to POS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        from .models import CashSession, PaymentMethod
+
+        get_default_warehouse()
+
+        session = (
+            CashSession.objects.filter(cashier=request.user, status=CashSession.Status.OPEN)
+            .order_by("-opened_at")
+            .first()
+        )
+        payment_methods = [
+            {"id": method.id, "code": method.code, "name": method.name}
+            for method in PaymentMethod.objects.filter(is_active=True).order_by("name")
+        ]
+
+        return Response(
+            {
+                "cashSession": (
+                    CurrentCashSessionSerializer(_serialize_cash_session(session)).data
+                    if session is not None
+                    else None
+                ),
+                "paymentMethods": PaymentMethodSerializer(payment_methods, many=True).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class OpenCashSessionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not _user_has_pos_access(request.user):
+            return Response(
+                {"detail": "You do not have access to POS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = OpenCashSessionRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            session, created = open_cash_session(
+                cashier=request.user,
+                opening_balance=serializer.validated_data["opening_balance"],
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except RuntimeError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response(
+            {
+                "cashSession": CurrentCashSessionSerializer(_serialize_cash_session(session)).data,
+                "created": created,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class PosCheckoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not _user_has_pos_access(request.user):
+            return Response(
+                {"detail": "You do not have access to POS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = PosCheckoutRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+
+        try:
+            result = create_and_complete_sale(
+                cash_session_id=validated["cash_session_id"],
+                cashier=request.user,
+                customer=validated.get("customer_id"),
+                customer_name=validated.get("customer_name"),
+                items=validated["items"],
+                payments=validated["payments"],
+                notes=validated.get("notes"),
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except RuntimeError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response(result, status=status.HTTP_201_CREATED)
 
 
 class PosTransactionListView(APIView):

@@ -20,6 +20,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -141,6 +148,8 @@ export default function CatalogModulePage() {
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(
     null
   );
+  const [variantDialogOpen, setVariantDialogOpen] = useState(false);
+  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] =
     useState<ProductFormData>(EMPTY_PRODUCT);
   const [categoryForm, setCategoryForm] =
@@ -462,6 +471,11 @@ export default function CatalogModulePage() {
     setDeleteDialogOpen(true);
   }, []);
 
+  const openViewVariants = useCallback((product: Product) => {
+    setVariantProduct(product);
+    setVariantDialogOpen(true);
+  }, []);
+
   const openCreateCategory = useCallback(() => {
     setEditingCategory(null);
     setCategoryForm(EMPTY_CATEGORY);
@@ -559,8 +573,9 @@ export default function CatalogModulePage() {
         onEdit: openEditProduct,
         onToggleAvailability: toggleProductAvailability,
         onDelete: openDeleteProduct,
+        onViewVariants: openViewVariants,
       }),
-    [openEditProduct, openDeleteProduct, toggleProductAvailability]
+    [openEditProduct, openDeleteProduct, openViewVariants, toggleProductAvailability]
   );
 
   const productsToolbar = (
@@ -637,7 +652,7 @@ export default function CatalogModulePage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total Products"
+          label="Total Product Records"
           value={stats.total}
           icon={Package}
           accent="primary"
@@ -661,6 +676,9 @@ export default function CatalogModulePage() {
           accent="blue"
         />
       </div>
+      <p className="text-muted-foreground text-xs">
+        Inventory counts SKU variants, so its tracked total can be higher than catalog product records.
+      </p>
 
       <Card className="pt-0 pb-0">
         <Tabs
@@ -819,6 +837,47 @@ export default function CatalogModulePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={variantDialogOpen} onOpenChange={setVariantDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Product Variants</DialogTitle>
+            <DialogDescription>
+              {variantProduct?.name} has{" "}
+              {variantProduct?.variant_count ?? variantProduct?.variants?.length ?? 0} variant
+              {(variantProduct?.variant_count ?? variantProduct?.variants?.length ?? 0) === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border">
+            <div className="grid grid-cols-12 gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-semibold text-muted-foreground">
+              <div className="col-span-4">SKU</div>
+              <div className="col-span-3">Size</div>
+              <div className="col-span-3 text-right">Sell Price</div>
+              <div className="col-span-2 text-right">Status</div>
+            </div>
+            <div className="max-h-[320px] overflow-auto">
+              {(variantProduct?.variants ?? []).map((variant) => (
+                <div
+                  key={variant.id}
+                  className="grid grid-cols-12 gap-3 border-b px-4 py-2 text-sm last:border-b-0"
+                >
+                  <div className="col-span-4 font-mono text-xs">{variant.variant_sku}</div>
+                  <div className="col-span-3">{variant.size_display}</div>
+                  <div className="col-span-3 text-right">{formatCurrency(variant.selling_price)}</div>
+                  <div className="col-span-2 text-right">
+                    <Badge variant={variant.is_active ? "secondary" : "outline"}>
+                      {variant.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              {(variantProduct?.variants?.length ?? 0) === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">No variants found for this product.</p>
+              ) : null}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

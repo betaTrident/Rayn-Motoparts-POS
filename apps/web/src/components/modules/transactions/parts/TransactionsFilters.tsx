@@ -1,7 +1,6 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -46,24 +45,34 @@ export default function TransactionsFilters({
   onClearFilters,
 }: TransactionsFiltersProps) {
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4">
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <div className="relative lg:col-span-2">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Search transaction no, customer, staff"
-              className="pl-9"
-            />
-          </div>
+    <div className="space-y-2">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="text-muted-foreground absolute left-3.5 top-1/2 size-4 -translate-y-1/2" />
+          <Input
+            value={q}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search transaction no, customer, or cashier..."
+            className="h-9 rounded-md border-border/70 bg-card pl-10 pr-10 text-xs shadow-xs"
+          />
+          {q ? (
+            <button
+              type="button"
+              onClick={() => onQueryChange("")}
+              aria-label="Clear transaction search"
+              className="text-muted-foreground hover:text-foreground absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer transition-colors"
+            >
+              <X className="size-3.5" />
+            </button>
+          ) : null}
+        </div>
 
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={days} onValueChange={onDaysChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-10 w-40 rounded-lg border-border/70 bg-card text-sm shadow-xs">
               <SelectValue placeholder="Range" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-lg">
               <SelectItem value="1">Today</SelectItem>
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
@@ -71,10 +80,10 @@ export default function TransactionsFilters({
           </Select>
 
           <Select value={status} onValueChange={onStatusChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-10 w-40 rounded-lg border-border/70 bg-card text-sm shadow-xs">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-lg">
               <SelectItem value="all">All Status</SelectItem>
               {statusOptions.map((item) => (
                 <SelectItem key={item} value={item}>
@@ -85,10 +94,10 @@ export default function TransactionsFilters({
           </Select>
 
           <Select value={paymentMethod} onValueChange={onPaymentMethodChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-10 w-44 rounded-lg border-border/70 bg-card text-sm shadow-xs">
               <SelectValue placeholder="Payment" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-lg">
               <SelectItem value="all">All Payments</SelectItem>
               {paymentOptions.map((item) => (
                 <SelectItem key={item.code} value={item.code}>
@@ -97,16 +106,19 @@ export default function TransactionsFilters({
               ))}
             </SelectContent>
           </Select>
-        </div>
 
-        {activeFilters && (
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            <Button variant="outline" onClick={onClearFilters}>
-              Clear Filters
+          {activeFilters ? (
+            <Button
+              variant="outline"
+              onClick={onClearFilters}
+              className="h-10 rounded-lg border-border/70 bg-card px-3 text-sm"
+            >
+              <X className="mr-1.5 size-3.5" />
+              Clear filters
             </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }

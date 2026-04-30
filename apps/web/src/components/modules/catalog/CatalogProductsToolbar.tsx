@@ -1,7 +1,6 @@
 import { Search, X } from "lucide-react";
 
 import type { Category } from "@/types/product.types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -31,8 +30,6 @@ export default function CatalogProductsToolbar({
   onCategoryChange,
   availabilityFilter,
   onAvailabilityChange,
-  hasActiveFilters,
-  onClearFilters,
 }: CatalogProductsToolbarProps) {
   return (
     <div className="space-y-2">
@@ -90,16 +87,6 @@ export default function CatalogProductsToolbar({
             </SelectContent>
           </Select>
 
-          {hasActiveFilters ? (
-            <Button
-              variant="outline"
-              onClick={onClearFilters}
-              className="h-10 rounded-lg border-border/70 bg-card px-3 text-sm"
-            >
-              <X className="mr-1.5 size-3.5" />
-              Clear filters
-            </Button>
-          ) : null}
         </div>
       </div>
     </div>

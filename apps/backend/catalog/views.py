@@ -27,7 +27,12 @@ class ProductViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Product.objects.filter(deleted_at__isnull=True).select_related('category').order_by('-created_at')
+    queryset = (
+        Product.objects.filter(deleted_at__isnull=True)
+        .select_related('category')
+        .prefetch_related('variants')
+        .order_by('-created_at')
+    )
 
     def get_queryset(self):
         queryset = super().get_queryset()

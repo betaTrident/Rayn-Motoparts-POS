@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import raynLogo from "@/assets/RAYN-LOGO.svg";
 
 // ═══════════════════════════════════════════════════════
 //  INDUSTRIAL ATELIER — AppSidebar
@@ -187,17 +188,12 @@ export default function AppSidebar({
           collapsed ? "justify-center px-2" : "px-4 gap-3",
         )}
       >
-        <div className="w-8 h-8 bg-[#ff5722] flex items-center justify-center rounded-sm shrink-0">
-          <span
-            className="material-symbols-outlined text-white"
-            style={{
-              fontSize: "18px",
-              fontVariationSettings:
-                "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24",
-            }}
-          >
-            precision_manufacturing
-          </span>
+        <div className="w-12 h-12 flex items-center justify-center shrink-0">
+          <img 
+            src={raynLogo} 
+            alt="Rayn Motoparts" 
+            className="w-full h-full object-contain"
+          />
         </div>
         {!collapsed && (
           <div className="min-w-0">

@@ -23,6 +23,7 @@ interface ProductColumnHandlers {
   onEdit: (product: Product) => void;
   onToggleAvailability: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onViewVariants: (product: Product) => void;
 }
 
 function formatCurrency(amount: string | number) {
@@ -55,6 +56,10 @@ export function createCatalogProductColumns(
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span className="font-mono font-semibold text-foreground/80">
                   {product.sku}
+                </span>
+                <span>
+                  {product.variant_count ?? product.variants?.length ?? 0} variant
+                  {(product.variant_count ?? product.variants?.length ?? 0) === 1 ? "" : "s"}
                 </span>
                 <span className="max-w-[12.5rem] truncate">
                   Part #{product.part_number || "-"}
@@ -169,6 +174,13 @@ export function createCatalogProductColumns(
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem
+                  onClick={() => handlers.onViewVariants(product)}
+                  className="cursor-pointer"
+                >
+                  <Wrench className="mr-2 size-4" />
+                  View variants
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handlers.onToggleAvailability(product)}
                   className="cursor-pointer"

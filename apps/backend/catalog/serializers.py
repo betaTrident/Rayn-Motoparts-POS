@@ -66,8 +66,11 @@ class ProductReadSerializer(serializers.ModelSerializer):
     is_active = serializers.BooleanField(read_only=True)
     is_taxable = serializers.BooleanField(read_only=True)
     is_serialized = serializers.BooleanField(read_only=True)
+    variant_id = serializers.SerializerMethodField()
     variant_sku = serializers.SerializerMethodField()
     variant_name = serializers.SerializerMethodField()
+    variant_count = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
     size = serializers.SerializerMethodField()
     size_display = serializers.SerializerMethodField()
@@ -91,8 +94,11 @@ class ProductReadSerializer(serializers.ModelSerializer):
             'is_active',
             'is_taxable',
             'is_serialized',
+            'variant_id',
             'variant_sku',
             'variant_name',
+            'variant_count',
+            'variants',
             'price',
             'size',
             'size_display',
@@ -124,9 +130,39 @@ class ProductReadSerializer(serializers.ModelSerializer):
         variant = self._first_variant(obj)
         return variant.variant_sku if variant else None
 
+    def get_variant_id(self, obj):
+        variant = self._first_variant(obj)
+        return variant.id if variant else None
+
     def get_variant_name(self, obj):
         variant = self._first_variant(obj)
         return variant.variant_name if variant else None
+
+    def get_variant_count(self, obj):
+        return obj.variants.filter(deleted_at__isnull=True, is_active=True).count()
+
+    def get_variants(self, obj):
+        return [
+            {
+                "id": variant.id,
+                "variant_sku": variant.variant_sku,
+                "variant_name": variant.variant_name,
+                "size": (
+                    variant.attributes.get("size", "medium")
+                    if isinstance(variant.attributes, dict)
+                    else "medium"
+                ),
+                "size_display": (
+                    (variant.attributes.get("size", "medium").capitalize())
+                    if isinstance(variant.attributes, dict)
+                    else "Medium"
+                ),
+                "selling_price": str(variant.effective_price),
+                "cost_price": str(variant.effective_cost),
+                "is_active": variant.is_active,
+            }
+            for variant in obj.variants.filter(deleted_at__isnull=True).order_by("id")
+        ]
 
     def get_size(self, obj):
         variant = self._first_variant(obj)

@@ -23,8 +23,15 @@ const toProduct = (dto: ProductDto): Product => ({
   is_active: dto.is_active ?? dto.is_available,
   is_taxable: dto.is_taxable ?? true,
   is_serialized: dto.is_serialized ?? false,
+  variant_id: dto.variant_id ?? null,
   variant_sku: dto.variant_sku ?? "",
   variant_name: dto.variant_name ?? "",
+  variant_count: dto.variant_count ?? (dto.variants?.length ?? 0),
+  variants:
+    dto.variants?.map((variant) => ({
+      ...variant,
+      variant_name: variant.variant_name ?? "",
+    })) ?? [],
   price: dto.selling_price ?? dto.price,
   is_available: dto.is_active ?? dto.is_available,
 });

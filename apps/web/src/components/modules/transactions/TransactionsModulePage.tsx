@@ -6,6 +6,7 @@ import { exportTransactionsCsv } from "@/components/modules/transactions/formatt
 import TransactionDetailDialog from "@/components/modules/transactions/parts/TransactionDetailDialog";
 import TransactionsFilters from "@/components/modules/transactions/parts/TransactionsFilters";
 import TransactionsTable from "@/components/modules/transactions/parts/TransactionsTable";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   useTransactionDetail,
@@ -42,6 +43,10 @@ export default function TransactionsModulePage() {
     return Boolean(q) || days !== "7" || status !== "all" || paymentMethod !== "all";
   }, [q, days, status, paymentMethod]);
 
+  const pageGross = results.reduce((sum, row) => sum + row.totalAmount, 0);
+  const refundedCount = results.filter((row) => row.status === "refunded").length;
+  const avgTicket = results.length ? pageGross / results.length : 0;
+
   const clearFilters = () => {
     setQ("");
     setDays("7");
@@ -67,32 +72,43 @@ export default function TransactionsModulePage() {
         }
       />
 
-      <TransactionsFilters
-        q={q}
-        days={days}
-        status={status}
-        paymentMethod={paymentMethod}
-        statusOptions={statusOptions}
-        paymentOptions={paymentOptions}
-        activeFilters={activeFilters}
-        onQueryChange={(value) => {
-          setQ(value);
-          setPage(1);
-        }}
-        onDaysChange={(value) => {
-          setDays(value);
-          setPage(1);
-        }}
-        onStatusChange={(value) => {
-          setStatus(value);
-          setPage(1);
-        }}
-        onPaymentMethodChange={(value) => {
-          setPaymentMethod(value);
-          setPage(1);
-        }}
-        onClearFilters={clearFilters}
-      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Matched Records" value={pagination?.totalCount ?? 0} />
+        <StatCard label="Current Page Gross" value={formatPhp(pageGross)} />
+        <StatCard label="Refunded on Page" value={refundedCount} />
+        <StatCard label="Page Avg Ticket" value={formatPhp(avgTicket)} />
+      </div>
+
+      <Card className="py-0">
+        <CardContent className="p-4 pt-3">
+          <TransactionsFilters
+            q={q}
+            days={days}
+            status={status}
+            paymentMethod={paymentMethod}
+            statusOptions={statusOptions}
+            paymentOptions={paymentOptions}
+            activeFilters={activeFilters}
+            onQueryChange={(value) => {
+              setQ(value);
+              setPage(1);
+            }}
+            onDaysChange={(value) => {
+              setDays(value);
+              setPage(1);
+            }}
+            onStatusChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
+            onPaymentMethodChange={(value) => {
+              setPaymentMethod(value);
+              setPage(1);
+            }}
+            onClearFilters={clearFilters}
+          />
+        </CardContent>
+      </Card>
 
       <TransactionsTable
         isLoading={transactionsQuery.isLoading}
@@ -114,5 +130,29 @@ export default function TransactionsModulePage() {
         onRetry={() => detailQuery.refetch()}
       />
     </div>
+  );
+}
+
+function formatPhp(value: number) {
+  return `PHP ${value.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <Card className="py-4">
+      <CardContent className="pb-0">
+        <p className="text-2xl font-bold leading-none">{value}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+      </CardContent>
+    </Card>
   );
 }

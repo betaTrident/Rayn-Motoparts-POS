@@ -25,8 +25,20 @@ export interface ProductDto {
   is_active: boolean;
   is_taxable: boolean;
   is_serialized: boolean;
+  variant_id: number | null;
   variant_sku: string | null;
   variant_name: string | null;
+  variant_count?: number;
+  variants?: Array<{
+    id: number;
+    variant_sku: string;
+    variant_name: string | null;
+    size: ProductSizeDto;
+    size_display: string;
+    selling_price: string;
+    cost_price: string;
+    is_active: boolean;
+  }>;
   price: string;
   size: ProductSizeDto;
   size_display: string;

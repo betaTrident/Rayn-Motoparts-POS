@@ -1,293 +1,241 @@
-import { useMemo } from "react";
-import { useSearchParams } from "react-router";
-import { AlertTriangle, PackageSearch, TrendingDown, TrendingUp } from "lucide-react";
+import { useDeferredValue, useState } from "react";
+import { toast } from "sonner";
+import { ClipboardList, PackageSearch, SlidersHorizontal } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageErrorState } from "@/components/ui/page-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { parseApiError } from "@/lib/api-error";
 import {
-  PageEmptyState,
-  PageErrorState,
-  PageLoadingState,
-} from "@/components/ui/page-state";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useDashboardSnapshot } from "@/hooks/modules/useDashboard";
-
-type InventoryRange = "1" | "7" | "30";
-
-function toValidRange(value: string | null): InventoryRange {
-  if (value === "1" || value === "7" || value === "30") {
-    return value;
-  }
-  return "7";
-}
-
-function formatCurrency(value: number): string {
-  return `PHP ${value.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
+  useInventoryStock,
+  useInventorySummary,
+  useStockAdjust,
+  useStockConfigure,
+  useStockMovements,
+} from "@/hooks/modules/useInventory";
+import type {
+  InventoryStockRow,
+  StockStatus,
+  StockAdjustPayload,
+  StockConfigurePayload,
+} from "@/services/modules/inventory.service";
+import InventoryStatsStrip from "./parts/InventoryStatsStrip";
+import InventoryStockTable from "./parts/InventoryStockTable";
+import StockAdjustSheet from "./parts/StockAdjustSheet";
+import StockConfigureSheet from "./parts/StockConfigureSheet";
+import StockMovementTable from "./parts/StockMovementTable";
 
 export default function InventoryModulePage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const range = toValidRange(searchParams.get("range"));
-  const days = useMemo(() => Number(range), [range]);
+  const [activeTab, setActiveTab] = useState<"stock" | "movements">("stock");
+  const [stockSearch, setStockSearch] = useState("");
+  const [stockStatus, setStockStatus] = useState<StockStatus | "all">("all");
+  const [stockCategory, setStockCategory] = useState("all");
+  const [movementSku, setMovementSku] = useState("");
+  const [movementType, setMovementType] = useState("all");
+  const deferredStockSearch = useDeferredValue(stockSearch);
+  const deferredMovementSku = useDeferredValue(movementSku);
 
-  const dashboardQuery = useDashboardSnapshot(days);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [configureOpen, setConfigureOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<InventoryStockRow | null>(null);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+  const [configureError, setConfigureError] = useState<string | null>(null);
 
-  const setRange = (value: InventoryRange) => {
-    const next = new URLSearchParams(searchParams);
-    next.set("range", value);
-    setSearchParams(next, { replace: true });
-  };
+  const summaryQuery = useInventorySummary();
+  const stockQuery = useInventoryStock({
+    search: deferredStockSearch,
+    status: stockStatus,
+    category: stockCategory,
+    pageSize: 500,
+  });
+  const stockSelectorQuery = useInventoryStock({ pageSize: 500 });
+  const movementQuery = useStockMovements({
+    variant_sku: deferredMovementSku,
+    movement_type: movementType,
+    pageSize: 500,
+  });
+  const adjustMutation = useStockAdjust();
+  const configureMutation = useStockConfigure();
 
-  if (dashboardQuery.isLoading) {
-    return <PageLoadingState label="Loading inventory snapshot..." />;
+  const stockRows = stockQuery.data?.results ?? [];
+  const stockSelectorRows = stockSelectorQuery.data?.results ?? [];
+  const categories = stockQuery.data?.categories ?? [];
+  const movementRows = movementQuery.data?.results ?? [];
+  const movementTypes = movementQuery.data?.movementTypes ?? [];
+
+  function clearStockFilters() {
+    setStockSearch("");
+    setStockStatus("all");
+    setStockCategory("all");
   }
 
-  if (dashboardQuery.isError || !dashboardQuery.data) {
-    return (
-      <PageErrorState
-        title="Unable to load inventory"
-        description="Please check your connection and try again."
-        onRetry={() => dashboardQuery.refetch()}
-      />
+  function clearMovementFilters() {
+    setMovementSku("");
+    setMovementType("all");
+  }
+
+  function openAdjust(row?: InventoryStockRow) {
+    setSelectedStock(row ?? null);
+    setAdjustError(null);
+    setAdjustOpen(true);
+  }
+
+  function openConfigure(row: InventoryStockRow) {
+    setSelectedStock(row);
+    setConfigureError(null);
+    setConfigureOpen(true);
+  }
+
+  function submitAdjustment(payload: StockAdjustPayload) {
+    setAdjustError(null);
+    adjustMutation.mutate(payload, {
+      onSuccess: () => {
+        setAdjustOpen(false);
+        toast.success("Stock adjustment saved.");
+      },
+      onError: (error) => {
+        const parsed = parseApiError(error, "Unable to save adjustment.");
+        setAdjustError(parsed.message);
+        toast.error(parsed.message);
+      },
+    });
+  }
+
+  function submitConfigure(id: number, payload: StockConfigurePayload) {
+    setConfigureError(null);
+    configureMutation.mutate(
+      { id, payload },
+      {
+        onSuccess: () => {
+          setConfigureOpen(false);
+          toast.success("Reorder settings updated.");
+        },
+        onError: (error) => {
+          const parsed = parseApiError(error, "Unable to update reorder settings.");
+          setConfigureError(parsed.message);
+          toast.error(parsed.message);
+        },
+      }
     );
   }
-
-  const { inventoryAlerts, movementInsights } = dashboardQuery.data;
-  const lowStockCount = inventoryAlerts.lowStock.length;
-  const outOfStockCount = inventoryAlerts.outOfStock.length;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Inventory"
-        description="Monitor stock health and movement trends"
+        title="Inventory Control"
+        description="Monitor stock levels, adjust inventory, and review movement history"
         actions={
-          <Select value={range} onValueChange={(value) => setRange(value as InventoryRange)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Today</SelectItem>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <Button onClick={() => openAdjust()} className="cursor-pointer">
+            <SlidersHorizontal className="mr-2 size-4" />
+            Adjust Stock
+          </Button>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Low Stock Variants</CardDescription>
-            <CardTitle className="text-2xl">{lowStockCount}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Items at or below reorder point
-          </CardContent>
-        </Card>
+      {summaryQuery.isError ? (
+        <PageErrorState
+          title="Unable to load inventory summary"
+          description="Please check your connection and try again."
+          onRetry={() => summaryQuery.refetch()}
+        />
+      ) : (
+        <InventoryStatsStrip summary={summaryQuery.data} />
+      )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Out of Stock Variants</CardDescription>
-            <CardTitle className="text-2xl">{outOfStockCount}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Variants with no available quantity
-          </CardContent>
-        </Card>
+      <Card className="pt-0 pb-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as "stock" | "movements")}
+          className="gap-0"
+        >
+          <div className="border-b px-4 pt-3">
+            <TabsList variant="line" className="flex w-fit flex-wrap gap-5">
+              <TabsTrigger value="stock" className="gap-2.5">
+                <PackageSearch className="size-4" />
+                <span>Stock Levels</span>
+                <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
+                  {stockQuery.data?.pagination.totalCount ?? stockRows.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="movements" className="gap-2.5">
+                <ClipboardList className="size-4" />
+                <span>Stock Movements</span>
+                <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-[11px]">
+                  {movementQuery.data?.pagination.totalCount ?? movementRows.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Fast Moving (Top)</CardDescription>
-            <CardTitle className="text-2xl">{movementInsights.fastMoving.length}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Highest-selling variants in range
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Slow Moving (Bottom)</CardDescription>
-            <CardTitle className="text-2xl">{movementInsights.slowMoving.length}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Lowest-selling active variants in range
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-4 text-amber-500" />
-              Low Stock
-            </CardTitle>
-            <CardDescription>Restock these variants soon</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {inventoryAlerts.lowStock.length === 0 ? (
-              <PageEmptyState
-                icon={PackageSearch}
-                title="No low stock items"
-                description="All tracked variants are above reorder point."
+          <TabsContent value="stock" className="p-4 pt-3">
+            {stockQuery.isError ? (
+              <PageErrorState
+                title="Unable to load stock levels"
+                description="Please check your connection and try again."
+                onRetry={() => stockQuery.refetch()}
               />
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-right">Available</TableHead>
-                      <TableHead className="text-right">Reorder</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inventoryAlerts.lowStock.map((item) => (
-                      <TableRow key={item.variantSku}>
-                        <TableCell className="font-mono text-xs">{item.variantSku}</TableCell>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell className="text-right">{item.qtyAvailable}</TableCell>
-                        <TableCell className="text-right">{item.reorderPoint}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <InventoryStockTable
+                data={stockRows}
+                categories={categories}
+                search={stockSearch}
+                status={stockStatus}
+                category={stockCategory}
+                isLoading={stockQuery.isLoading}
+                onSearchChange={setStockSearch}
+                onStatusChange={(value) => setStockStatus(value as StockStatus | "all")}
+                onCategoryChange={setStockCategory}
+                onClearFilters={clearStockFilters}
+                onConfigure={openConfigure}
+                onAdjust={openAdjust}
+              />
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-4 text-red-500" />
-              Out of Stock
-            </CardTitle>
-            <CardDescription>Variants unavailable for sale</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {inventoryAlerts.outOfStock.length === 0 ? (
-              <PageEmptyState
-                icon={PackageSearch}
-                title="No out-of-stock items"
-                description="All tracked variants currently have available quantity."
+          <TabsContent value="movements" className="p-4 pt-3">
+            {movementQuery.isError ? (
+              <PageErrorState
+                title="Unable to load movement log"
+                description="Please check your connection and try again."
+                onRetry={() => movementQuery.refetch()}
               />
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead className="text-right">Available</TableHead>
-                      <TableHead className="text-right">Reorder</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inventoryAlerts.outOfStock.map((item) => (
-                      <TableRow key={item.variantSku}>
-                        <TableCell className="font-mono text-xs">{item.variantSku}</TableCell>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell className="text-right">{item.qtyAvailable}</TableCell>
-                        <TableCell className="text-right">{item.reorderPoint}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-green-600" />
-              Fast Moving
-            </CardTitle>
-            <CardDescription>Top selling variants in selected range</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {movementInsights.fastMoving.length === 0 ? (
-              <PageEmptyState
-                icon={TrendingUp}
-                title="No movement data"
-                description="No sales activity found for this date range."
+              <StockMovementTable
+                data={movementRows}
+                movementTypes={movementTypes}
+                variantSku={movementSku}
+                movementType={movementType}
+                isLoading={movementQuery.isLoading}
+                onVariantSkuChange={setMovementSku}
+                onMovementTypeChange={setMovementType}
+                onClearFilters={clearMovementFilters}
               />
-            ) : (
-              movementInsights.fastMoving.map((item) => (
-                <div key={`fast-${item.variantSku}`} className="rounded-md border p-3">
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{item.productName}</p>
-                    <Badge variant="secondary">{item.category}</Badge>
-                  </div>
-                  <p className="font-mono text-xs text-muted-foreground">{item.variantSku}</p>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span>{item.sold} units sold</span>
-                    <span className="font-medium">{formatCurrency(item.revenue)}</span>
-                  </div>
-                </div>
-              ))
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="size-4 text-orange-600" />
-              Slow Moving
-            </CardTitle>
-            <CardDescription>Low-selling variants in selected range</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {movementInsights.slowMoving.length === 0 ? (
-              <PageEmptyState
-                icon={TrendingDown}
-                title="No movement data"
-                description="No sales activity found for this date range."
-              />
-            ) : (
-              movementInsights.slowMoving.map((item) => (
-                <div key={`slow-${item.variantSku}`} className="rounded-md border p-3">
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{item.productName}</p>
-                    <Badge variant="secondary">{item.category}</Badge>
-                  </div>
-                  <p className="font-mono text-xs text-muted-foreground">{item.variantSku}</p>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span>{item.sold} units sold</span>
-                    <span className="font-medium">{formatCurrency(item.revenue)}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <StockAdjustSheet
+        open={adjustOpen}
+        onOpenChange={setAdjustOpen}
+        stockRows={stockSelectorRows}
+        selectedStock={selectedStock}
+        isSaving={adjustMutation.isPending}
+        error={adjustError}
+        onSubmit={submitAdjustment}
+      />
+
+      <StockConfigureSheet
+        open={configureOpen}
+        onOpenChange={setConfigureOpen}
+        stock={selectedStock}
+        isSaving={configureMutation.isPending}
+        error={configureError}
+        onSubmit={submitConfigure}
+      />
     </div>
   );
 }

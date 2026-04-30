@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import DateTimeDisplay from "@/components/layout/DateTimeDisplay";
 
 // Map route paths to display titles
 const pageTitles: Record<string, string> = {
@@ -44,8 +44,8 @@ export default function AppHeader({ sidebarCollapsed, onToggleMobileSidebar }: A
   const navigate = useNavigate();
   const { user } = useAuth();
   const { highestRole } = usePermissions();
-  const [searchValue, setSearchValue] = useState("");
 
+  
   const pageTitle = pageTitles[location.pathname] ?? toTitleFromPath(location.pathname);
   const appBasePath = highestRole === "staff" ? "/app/staff" : "/app/admin";
   const leftOffset = sidebarCollapsed ? "left-0 lg:left-16" : "left-0 lg:left-64";
@@ -68,27 +68,7 @@ export default function AppHeader({ sidebarCollapsed, onToggleMobileSidebar }: A
         <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>menu</span>
       </button>
 
-      {/* ── Search bar ── */}
-      <div className="hidden sm:flex relative flex-1 max-w-md">
-        <span
-          className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#546067]"
-          style={{ fontSize: "18px" }}
-        >
-          search
-        </span>
-        <input
-          type="text"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Search parts, orders, customers..."
-          className={cn(
-            "w-full bg-[#f3f3f3] pl-9 pr-4 py-2 text-sm text-[#1a1c1c] placeholder:text-[#546067]",
-            "border border-transparent rounded-sm",
-            "focus:outline-none focus:border-[#ff5722] focus:border-[2px] focus:bg-white",
-            "transition-all duration-150"
-          )}
-        />
-      </div>
+     
 
       {/* Search icon fallback on very small screens */}
       <button className="sm:hidden w-10 h-10 -ml-2 flex items-center justify-center text-[#546067] hover:text-[#ff5722] rounded-sm shrink-0 mr-auto" aria-label="Search">
@@ -97,8 +77,9 @@ export default function AppHeader({ sidebarCollapsed, onToggleMobileSidebar }: A
 
       {/* ── Right controls ── */}
       <div className="flex items-center gap-2 ml-auto">
+        <DateTimeDisplay className="mr-4" />
 
-        {/* Notifications */}
+        {/* Notifications shortcut */}
         <button
           className="w-8 h-8 flex items-center justify-center text-[#546067] hover:text-[#ff5722] hover:bg-[#f3f3f3] rounded-sm transition-colors"
           title="Notifications"

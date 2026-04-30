@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,12 +9,12 @@ import {
   useReactTable,
   type Row,
   type SortingState,
-} from "@tanstack/react-table"
-import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react"
+} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Pagination,
   PaginationContent,
@@ -23,7 +23,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -31,23 +31,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  isLoading?: boolean
-  emptyState?: React.ReactNode
-  loadingState?: React.ReactNode
-  toolbar?: React.ReactNode
-  footer?: React.ReactNode
-  onRowClick?: (row: Row<TData>) => void
-  className?: string
-  tableClassName?: string
-  pageSize?: number
-  pageSizeOptions?: number[]
-  enablePagination?: boolean
-  mobileCardRenderer?: (row: TData) => React.ReactNode
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  isLoading?: boolean;
+  emptyState?: React.ReactNode;
+  loadingState?: React.ReactNode;
+  toolbar?: React.ReactNode;
+  footer?: React.ReactNode;
+  onRowClick?: (row: Row<TData>) => void;
+  className?: string;
+  tableClassName?: string;
+  pageSize?: number;
+  pageSizeOptions?: number[];
+  enablePagination?: boolean;
+  mobileCardRenderer?: (row: TData) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -66,19 +66,19 @@ export function DataTable<TData, TValue>({
   enablePagination = true,
   mobileCardRenderer,
 }: DataTableProps<TData, TValue>) {
-  const isMobile = useIsMobile()
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const isMobile = useIsMobile();
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize,
-  })
+  });
 
   React.useEffect(() => {
     setPagination((current) => {
-      if (current.pageSize === pageSize) return current
-      return { pageIndex: 0, pageSize }
-    })
-  }, [pageSize])
+      if (current.pageSize === pageSize) return current;
+      return { pageIndex: 0, pageSize };
+    });
+  }, [pageSize]);
 
   const table = useReactTable({
     data,
@@ -91,32 +91,36 @@ export function DataTable<TData, TValue>({
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
-  })
+    getPaginationRowModel: enablePagination
+      ? getPaginationRowModel()
+      : undefined,
+  });
 
-  const rows = table.getRowModel().rows
-  const totalRows = table.getSortedRowModel().rows.length
-  const pageCount = enablePagination ? table.getPageCount() : 1
-  const currentPage = enablePagination ? table.getState().pagination.pageIndex + 1 : 1
-  const currentPageSize = table.getState().pagination.pageSize
+  const rows = table.getRowModel().rows;
+  const totalRows = table.getSortedRowModel().rows.length;
+  const pageCount = enablePagination ? table.getPageCount() : 1;
+  const currentPage = enablePagination
+    ? table.getState().pagination.pageIndex + 1
+    : 1;
+  const currentPageSize = table.getState().pagination.pageSize;
   const defaultEmptyState = (
     <span className="text-muted-foreground text-sm">No results.</span>
-  )
+  );
   const defaultLoadingState = (
     <span className="text-muted-foreground text-sm">Loading...</span>
-  )
+  );
 
-  const paginationItems = buildPaginationItems(currentPage, pageCount)
-  const showPagination = enablePagination && !isLoading && totalRows > currentPageSize
-  const showMobileCards = Boolean(isMobile && mobileCardRenderer)
+  const paginationItems = buildPaginationItems(currentPage, pageCount);
+  const showPagination = enablePagination && !isLoading;
+  const showMobileCards = Boolean(isMobile && mobileCardRenderer);
 
   return (
     <div className={cn("space-y-3", className)}>
       {toolbar}
       <div
         className={cn(
-          "overflow-hidden rounded-md border border-border/70 bg-card shadow-sm",
-          tableClassName
+          "overflow-hidden rounded-md border border-border/70 bg-card shadow-sm w-full",
+          tableClassName,
         )}
       >
         {showMobileCards ? (
@@ -127,9 +131,7 @@ export function DataTable<TData, TValue>({
               </div>
             ) : rows.length ? (
               rows.map((row) => (
-                <div key={row.id}>
-                  {mobileCardRenderer?.(row.original)}
-                </div>
+                <div key={row.id}>{mobileCardRenderer?.(row.original)}</div>
               ))
             ) : (
               <div className="rounded-lg border border-dashed p-6 text-center">
@@ -141,16 +143,13 @@ export function DataTable<TData, TValue>({
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="hover:bg-transparent"
-                >
+                <TableRow key={headerGroup.id} className="hover:bg-transparent">
                   {headerGroup.headers.map((header) => {
-                    const canSort = header.column.getCanSort()
-                    const isSorted = header.column.getIsSorted()
+                    const canSort = header.column.getCanSort();
+                    const isSorted = header.column.getIsSorted();
                     const meta = header.column.columnDef.meta as
                       | { headerClassName?: string }
-                      | undefined
+                      | undefined;
 
                     return (
                       <TableHead
@@ -158,7 +157,7 @@ export function DataTable<TData, TValue>({
                         className={cn(
                           "h-12 bg-muted/10 px-4 text-sm font-semibold tracking-tight text-foreground/90",
                           canSort && "cursor-pointer select-none",
-                          meta?.headerClassName
+                          meta?.headerClassName,
                         )}
                       >
                         {header.isPlaceholder ? null : canSort ? (
@@ -170,7 +169,7 @@ export function DataTable<TData, TValue>({
                             <span>
                               {flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                             </span>
                             {isSorted === "asc" ? (
@@ -184,11 +183,11 @@ export function DataTable<TData, TValue>({
                         ) : (
                           flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )
                         )}
                       </TableHead>
-                    )
+                    );
                   })}
                 </TableRow>
               ))}
@@ -210,28 +209,28 @@ export function DataTable<TData, TValue>({
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
                     className={cn(
                       "odd:bg-card even:bg-muted/10 hover:bg-muted/25",
-                      onRowClick && "cursor-pointer"
+                      onRowClick && "cursor-pointer",
                     )}
                   >
                     {row.getVisibleCells().map((cell) => {
                       const meta = cell.column.columnDef.meta as
                         | { cellClassName?: string }
-                        | undefined
+                        | undefined;
 
                       return (
                         <TableCell
                           key={cell.id}
                           className={cn(
                             "px-4 py-3 align-middle text-[13px]",
-                            meta?.cellClassName
+                            meta?.cellClassName,
                           )}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
-                      )
+                      );
                     })}
                   </TableRow>
                 ))
@@ -251,25 +250,27 @@ export function DataTable<TData, TValue>({
       </div>
       {showPagination ? (
         <div className="flex flex-col gap-3 rounded-xl bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-muted-foreground text-xs sm:text-sm">
+          <div className="text-muted-foreground text-[12px]">
             Showing{" "}
             <span className="text-foreground font-medium">
-              {pagination.pageIndex * currentPageSize + 1}
+              {totalRows === 0 ? 0 : pagination.pageIndex * currentPageSize + 1}
             </span>{" "}
             to{" "}
             <span className="text-foreground font-medium">
-              {Math.min((pagination.pageIndex + 1) * currentPageSize, totalRows)}
+              {Math.min(
+                (pagination.pageIndex + 1) * currentPageSize,
+                totalRows,
+              )}
             </span>{" "}
-            of{" "}
-            <span className="text-foreground font-medium">{totalRows}</span>{" "}
+            of <span className="text-foreground font-medium">{totalRows}</span>{" "}
             items
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
+            <label className="text-muted-foreground flex items-center gap-2 text-[12px]">
               Rows per page
               <select
-                className="border-input bg-white text-foreground h-8 rounded-md border px-2 text-xs outline-none"
+                className="border-input bg-white text-foreground h-10 rounded-md border px-1.5 text-[10px] outline-none"
                 value={currentPageSize}
                 onChange={(event) =>
                   table.setPageSize(Number(event.target.value))
@@ -283,19 +284,20 @@ export function DataTable<TData, TValue>({
               </select>
             </label>
 
-            <Pagination className="mx-0 w-full justify-start sm:w-auto sm:justify-end">
+            <Pagination className="mx-0 w-full justify-start sm:w-auto sm:justify-end scale-90 origin-right">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
                     onClick={(event) => {
-                      event.preventDefault()
-                      table.previousPage()
+                      event.preventDefault();
+                      table.previousPage();
                     }}
                     aria-disabled={!table.getCanPreviousPage()}
+                    size="sm"
                     className={cn(
                       !table.getCanPreviousPage() &&
-                        "pointer-events-none opacity-50"
+                        "pointer-events-none opacity-50",
                     )}
                   />
                 </PaginationItem>
@@ -309,27 +311,29 @@ export function DataTable<TData, TValue>({
                       <PaginationLink
                         href="#"
                         isActive={item === currentPage}
+                        size="sm"
                         onClick={(event) => {
-                          event.preventDefault()
-                          table.setPageIndex(item - 1)
+                          event.preventDefault();
+                          table.setPageIndex(item - 1);
                         }}
                       >
                         {item}
                       </PaginationLink>
                     </PaginationItem>
-                  )
+                  ),
                 )}
                 <PaginationItem>
                   <PaginationNext
                     href="#"
                     onClick={(event) => {
-                      event.preventDefault()
-                      table.nextPage()
+                      event.preventDefault();
+                      table.nextPage();
                     }}
                     aria-disabled={!table.getCanNextPage()}
+                    size="sm"
                     className={cn(
                       !table.getCanNextPage() &&
-                        "pointer-events-none opacity-50"
+                        "pointer-events-none opacity-50",
                     )}
                   />
                 </PaginationItem>
@@ -340,21 +344,36 @@ export function DataTable<TData, TValue>({
       ) : null}
       {footer}
     </div>
-  )
+  );
 }
 
 function buildPaginationItems(currentPage: number, pageCount: number) {
   if (pageCount <= 5) {
-    return Array.from({ length: pageCount }, (_, index) => index + 1)
+    return Array.from({ length: pageCount }, (_, index) => index + 1);
   }
 
   if (currentPage <= 3) {
-    return [1, 2, 3, 4, "ellipsis", pageCount] as const
+    return [1, 2, 3, 4, "ellipsis", pageCount] as const;
   }
 
   if (currentPage >= pageCount - 2) {
-    return [1, "ellipsis", pageCount - 3, pageCount - 2, pageCount - 1, pageCount] as const
+    return [
+      1,
+      "ellipsis",
+      pageCount - 3,
+      pageCount - 2,
+      pageCount - 1,
+      pageCount,
+    ] as const;
   }
 
-  return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", pageCount] as const
+  return [
+    1,
+    "ellipsis",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "ellipsis",
+    pageCount,
+  ] as const;
 }

@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from inventory.models import InventoryStock, StockMovement
+from inventory.models import InventoryStock, StockMovement, get_default_warehouse
 
 from .models import SalesReturnItem, SalesTransactionItem
 
@@ -13,10 +13,12 @@ def deduct_inventory_on_sale(sender, instance, created, **kwargs):
         return
 
     txn = instance.sales_transaction
+    warehouse = get_default_warehouse()
 
     with transaction.atomic():
         stock = InventoryStock.objects.select_for_update().get(
             product_variant=instance.product_variant,
+            warehouse=warehouse,
         )
 
         if stock.qty_on_hand < instance.qty:
@@ -31,6 +33,7 @@ def deduct_inventory_on_sale(sender, instance, created, **kwargs):
 
         StockMovement.objects.create(
             product_variant=instance.product_variant,
+            warehouse=warehouse,
             movement_type=StockMovement.MovementType.SALE,
             reference_type=StockMovement.ReferenceType.SALES_TRANSACTION,
             reference_id=txn.id,
@@ -48,10 +51,12 @@ def restore_inventory_on_return(sender, instance, created, **kwargs):
         return
 
     sales_return = instance.sales_return
+    warehouse = get_default_warehouse()
 
     with transaction.atomic():
         stock = InventoryStock.objects.select_for_update().get(
             product_variant=instance.product_variant,
+            warehouse=warehouse,
         )
         qty_before = stock.qty_on_hand
         qty_after = qty_before + instance.qty_returned
@@ -60,6 +65,7 @@ def restore_inventory_on_return(sender, instance, created, **kwargs):
 
         StockMovement.objects.create(
             product_variant=instance.product_variant,
+            warehouse=warehouse,
             movement_type=StockMovement.MovementType.SALE_RETURN,
             reference_type=StockMovement.ReferenceType.SALES_RETURN,
             reference_id=sales_return.id,

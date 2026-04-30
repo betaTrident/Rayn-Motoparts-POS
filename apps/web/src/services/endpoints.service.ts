@@ -15,6 +15,11 @@ export const ENDPOINTS = {
     sizes: 'products/items/sizes/',
   },
   pos: {
+    bootstrap: 'pos/bootstrap/',
+    checkout: 'pos/checkout/',
+    paymentMethods: 'pos/payment-methods/',
+    currentCashSession: 'pos/cash-session/current/',
+    openCashSession: 'pos/cash-sessions/open/',
     dashboard: 'pos/dashboard/',
     transactions: 'pos/transactions/',
     transactionById: (id: number) => `pos/transactions/${id}/`,

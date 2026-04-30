@@ -47,6 +47,23 @@ export interface ReportsSnapshotQueryKeyInput {
   days: 7 | 30;
 }
 
+export interface InventoryStockQueryKeyInput {
+  search?: string;
+  status?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface StockMovementQueryKeyInput {
+  variant_sku?: string;
+  movement_type?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface SystemAuditQueryKeyInput {
   q?: string;
   table?: string;
@@ -79,6 +96,9 @@ export const queryKeys = {
   },
   pos: {
     all: ["pos"] as const,
+    bootstrap: ["pos", "bootstrap"] as const,
+    paymentMethods: ["pos", "payment-methods"] as const,
+    currentCashSession: ["pos", "current-cash-session"] as const,
     categories: ["pos", "categories"] as const,
     products: (input: PosCatalogQueryKeyInput = {}) =>
       ["pos", "products", input] as const,
@@ -98,6 +118,14 @@ export const queryKeys = {
     all: ["reports"] as const,
     snapshot: (input: ReportsSnapshotQueryKeyInput) =>
       ["reports", "snapshot", input] as const,
+  },
+  inventory: {
+    all: ["inventory"] as const,
+    summary: ["inventory", "summary"] as const,
+    stock: (input: InventoryStockQueryKeyInput = {}) =>
+      ["inventory", "stock", input] as const,
+    movements: (input: StockMovementQueryKeyInput = {}) =>
+      ["inventory", "movements", input] as const,
   },
   settings: {
     all: ["settings"] as const,
