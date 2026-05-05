@@ -58,7 +58,7 @@ export default function CatalogProductDialog({
 }: CatalogProductDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden bg-white p-0 sm:max-w-md">
         <DialogHeader className="px-6 pb-4 pt-6">
           <DialogTitle className="text-lg">
             {editingProduct ? "Edit Product" : "New Product"}

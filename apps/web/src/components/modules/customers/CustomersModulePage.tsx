@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Search, Users, X } from "lucide-react";
+import { Search, Users, X, UserCheck, UserMinus, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
 import { useCustomers } from "@/hooks/modules/useCustomers";
@@ -188,10 +188,30 @@ export default function CustomersModulePage() {
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Customers" value={totalsQuery.data?.pagination.totalCount ?? 0} />
-        <StatCard label="Active Customers" value={activeCountQuery.data?.pagination.totalCount ?? 0} />
-        <StatCard label="Inactive Customers" value={inactiveCountQuery.data?.pagination.totalCount ?? 0} />
-        <StatCard label="Visible This Page" value={results.length} />
+        <StatCard
+          label="Total Customers"
+          value={totalsQuery.data?.pagination.totalCount ?? 0}
+          icon={Users}
+          accent="primary"
+        />
+        <StatCard
+          label="Active Customers"
+          value={activeCountQuery.data?.pagination.totalCount ?? 0}
+          icon={UserCheck}
+          accent="green"
+        />
+        <StatCard
+          label="Inactive Customers"
+          value={inactiveCountQuery.data?.pagination.totalCount ?? 0}
+          icon={UserMinus}
+          accent="amber"
+        />
+        <StatCard
+          label="Visible This Page"
+          value={results.length}
+          icon={Eye}
+          accent="blue"
+        />
       </div>
 
       {customersQuery.isError ? (
@@ -207,7 +227,12 @@ export default function CustomersModulePage() {
           isLoading={customersQuery.isLoading}
           enablePagination={false}
           toolbar={toolbar}
-          loadingState={<span className="text-muted-foreground text-sm">Loading customers...</span>}
+          loadingState={
+            <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
+              <Loader2 className="size-4 animate-spin" />
+              Loading customers...
+            </div>
+          }
           emptyState={
             <PageEmptyState
               icon={Users}
@@ -220,11 +245,16 @@ export default function CustomersModulePage() {
             />
           }
           mobileCardRenderer={(row) => (
-            <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+            <div className="rounded-md border border-border/70 bg-card p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{row.fullName}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{row.customerCode}</p>
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                    <Users className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{row.fullName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{row.customerCode}</p>
+                  </div>
                 </div>
                 <Badge
                   variant="outline"
@@ -249,16 +279,20 @@ export default function CustomersModulePage() {
           footer={
             pagination ? (
               <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-muted-foreground">
-                  Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total)
-                </p>
+                <div className="text-muted-foreground text-[12px]">
+                  Showing page <span className="font-medium text-foreground">{pagination.page}</span> of{" "}
+                  <span className="font-medium text-foreground">{pagination.totalPages}</span> (
+                  <span className="font-medium text-foreground">{pagination.totalCount}</span> total)
+                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={!pagination.hasPrevious}
                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    className="h-8 gap-1 px-2 text-[12px]"
                   >
+                    <ChevronLeft className="size-3.5" />
                     Previous
                   </Button>
                   <Button
@@ -266,8 +300,10 @@ export default function CustomersModulePage() {
                     size="sm"
                     disabled={!pagination.hasNext}
                     onClick={() => setPage((prev) => prev + 1)}
+                    className="h-8 gap-1 px-2 text-[12px]"
                   >
                     Next
+                    <ChevronRight className="size-3.5" />
                   </Button>
                 </div>
               </div>
@@ -279,12 +315,39 @@ export default function CustomersModulePage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: number | string;
+  icon: React.ElementType;
+  accent: "primary" | "green" | "amber" | "blue";
+}) {
+  const colors = {
+    primary: "bg-primary/10 text-primary",
+    green: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
+    amber: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
+  };
+
   return (
     <Card className="py-4">
-      <CardContent className="pb-0">
-        <p className="text-2xl font-bold leading-none">{value}</p>
-        <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+      <CardContent className="flex items-center gap-3 pb-0">
+        <div
+          className={cn(
+            "flex size-9 items-center justify-center rounded-md",
+            colors[accent]
+          )}
+        >
+          <Icon className="size-4" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold leading-none">{value}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+        </div>
       </CardContent>
     </Card>
   );

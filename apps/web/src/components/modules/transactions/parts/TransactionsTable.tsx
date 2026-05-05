@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, Receipt } from "lucide-react";
+import { Eye, Receipt, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { formatCurrency, formatDateTime } from "@/components/modules/transactions/formatters";
 import { Badge } from "@/components/ui/badge";
@@ -113,7 +113,12 @@ export default function TransactionsTable({
       data={results}
       isLoading={isLoading}
       enablePagination={false}
-      loadingState={<span className="text-muted-foreground text-sm">Loading transactions...</span>}
+      loadingState={
+        <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
+          <Loader2 className="size-4 animate-spin" />
+          Loading transactions...
+        </div>
+      }
       emptyState={
         <PageEmptyState
           icon={Receipt}
@@ -122,11 +127,16 @@ export default function TransactionsTable({
         />
       }
       mobileCardRenderer={(row) => (
-        <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+        <div className="rounded-md border border-border/70 bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{row.transactionNumber}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(row.transactionDate)}</p>
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <Receipt className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{row.transactionNumber}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(row.transactionDate)}</p>
+              </div>
             </div>
             <Badge variant={row.status === "refunded" ? "destructive" : "secondary"}>
               {row.status.replaceAll("_", " ")}
@@ -152,17 +162,20 @@ export default function TransactionsTable({
       footer={
         pagination ? (
           <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground">
-              Showing page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total)
-            </p>
+            <div className="text-muted-foreground text-[12px]">
+              Showing page <span className="font-medium text-foreground">{pagination.page}</span> of{" "}
+              <span className="font-medium text-foreground">{pagination.totalPages}</span> (
+              <span className="font-medium text-foreground">{pagination.totalCount}</span> total)
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 disabled={!pagination.hasPrevious}
                 onClick={onPreviousPage}
-                className="flex-1 sm:flex-none"
+                className="h-8 gap-1 px-2 text-[12px]"
               >
+                <ChevronLeft className="size-3.5" />
                 Previous
               </Button>
               <Button
@@ -170,9 +183,10 @@ export default function TransactionsTable({
                 size="sm"
                 disabled={!pagination.hasNext}
                 onClick={onNextPage}
-                className="flex-1 sm:flex-none"
+                className="h-8 gap-1 px-2 text-[12px]"
               >
                 Next
+                <ChevronRight className="size-3.5" />
               </Button>
             </div>
           </div>

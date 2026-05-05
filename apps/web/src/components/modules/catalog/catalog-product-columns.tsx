@@ -78,14 +78,33 @@ export function createCatalogProductColumns(
     {
       accessorKey: "category_name",
       header: "Category",
-      cell: ({ row }) => (
-        <Badge
-          variant="secondary"
-          className="max-w-[9.5rem] truncate rounded-full px-2.5 py-1 text-xs font-medium"
-        >
-          {row.original.category_name}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.category_name || "Uncategorized";
+        const getCategoryStyles = (cat: string) => {
+          const lower = cat.toLowerCase();
+          if (lower.includes("tire")) return "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-800";
+          if (lower.includes("oil") || lower.includes("fluid") || lower.includes("lube")) return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50";
+          if (lower.includes("brake")) return "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50";
+          if (lower.includes("engine")) return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50";
+          if (lower.includes("electrical") || lower.includes("battery")) return "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50";
+          if (lower.includes("suspension")) return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50";
+          if (lower.includes("accessory") || lower.includes("helmet")) return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-900/50";
+          if (lower.includes("maintenance") || lower.includes("tool")) return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
+          return "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/30 dark:text-cyan-400 dark:border-cyan-900/50";
+        };
+
+        return (
+          <Badge
+            variant="outline"
+            className={cn(
+              "max-w-[9.5rem] truncate rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+              getCategoryStyles(name)
+            )}
+          >
+            {name}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "size_display",

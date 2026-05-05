@@ -1,4 +1,4 @@
-import { Search, Settings, SlidersHorizontal, X } from "lucide-react";
+import { Search, Settings, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";
@@ -288,9 +288,14 @@ export default function InventoryStockTable({
           }
         />
       }
-      loadingState={<span className="text-muted-foreground text-sm">Loading stock levels...</span>}
+      loadingState={
+        <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
+          <Loader2 className="size-4 animate-spin" />
+          Loading stock levels...
+        </div>
+      }
       mobileCardRenderer={(row) => (
-        <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+        <div className="rounded-md border border-border/70 bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{row.product_name}</p>

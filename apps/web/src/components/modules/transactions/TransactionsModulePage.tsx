@@ -1,5 +1,6 @@
-import { Download } from "lucide-react";
+import { Download, Receipt, Banknote, Undo2, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 
 import PageHeader from "@/components/layout/PageHeader";
 import { exportTransactionsCsv } from "@/components/modules/transactions/formatters";
@@ -20,7 +21,8 @@ export default function TransactionsModulePage() {
   const [status, setStatus] = useState("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
   const [page, setPage] = useState(1);
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionRow | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<TransactionRow | null>(null);
   const pageSize = 20;
 
   const transactionsQuery = useTransactionsList({
@@ -40,11 +42,15 @@ export default function TransactionsModulePage() {
   const pagination = transactionsQuery.data?.pagination;
 
   const activeFilters = useMemo(() => {
-    return Boolean(q) || days !== "7" || status !== "all" || paymentMethod !== "all";
+    return (
+      Boolean(q) || days !== "7" || status !== "all" || paymentMethod !== "all"
+    );
   }, [q, days, status, paymentMethod]);
 
   const pageGross = results.reduce((sum, row) => sum + row.totalAmount, 0);
-  const refundedCount = results.filter((row) => row.status === "refunded").length;
+  const refundedCount = results.filter(
+    (row) => row.status === "refunded",
+  ).length;
   const avgTicket = results.length ? pageGross / results.length : 0;
 
   const clearFilters = () => {
@@ -73,10 +79,30 @@ export default function TransactionsModulePage() {
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Matched Records" value={pagination?.totalCount ?? 0} />
-        <StatCard label="Current Page Gross" value={formatPhp(pageGross)} />
-        <StatCard label="Refunded on Page" value={refundedCount} />
-        <StatCard label="Page Avg Ticket" value={formatPhp(avgTicket)} />
+        <StatCard
+          label="Matched Records"
+          value={pagination?.totalCount ?? 0}
+          icon={Receipt}
+          accent="primary"
+        />
+        <StatCard
+          label="Current Page Gross"
+          value={formatPhp(pageGross)}
+          icon={Banknote}
+          accent="green"
+        />
+        <StatCard
+          label="Refunded on Page"
+          value={refundedCount}
+          icon={Undo2}
+          accent="amber"
+        />
+        <StatCard
+          label="Page Avg Ticket"
+          value={formatPhp(avgTicket)}
+          icon={TrendingUp}
+          accent="blue"
+        />
       </div>
 
       <Card className="py-0">
@@ -143,15 +169,36 @@ function formatPhp(value: number) {
 function StatCard({
   label,
   value,
+  icon: Icon,
+  accent,
 }: {
   label: string;
   value: number | string;
+  icon: React.ElementType;
+  accent: "primary" | "green" | "amber" | "blue";
 }) {
+  const colors = {
+    primary: "bg-primary/10 text-primary",
+    green: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
+    amber: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
+  };
+
   return (
     <Card className="py-4">
-      <CardContent className="pb-0">
-        <p className="text-2xl font-bold leading-none">{value}</p>
-        <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+      <CardContent className="flex items-center gap-3 pb-0">
+        <div
+          className={cn(
+            "flex size-9 items-center justify-center rounded-md",
+            colors[accent],
+          )}
+        >
+          <Icon className="size-4" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold leading-none">{value}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+        </div>
       </CardContent>
     </Card>
   );

@@ -87,7 +87,7 @@ export default function StockAdjustSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] overflow-hidden bg-white p-0 sm:max-w-xl">
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>Adjust Stock</DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ export default function StockAdjustSheet({
           </div>
 
           {activeStock ? (
-            <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/40 p-3 text-xs">
+            <div className="grid grid-cols-3 gap-2 rounded-lg border bg-white p-3 text-xs">
               <div>
                 <p className="text-muted-foreground">On Hand</p>
                 <p className="mt-1 font-semibold">{activeStock.qty_on_hand}</p>

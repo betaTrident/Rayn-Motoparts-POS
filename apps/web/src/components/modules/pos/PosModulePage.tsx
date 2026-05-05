@@ -682,7 +682,7 @@ export default function PosModulePage() {
             mobileTab === "cart" ? "hidden" : "block",
           )}
         >
-          <div className="rounded-xl border border-border/70 bg-white/95 p-3 shadow-lg backdrop-blur">
+          <div className="rounded-md border border-border/70 bg-white/95 p-3 shadow-lg backdrop-blur">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold">Cart Summary</p>
@@ -699,7 +699,7 @@ export default function PosModulePage() {
       </div>
 
       <Sheet open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        <SheetContent className="w-full overflow-y-auto bg-white sm:max-w-md">
           <SheetHeader className="bg-[#ff5722] text-white">
             <SheetTitle className="text-white">Complete Checkout</SheetTitle>
             <SheetDescription className="text-white/80">
@@ -841,7 +841,7 @@ export default function PosModulePage() {
       </Sheet>
 
       <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="bg-white sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="size-5 text-primary" />
@@ -854,7 +854,7 @@ export default function PosModulePage() {
 
           {receiptResult && receiptDisplay ? (
             <div className="space-y-4">
-              <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="rounded-md border bg-white p-4 shadow-sm">
                 <div className="mb-4 border-b pb-3">
                   <img
                     src={RaynReceiptLogo}
@@ -971,7 +971,7 @@ export default function PosModulePage() {
       </Dialog>
 
       <Dialog open={openSessionDialogOpen} onOpenChange={setOpenSessionDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="bg-white sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Open Cash Session</DialogTitle>
             <DialogDescription>

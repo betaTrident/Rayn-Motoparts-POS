@@ -23,7 +23,7 @@ const DateTimeDisplay: React.FC<DateTimeDisplayProps> = ({ className }) => {
   // Format parts: Wednesday, 27 Mar 2024 at 9:48 AM
   const formatDate = (date: Date) => {
     const dayName = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date);
-    const day = new Intl.DateTimeFormat("en-US", { day: "numeric" }).format(date);
+    const day = new Intl.DateTimeFormat("en-US", { day: "numeric" }).format(date)
     const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
     const year = new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(date);
     const time = new Intl.DateTimeFormat("en-US", {

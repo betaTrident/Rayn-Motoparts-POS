@@ -57,7 +57,7 @@ export default function StockConfigureSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-hidden bg-white p-0 sm:max-w-lg">
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>Reorder Settings</DialogTitle>
           <DialogDescription>
@@ -74,7 +74,7 @@ export default function StockConfigureSheet({
           ) : null}
 
           {stock ? (
-            <div className="rounded-lg bg-muted/40 p-3">
+            <div className="rounded-lg border bg-white p-3">
               <p className="text-sm font-semibold">{stock.product_name}</p>
               <p className="font-mono text-xs text-muted-foreground">{stock.variant_sku}</p>
             </div>

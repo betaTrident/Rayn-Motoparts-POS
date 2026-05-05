@@ -59,7 +59,7 @@ export default function CatalogProductsTable({
       pageSize={10}
       pageSizeOptions={[10, 20, 30, 40]}
       mobileCardRenderer={(product) => (
-        <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+        <div className="rounded-md border border-border/70 bg-card p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
               <div className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
