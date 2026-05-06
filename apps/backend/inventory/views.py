@@ -112,6 +112,7 @@ class InventoryStockListView(APIView):
         search = request.query_params.get("search", "").strip()
         status_filter = request.query_params.get("status", "").strip().upper()
         category = request.query_params.get("category", "").strip()
+        variant_id = request.query_params.get("variant_id", "").strip()
 
         if search:
             queryset = queryset.filter(
@@ -123,6 +124,8 @@ class InventoryStockListView(APIView):
 
         if category:
             queryset = queryset.filter(product_variant__product__category_id=category)
+        if variant_id:
+            queryset = queryset.filter(product_variant_id=variant_id)
 
         if status_filter == "OUT_OF_STOCK":
             queryset = queryset.filter(qty_on_hand__lte=F("qty_reserved"))

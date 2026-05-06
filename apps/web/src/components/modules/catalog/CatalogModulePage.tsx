@@ -11,6 +11,7 @@ import type {
   ProductSize,
 } from "@/types/product.types";
 import * as productService from "@/services/productService.service";
+import * as inventoryService from "@/services/modules/inventory.service";
 import { queryKeys } from "@/services/query/queryKeys";
 
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ import { PageEmptyState, PageErrorState } from "@/components/ui/page-state";
 import PageHeader from "@/components/layout/PageHeader";
 import CatalogCategoriesPanel from "@/components/modules/catalog/CatalogCategoriesPanel";
 import CatalogCategoryDialog from "@/components/modules/catalog/CatalogCategoryDialog";
-import CatalogProductDialog from "@/components/modules/catalog/CatalogProductDialog";
+import UnifiedProductDialog from "@/components/modules/catalog/UnifiedProductDialog";
 import CatalogProductsTable from "@/components/modules/catalog/CatalogProductsTable";
 import CatalogProductsToolbar from "@/components/modules/catalog/CatalogProductsToolbar";
 import { createCatalogProductColumns } from "@/components/modules/catalog/catalog-product-columns";
@@ -183,10 +184,7 @@ export default function CatalogModulePage() {
     mutationFn: (data: ProductFormData) => productService.createProduct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
-      setProductDialogOpen(false);
-      setProductServerError(null);
-      setProductFormErrors({});
-      toast.success("Product created successfully.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
     },
     onError: (error) => {
       const parsed = parseApiError(
@@ -230,10 +228,7 @@ export default function CatalogModulePage() {
     }) => productService.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
-      setProductDialogOpen(false);
-      setProductServerError(null);
-      setProductFormErrors({});
-      toast.success("Product updated successfully.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
     },
     onError: (error) => {
       const parsed = parseApiError(
@@ -501,30 +496,63 @@ export default function CatalogModulePage() {
     setDeleteCategoryDialogOpen(true);
   }, []);
 
-  function handleProductSubmit(e?: React.FormEvent | React.MouseEvent) {
-    e?.preventDefault();
-
-    const errors = validateProductForm(productForm);
-    setProductFormErrors(errors);
-    setProductServerError(null);
-
-    if (Object.keys(errors).length > 0) {
-      toast.error("Please fix the highlighted product fields.");
-      return;
-    }
-
+  function toProductPayload(source: ProductFormData): ProductFormData {
     const payload: ProductFormData = {
-      ...productForm,
-      price: productForm.selling_price,
-      is_available: productForm.is_active,
-      cost_price: productForm.cost_price || productForm.selling_price,
+      ...source,
+      price: source.selling_price,
+      is_available: source.is_active,
+      cost_price: source.cost_price || source.selling_price,
     };
+    return payload;
+  }
 
-    if (editingProduct) {
-      updateProductMut.mutate({ id: editingProduct.id, data: payload });
-    } else {
-      createProductMut.mutate(payload);
-    }
+  async function handleCreateProduct(payload: ProductFormData): Promise<Product> {
+    setProductServerError(null);
+    setProductFormErrors({});
+    const created = await createProductMut.mutateAsync(toProductPayload(payload));
+    toast.success("Product created. Configure inventory below.");
+    return created;
+  }
+
+  async function handleUpdateProduct(id: number, payload: ProductFormData) {
+    setProductServerError(null);
+    setProductFormErrors({});
+    await updateProductMut.mutateAsync({ id, data: toProductPayload(payload) });
+    toast.success("Product details updated.");
+  }
+
+  async function handleFetchStockByVariant(variantId: number) {
+    return inventoryService.fetchStockByVariantId(variantId);
+  }
+
+  async function handleConfigureStock(
+    stockId: number,
+    form: { reorder_point: string; reorder_qty: string; max_stock_level: string }
+  ) {
+    await inventoryService.configureStock(stockId, {
+      reorder_point: Number(form.reorder_point),
+      reorder_qty: Number(form.reorder_qty),
+      max_stock_level: form.max_stock_level === "" ? null : Number(form.max_stock_level),
+    });
+    queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
+    toast.success(editingProduct ? "Reorder settings saved." : "Inventory configured. All done!");
+  }
+
+  async function handleAdjustStock(
+    variantId: number,
+    form: { adjustment_type: "add" | "subtract"; quantity: string; reason: string; notes: string }
+  ) {
+    await inventoryService.adjustStock({
+      variant_id: variantId,
+      adjustment_type: form.adjustment_type,
+      quantity: Number(form.quantity),
+      reason: form.reason,
+      notes: form.notes,
+    });
+    queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
+    toast.success("Stock adjustment recorded.");
   }
 
   function handleCategorySubmit(e?: React.FormEvent | React.MouseEvent) {
@@ -625,8 +653,6 @@ export default function CatalogModulePage() {
     />
   );
 
-  const isProductSaving =
-    createProductMut.isPending || updateProductMut.isPending;
   const isCategorySaving =
     createCategoryMut.isPending || updateCategoryMut.isPending;
 
@@ -748,7 +774,7 @@ export default function CatalogModulePage() {
         </Tabs>
       </Card>
 
-      <CatalogProductDialog
+      <UnifiedProductDialog
         open={productDialogOpen}
         onOpenChange={setProductDialogOpen}
         editingProduct={editingProduct}
@@ -759,8 +785,12 @@ export default function CatalogModulePage() {
         productServerError={productServerError}
         categories={categories}
         sizeOptions={sizeOptions}
-        isSaving={isProductSaving}
-        onSubmit={handleProductSubmit}
+        validateProductForm={validateProductForm}
+        onCreateProduct={handleCreateProduct}
+        onUpdateProduct={handleUpdateProduct}
+        onFetchStockByVariant={handleFetchStockByVariant}
+        onConfigureStock={handleConfigureStock}
+        onAdjustStock={handleAdjustStock}
       />
 
       <CatalogCategoryDialog

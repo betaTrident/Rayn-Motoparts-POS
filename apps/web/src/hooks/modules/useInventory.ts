@@ -5,6 +5,7 @@ import {
   configureStock,
   fetchInventoryStock,
   fetchInventorySummary,
+  fetchStockByVariantId,
   fetchStockMovements,
   type InventoryStockParams,
   type StockAdjustPayload,
@@ -31,6 +32,14 @@ export function useStockMovements(params: StockMovementParams = {}) {
   return useQuery({
     queryKey: queryKeys.inventory.movements(params),
     queryFn: () => fetchStockMovements(params),
+  });
+}
+
+export function useStockByVariantId(variantId: number | null) {
+  return useQuery({
+    queryKey: queryKeys.inventory.stockByVariant(variantId ?? 0),
+    queryFn: () => fetchStockByVariantId(variantId ?? 0),
+    enabled: variantId !== null,
   });
 }
 

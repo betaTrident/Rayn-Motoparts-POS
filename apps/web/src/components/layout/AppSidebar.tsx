@@ -14,8 +14,8 @@ const mainNavItems = [
   { title: "Dashboard", icon: "dashboard", key: "dashboard", enabled: true },
   { title: "Point of Sale", icon: "point_of_sale", key: "pos", enabled: true },
   { title: "Products", icon: "inventory_2", key: "catalog", enabled: true },
-  { title: "Customers", icon: "groups", key: "customers", enabled: true },
   { title: "Inventory", icon: "warehouse", key: "inventory", enabled: true },
+  { title: "Customers", icon: "groups", key: "customers", enabled: true },
   {
     title: "Transactions",
     icon: "receipt_long",

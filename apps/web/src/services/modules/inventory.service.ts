@@ -124,6 +124,23 @@ export async function fetchInventoryStock(
   return data;
 }
 
+export async function fetchStockByVariantId(variantId: number): Promise<InventoryStockRow> {
+  const { data } = await api.get<InventoryStockResponse>("inventory/stock/", {
+    params: compactParams({
+      variant_id: variantId,
+      page_size: 1,
+    }),
+  });
+  const row = data.results[0];
+  if (!row) {
+    throw new Error(`No stock row found for variant ${variantId}`);
+  }
+  if (row.variant_id !== variantId) {
+    throw new Error(`Mismatched stock row returned for variant ${variantId}`);
+  }
+  return row;
+}
+
 export async function fetchStockMovements(
   params: StockMovementParams = {}
 ): Promise<StockMovementResponse> {

@@ -132,6 +132,8 @@ export const queryKeys = {
     summary: ["inventory", "summary"] as const,
     stock: (input: InventoryStockQueryKeyInput = {}) =>
       ["inventory", "stock", input] as const,
+    stockByVariant: (variantId: number) =>
+      ["inventory", "stock", "variant", variantId] as const,
     movements: (input: StockMovementQueryKeyInput = {}) =>
       ["inventory", "movements", input] as const,
   },
