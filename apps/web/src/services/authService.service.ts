@@ -8,6 +8,7 @@ import type {
   ChangePasswordData,
   User,
   UserRole,
+  PermissionKey,
 } from "@/types/auth.types";
 
 const VALID_ROLES: UserRole[] = ["superadmin", "admin", "staff"];
@@ -54,14 +55,26 @@ export const getAuthClaims = (): AuthClaims | null => {
   if (!payload) return null;
 
   const rawRoles = payload.roles;
+  const rawRole = payload.role;
   const roles = Array.isArray(rawRoles)
     ? rawRoles.filter(
         (v): v is AuthClaims["roles"][number] =>
           typeof v === "string" && VALID_ROLES.includes(v as UserRole)
       )
     : [];
+  const role =
+    typeof rawRole === "string" && VALID_ROLES.includes(rawRole as UserRole)
+      ? (rawRole as UserRole)
+      : roles[0] ?? null;
+  const rawPermissions = payload.permissions;
+  const permissions = Array.isArray(rawPermissions)
+    ? rawPermissions.filter(
+        (v): v is PermissionKey =>
+          typeof v === "string" && v.includes(":")
+      )
+    : [];
 
-  return { roles };
+  return { role, roles, permissions };
 };
 
 /** Save tokens + user to localStorage after login/register */

@@ -72,6 +72,14 @@ export interface SystemAuditQueryKeyInput {
   pageSize?: number;
 }
 
+export interface UserListQueryKeyInput {
+  q?: string;
+  role?: "all" | "admin" | "staff";
+  active?: "all" | "active" | "inactive";
+  page?: number;
+  pageSize?: number;
+}
+
 export const queryKeys = {
   auth: {
     user: ["auth", "user"] as const,
@@ -130,6 +138,13 @@ export const queryKeys = {
   settings: {
     all: ["settings"] as const,
     profile: ["settings", "profile"] as const,
+  },
+  users: {
+    all: ["users"] as const,
+    list: (input: UserListQueryKeyInput = {}) => ["users", "list", input] as const,
+    detail: (id: number) => ["users", "detail", id] as const,
+    roles: ["users", "roles"] as const,
+    permissions: ["users", "permissions"] as const,
   },
   system: {
     all: ["system"] as const,

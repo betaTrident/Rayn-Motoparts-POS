@@ -1,0 +1,176 @@
+import { 
+  ChevronDown, 
+  Database, 
+  History, 
+  LayoutGrid, 
+  Monitor, 
+  Package, 
+  Save, 
+  Settings, 
+  ShieldCheck, 
+  Tag, 
+  Users, 
+  Users2
+} from "lucide-react";
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import type { PermissionGroup, PermissionKey, UserRoleData } from "@/types/auth.types";
+
+interface RolePermissionsMatrixProps {
+  roles: UserRoleData[];
+  permissionGroups: Record<string, PermissionGroup[]>;
+  roleDrafts: Record<number, PermissionKey[]>;
+  isSaving: boolean;
+  onToggle: (roleId: number, key: PermissionKey, checked: boolean) => void;
+  onSave: (roleId: number) => Promise<void>;
+}
+
+const MODULE_ICONS: Record<string, any> = {
+  inventory: Package,
+  catalog: Tag,
+  pos: Monitor,
+  users: Users,
+  customers: Users2,
+  transactions: History,
+  reports: LayoutGrid,
+  settings: Settings,
+  "system_audit": Database,
+};
+
+export default function RolePermissionsMatrix({
+  roles,
+  permissionGroups,
+  roleDrafts,
+  isSaving,
+  onToggle,
+  onSave,
+}: RolePermissionsMatrixProps) {
+  const filteredRoles = roles.filter((role) => role.name !== "superadmin");
+
+  if (filteredRoles.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+          <ShieldCheck className="size-8 mb-2 opacity-20" />
+          <p className="text-sm">No manageable roles found.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Accordion type="multiple" defaultValue={filteredRoles.map(r => r.id.toString())} className="space-y-4">
+        {filteredRoles.map((role) => (
+          <AccordionItem 
+            key={role.id} 
+            value={role.id.toString()} 
+            className="border-none shadow-sm ring-1 ring-border rounded-xl bg-card overflow-hidden"
+          >
+            <div className="flex flex-row items-center justify-between bg-muted/30 px-6 py-4 border-b">
+              <AccordionTrigger className="flex-1 hover:no-underline py-0">
+                <div className="flex items-center gap-4 text-left">
+                  <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                    <ShieldCheck className="size-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-lg font-bold capitalize leading-none">
+                      {role.name} Access Control
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                      {role.user_count} assigned {role.user_count === 1 ? "user" : "users"}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <div className="flex items-center gap-3 pl-4 border-l ml-4">
+                <Button 
+                  size="sm" 
+                  className="h-8 px-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSave(role.id);
+                  }}
+                  disabled={isSaving}
+                >
+                  <Save className="mr-2 size-3.5" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+            
+            <AccordionContent className="p-0">
+              <div className="p-6 space-y-10">
+                {Object.entries(permissionGroups).map(([module, permissions]) => {
+                  const Icon = MODULE_ICONS[module.toLowerCase()] || LayoutGrid;
+                  return (
+                    <div key={module} className="space-y-5">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="bg-muted p-1.5 rounded-md">
+                            <Icon className="size-3.5 text-muted-foreground" />
+                          </div>
+                          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/70">
+                            {module.replace("_", " ")} Module
+                          </h4>
+                        </div>
+                        <div className="h-px flex-1 bg-gradient-to-r from-border/80 to-transparent" />
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {permissions.map((permission) => {
+                          const isChecked = (roleDrafts[role.id] ?? []).includes(permission.key);
+                          return (
+                            <label
+                              key={`${role.id}-${permission.key}`}
+                              className={cn(
+                                "group relative flex items-start gap-3 rounded-xl border p-4 transition-all cursor-pointer",
+                                "hover:border-primary/40 hover:bg-primary/[0.01] hover:shadow-sm",
+                                isChecked 
+                                  ? "bg-primary/[0.02] border-primary/20 ring-1 ring-primary/5" 
+                                  : "bg-background border-border/50"
+                              )}
+                            >
+                              <div className="pt-0.5">
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) =>
+                                    onToggle(role.id, permission.key, checked === true)
+                                  }
+                                  className="rounded-[4px] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <span className={cn(
+                                  "block text-[13px] font-semibold leading-none",
+                                  isChecked ? "text-foreground" : "text-foreground/80"
+                                )}>
+                                  {permission.action}
+                                </span>
+                                <span className="block text-[10px] leading-relaxed text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                                  {permission.description || permission.key}
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+  );
+}

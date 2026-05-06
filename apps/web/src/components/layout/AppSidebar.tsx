@@ -32,6 +32,7 @@ const mainNavItems = [
 ];
 
 const adminNavItems = [
+  { title: "Users", icon: "manage_accounts", key: "users", enabled: true },
   { title: "Settings", icon: "settings", key: "settings", enabled: true },
 ];
 
@@ -138,7 +139,7 @@ export default function AppSidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { canAccessAdmin, canAccessCatalog, canAccessPos, highestRole } =
+  const { canAccessAdmin, canAccessCatalog, canAccessPos, canAccessUsers, highestRole } =
     usePermissions();
 
   const handleLogout = async () => {
@@ -165,8 +166,9 @@ export default function AppSidebar({
     () =>
       adminNavItems
         .filter((i) => i.enabled)
+        .filter((i) => i.key !== "users" || canAccessUsers)
         .map((item) => ({ ...item, path: `${appBasePath}/${item.key}` })),
-    [appBasePath],
+    [appBasePath, canAccessUsers],
   );
 
   return (

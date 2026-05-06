@@ -21,6 +21,7 @@ const AdminReportsPage = lazy(() => import("@/app/admin/reports/page"));
 const AdminReturnsPage = lazy(() => import("@/app/admin/returns/page"));
 const AdminSettingsPage = lazy(() => import("@/app/admin/settings/page"));
 const AdminTransactionsPage = lazy(() => import("@/app/admin/transactions/page"));
+const AdminUsersPage = lazy(() => import("@/app/admin/users/page"));
 
 const StaffCustomersPage = lazy(() => import("@/app/staff/customers/page"));
 const StaffDashboardPage = lazy(() => import("@/app/staff/dashboard/page"));
@@ -70,6 +71,7 @@ export default function AppRouter() {
                 <Route path="/app/admin/returns" element={<AdminReturnsPage />} />
                 <Route path="/app/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/app/admin/settings" element={<AdminSettingsPage />} />
+                <Route path="/app/admin/users" element={<AdminUsersPage />} />
               </Route>
 
               <Route element={<RoleGuard allowedRoles={["staff"]} />}>
@@ -98,6 +100,7 @@ export default function AppRouter() {
               <Route path="/returns" element={<Navigate to="/" replace />} />
               <Route path="/reports" element={<Navigate to="/" replace />} />
               <Route path="/settings" element={<Navigate to="/" replace />} />
+              <Route path="/users" element={<Navigate to="/" replace />} />
               <Route path="/system-health" element={<Navigate to="/" replace />} />
               <Route path="/system-rollout" element={<Navigate to="/" replace />} />
               <Route path="/system-audit" element={<Navigate to="/" replace />} />

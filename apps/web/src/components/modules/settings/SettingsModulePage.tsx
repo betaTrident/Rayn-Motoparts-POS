@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
+import { Lock, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   PageErrorState,
   PageLoadingState,
 } from "@/components/ui/page-state";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSettingsProfile,
   useUpdateSettingsPassword,
   useUpdateSettingsProfile,
 } from "@/hooks/modules/useSettings";
 
+import ProfileSettings from "./parts/ProfileSettings";
+import SecuritySettings from "./parts/SecuritySettings";
+
 export default function SettingsModulePage() {
   const profileQuery = useSettingsProfile();
   const updateProfileMutation = useUpdateSettingsProfile();
   const updatePasswordMutation = useUpdateSettingsPassword();
+
+  const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
 
   const [profileForm, setProfileForm] = useState({
     first_name: "",
@@ -34,9 +37,7 @@ export default function SettingsModulePage() {
   });
 
   useEffect(() => {
-    if (!profileQuery.data) {
-      return;
-    }
+    if (!profileQuery.data) return;
 
     setProfileForm({
       first_name: profileQuery.data.first_name || "",
@@ -45,26 +46,25 @@ export default function SettingsModulePage() {
     });
   }, [profileQuery.data]);
 
-  const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleProfileSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     try {
       await updateProfileMutation.mutateAsync({
         first_name: profileForm.first_name.trim(),
         last_name: profileForm.last_name.trim(),
         phone: profileForm.phone.trim() || null,
       });
-      toast.success("Profile updated successfully");
+      toast.success("Profile information updated.");
     } catch {
-      toast.error("Failed to update profile");
+      toast.error("Unable to save profile changes.");
     }
   };
 
-  const handlePasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handlePasswordSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (passwordForm.new_password !== passwordForm.new_password_confirm) {
-      toast.error("New password and confirmation do not match");
+      toast.error("Password confirmation does not match.");
       return;
     }
 
@@ -75,155 +75,72 @@ export default function SettingsModulePage() {
         new_password: "",
         new_password_confirm: "",
       });
-      toast.success("Password updated successfully");
+      toast.success("Security credentials updated.");
     } catch {
-      toast.error("Failed to update password");
+      toast.error("Failed to update password. Please check your current password.");
     }
   };
 
   if (profileQuery.isLoading) {
-    return <PageLoadingState label="Loading settings..." />;
+    return <PageLoadingState label="Retrieving account settings..." />;
   }
 
   if (profileQuery.isError || !profileQuery.data) {
     return (
       <PageErrorState
-        title="Unable to load settings"
-        description="Please check your connection and try again."
+        title="Settings Unavailable"
+        description="We encountered an error while loading your account preferences."
         onRetry={() => profileQuery.refetch()}
       />
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <PageHeader
-        title="Settings"
-        description="Manage account profile and security settings"
+        title="Personal Settings"
+        description="Manage your professional profile, authentication methods, and notification preferences"
       />
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" value={profileQuery.data.email} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" value={profileQuery.data.username} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
-                <Input
-                  id="first_name"
-                  value={profileForm.first_name}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      first_name: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
-                <Input
-                  id="last_name"
-                  value={profileForm.last_name}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      last_name: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={profileForm.phone}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      phone: event.target.value,
-                    }))
-                  }
-                  placeholder="Optional"
-                />
-              </div>
-              <Button type="submit" disabled={updateProfileMutation.isPending}>
-                Save Profile
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as any)}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between border-b pb-1">
+          <TabsList variant="line" className="gap-8">
+            <TabsTrigger value="profile" className="gap-2.5 pb-3">
+              <UserCircle className="size-4" />
+              <span>Personal Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-2.5 pb-3">
+              <Lock className="size-4" />
+              <span>Security & Access</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Security</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="old_password">Current Password</Label>
-                <Input
-                  id="old_password"
-                  type="password"
-                  value={passwordForm.old_password}
-                  onChange={(event) =>
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      old_password: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new_password">New Password</Label>
-                <Input
-                  id="new_password"
-                  type="password"
-                  value={passwordForm.new_password}
-                  onChange={(event) =>
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      new_password: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new_password_confirm">Confirm New Password</Label>
-                <Input
-                  id="new_password_confirm"
-                  type="password"
-                  value={passwordForm.new_password_confirm}
-                  onChange={(event) =>
-                    setPasswordForm((prev) => ({
-                      ...prev,
-                      new_password_confirm: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={updatePasswordMutation.isPending}>
-                Update Password
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <TabsContent value="profile" className="m-0 focus-visible:ring-0">
+            <ProfileSettings
+              data={profileQuery.data}
+              form={profileForm}
+              onChange={(updates) => setProfileForm((prev) => ({ ...prev, ...updates }))}
+              onSubmit={handleProfileSubmit}
+              isSaving={updateProfileMutation.isPending}
+            />
+          </TabsContent>
+
+          <TabsContent value="security" className="m-0 focus-visible:ring-0">
+            <SecuritySettings
+              form={passwordForm}
+              onChange={(updates) => setPasswordForm((prev) => ({ ...prev, ...updates }))}
+              onSubmit={handlePasswordSubmit}
+              isSaving={updatePasswordMutation.isPending}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

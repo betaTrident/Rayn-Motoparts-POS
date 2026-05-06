@@ -13,6 +13,8 @@ export interface User {
   is_active: boolean;
   is_staff: boolean;
   date_joined: string;
+  role?: UserRole | null;
+  permissions?: PermissionKey[];
 }
 
 export type UserRole =
@@ -22,7 +24,12 @@ export type UserRole =
 
 export interface AuthClaims {
   roles: UserRole[];
+  role?: UserRole | null;
+  permissions?: PermissionKey[];
 }
+
+export type PermissionKey =
+  | `${string}:${string}`;
 
 // ──────────────────────────────────────────────
 // What we SEND to the backend

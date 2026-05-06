@@ -6,6 +6,12 @@ export const ENDPOINTS = {
     refresh: 'auth/token/refresh/',
     profile: 'auth/profile/',
     changePassword: 'auth/change-password/',
+    users: 'auth/users/',
+    userById: (id: number) => `auth/users/${id}/`,
+    resetUserPassword: (id: number) => `auth/users/${id}/reset-password/`,
+    roles: 'auth/roles/',
+    rolePermissions: (id: number) => `auth/roles/${id}/permissions/`,
+    permissions: 'auth/permissions/',
   },
   products: {
     categories: 'products/categories/',

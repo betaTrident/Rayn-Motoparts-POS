@@ -117,9 +117,9 @@ export function createCatalogProductColumns(
     },
     {
       accessorKey: "selling_price",
-      header: () => <span className="text-right">Sell Price</span>,
+      header: "Sell Price",
       cell: ({ row }) => (
-        <div className="text-right">
+        <div>
           <span className="text-[13px] font-semibold tabular-nums text-foreground">
             {formatCurrency(row.original.selling_price)}
           </span>
@@ -130,16 +130,12 @@ export function createCatalogProductColumns(
         const priceB = parseFloat(rowB.original.selling_price || "0");
         return priceA - priceB;
       },
-      meta: {
-        headerClassName: "text-right",
-        cellClassName: "text-right",
-      },
     },
     {
       accessorKey: "is_active",
-      header: () => <span className="text-center">Status</span>,
+      header: "Status",
       cell: ({ row }) => (
-        <div className="text-center">
+        <div>
           <Badge
             variant="outline"
             className={cn(
@@ -159,18 +155,14 @@ export function createCatalogProductColumns(
           </Badge>
         </div>
       ),
-      meta: {
-        headerClassName: "text-center",
-        cellClassName: "text-center",
-      },
     },
     {
       id: "actions",
-      header: () => <span className="text-right">Actions</span>,
+      header: "Actions",
       cell: ({ row }) => {
         const product = row.original;
         return (
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-start gap-1">
             <Button
               variant="outline"
               size="sm"

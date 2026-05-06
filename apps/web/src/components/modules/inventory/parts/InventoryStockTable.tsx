@@ -99,50 +99,44 @@ export function createInventoryStockColumns({
     },
     {
       accessorKey: "qty_on_hand",
-      header: () => <span className="text-right">On Hand</span>,
+      header: "On Hand",
       cell: ({ row }) => <span>{row.original.qty_on_hand}</span>,
-      meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
     },
     {
       accessorKey: "qty_reserved",
-      header: () => <span className="text-right">Reserved</span>,
+      header: "Reserved",
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.qty_reserved}</span>
       ),
-      meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
     },
     {
       accessorKey: "qty_available",
-      header: () => <span className="text-right">Available</span>,
+      header: "Available",
       cell: ({ row }) => (
         <span className="font-semibold text-foreground">{row.original.qty_available}</span>
       ),
-      meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
     },
     {
       accessorKey: "reorder_point",
-      header: () => <span className="text-right">Reorder At</span>,
+      header: "Reorder At",
       cell: ({ row }) => <span>{row.original.reorder_point}</span>,
-      meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
     },
     {
       accessorKey: "status",
-      header: () => <span className="text-center">Status</span>,
-      cell: ({ row }) => <div className="text-center">{statusBadge(row.original.status)}</div>,
-      meta: { headerClassName: "text-center", cellClassName: "text-center" },
+      header: "Status",
+      cell: ({ row }) => <div>{statusBadge(row.original.status)}</div>,
     },
     {
       accessorKey: "avg_cost",
-      header: () => <span className="text-right">Avg Cost</span>,
+      header: "Avg Cost",
       cell: ({ row }) => <span>{formatCurrency(row.original.avg_cost)}</span>,
-      meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
     },
     {
       id: "actions",
-      header: () => <span className="text-right">Actions</span>,
+      header: "Actions",
       cell: ({ row }) => (
         <TooltipProvider>
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-start gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -175,7 +169,6 @@ export function createInventoryStockColumns({
         </TooltipProvider>
       ),
       enableSorting: false,
-      meta: { headerClassName: "text-right", cellClassName: "text-right" },
     },
   ];
 }

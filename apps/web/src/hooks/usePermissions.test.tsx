@@ -13,8 +13,10 @@ describe("usePermissions", () => {
   it("resolves superadmin as highest role", () => {
     mockUseAuth.mockReturnValue({
       roles: ["staff", "admin", "superadmin"],
+      permissions: ["users:read"],
       hasAnyRole: (requiredRoles: string[]) =>
         requiredRoles.some((role) => ["staff", "admin", "superadmin"].includes(role)),
+      hasPermission: (permission: string) => permission === "users:read",
     });
 
     const { result } = renderHook(() => usePermissions());
@@ -28,7 +30,9 @@ describe("usePermissions", () => {
   it("resolves staff permissions correctly", () => {
     mockUseAuth.mockReturnValue({
       roles: ["staff"],
+      permissions: [],
       hasAnyRole: (requiredRoles: string[]) => requiredRoles.includes("staff"),
+      hasPermission: () => false,
     });
 
     const { result } = renderHook(() => usePermissions());
@@ -42,7 +46,9 @@ describe("usePermissions", () => {
   it("returns null highestRole for unknown role set", () => {
     mockUseAuth.mockReturnValue({
       roles: [],
+      permissions: [],
       hasAnyRole: () => false,
+      hasPermission: () => false,
     });
 
     const { result } = renderHook(() => usePermissions());

@@ -155,7 +155,7 @@ export function DataTable<TData, TValue>({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "h-12 bg-muted/10 px-4 text-sm font-semibold tracking-tight text-foreground/90",
+                          "h-12 bg-muted/10 px-6 text-sm font-semibold tracking-tight text-foreground/90",
                           canSort && "cursor-pointer select-none",
                           meta?.headerClassName,
                         )}
@@ -221,7 +221,7 @@ export function DataTable<TData, TValue>({
                         <TableCell
                           key={cell.id}
                           className={cn(
-                            "px-4 py-3 align-middle text-[13px]",
+                            "px-6 py-3 align-middle text-[13px]",
                             meta?.cellClassName,
                           )}
                         >
