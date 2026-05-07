@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Archive, ArchiveRestore, Loader2, Pencil, Trash2, Wrench } from "lucide-react";
+import { Archive, ArchiveRestore, Pencil, Trash2, Wrench } from "lucide-react";
 
 import type { Product } from "@/types/product.types";
 import { cn } from "@/lib/utils";
@@ -112,11 +112,6 @@ export default function CatalogProductsTable({
             </div>
           </div>
 
-          {product.description ? (
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              {product.description}
-            </p>
-          ) : null}
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Button

@@ -38,8 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageEmptyState, PageErrorState } from "@/components/ui/page-state";
-import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
-import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import CatalogCategoriesPanel from "@/components/modules/catalog/CatalogCategoriesPanel";
@@ -892,7 +891,7 @@ export default function CatalogModulePage() {
               <div className="col-span-3 text-right">Sell Price</div>
               <div className="col-span-2 text-right">Status</div>
             </div>
-            <div className="max-h-[320px] overflow-auto">
+            <div className="max-h-80 overflow-auto">
               {(variantProduct?.variants ?? []).map((variant) => (
                 <div
                   key={variant.id}

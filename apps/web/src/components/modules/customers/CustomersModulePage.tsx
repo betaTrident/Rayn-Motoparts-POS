@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Search, Users, X, UserCheck, UserMinus, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Users, X, UserCheck, UserMinus, Eye, ChevronLeft, ChevronRight} from "lucide-react";
 
 import PageHeader from "@/components/layout/PageHeader";
 import { useCustomers } from "@/hooks/modules/useCustomers";
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/page-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
-import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import {
   Select,
   SelectContent,
@@ -42,7 +41,7 @@ const customerColumns: ColumnDef<CustomerRow>[] = [
     accessorKey: "fullName",
     header: "Customer",
     cell: ({ row }) => (
-      <div className="min-w-[13rem]">
+      <div className="min-w-52">
         <p className="text-[13px] font-semibold">{row.original.fullName}</p>
         <p className="mt-1 text-xs text-muted-foreground">{row.original.customerCode}</p>
       </div>
@@ -57,7 +56,7 @@ const customerColumns: ColumnDef<CustomerRow>[] = [
     accessorKey: "email",
     header: "Email",
     cell: ({ row }) => (
-      <span className="block max-w-[14rem] truncate">{row.original.email || "-"}</span>
+      <span className="block max-w-56 truncate">{row.original.email || "-"}</span>
     ),
   },
   {
@@ -227,17 +226,15 @@ export default function CustomersModulePage() {
           description="Please check your connection and try again."
           onRetry={() => customersQuery.refetch()}
         />
-  if (customersQuery.isLoading) {
-    return <DataTableSkeleton columnCount={6} rowCount={10} />;
-  }
-
-  return (
-    <DataTable
-      columns={customerColumns}
-      data={results}
-      isLoading={customersQuery.isLoading}
-      enablePagination={false}
-      toolbar={toolbar}
+      ) : customersQuery.isLoading ? (
+        <DataTableSkeleton columnCount={6} rowCount={10} />
+      ) : (
+        <DataTable
+          columns={customerColumns}
+          data={results}
+          isLoading={customersQuery.isLoading}
+          enablePagination={false}
+          toolbar={toolbar}
           emptyState={
             <PageEmptyState
               icon={Users}
@@ -315,6 +312,7 @@ export default function CustomersModulePage() {
             ) : null
           }
         />
+      )}
     </div>
   );
 }

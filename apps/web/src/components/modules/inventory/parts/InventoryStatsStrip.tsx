@@ -2,7 +2,6 @@ import { AlertTriangle, Boxes, CheckCircle2, CircleDollarSign, XCircle } from "l
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import type { InventoryStockSummary } from "@/services/modules/inventory.service";
 

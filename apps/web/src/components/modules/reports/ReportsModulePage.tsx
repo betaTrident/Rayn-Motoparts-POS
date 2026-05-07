@@ -12,6 +12,9 @@ import {
   PageErrorState,
   PageLoadingState,
 } from "@/components/ui/page-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
+import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import { useReportsSnapshot } from "@/hooks/modules/useReports";
 import type { ReportsSnapshot } from "@/services/modules/reports.service";
 
@@ -135,7 +138,16 @@ export default function ReportsModulePage() {
       />
 
       {reportsQuery.isLoading ? (
-        <PageLoadingState label="Loading reports..." />
+        <div className="space-y-6">
+          <StatsStripSkeleton count={4} />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-48 w-full rounded-xl" />
+          </div>
+          <Card className="p-6">
+            <DataTableSkeleton columnCount={3} rowCount={5} showToolbar={false} />
+          </Card>
+        </div>
       ) : reportsQuery.isError ? (
         <PageErrorState
           title="Unable to load reports"
@@ -156,24 +168,32 @@ export default function ReportsModulePage() {
               value={formatCurrency(snapshot.dashboard.summary.todayRevenue)}
               note={`Change ${snapshot.dashboard.summary.revenueChange.toFixed(1)}%`}
               icon={Wallet}
+              accent="green"
+              isLoading={reportsQuery.isLoading}
             />
             <StatCard
               label="Transactions"
               value={snapshot.totals.transactions}
               note={`Orders today ${snapshot.dashboard.summary.todayOrders}`}
               icon={BarChart3}
+              accent="primary"
+              isLoading={reportsQuery.isLoading}
             />
             <StatCard
               label="Returns"
               value={snapshot.totals.returns}
               note="Refunded and partially refunded"
               icon={Wrench}
+              accent="amber"
+              isLoading={reportsQuery.isLoading}
             />
             <StatCard
               label="Customers"
               value={snapshot.totals.customers}
               note="Tracked customer records"
               icon={Users}
+              accent="blue"
+              isLoading={reportsQuery.isLoading}
             />
           </div>
 
@@ -332,22 +352,57 @@ function StatCard({
   value,
   note,
   icon: Icon,
+  accent = "primary",
+  isLoading = false,
 }: {
   label: string;
   value: number | string;
   note: string;
   icon: ElementType;
+  accent?: "primary" | "green" | "amber" | "blue";
+  isLoading?: boolean;
 }) {
+  const colors = {
+    primary: "bg-primary/10 text-primary border-primary/20",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
+    blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900",
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+        <CardContent className="p-4 flex items-center gap-4">
+          <Skeleton className="size-10 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-2 min-w-0">
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-2 w-16" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="py-4">
-      <CardContent className="flex items-center gap-3 pb-0">
-        <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-md">
-          <Icon className="size-4" />
+    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+      <CardContent className="p-4 flex items-center gap-4">
+        <div className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+          colors[accent]
+        )}>
+          <Icon className="size-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold leading-none">{value}</p>
-          <p className="mt-1 text-xs font-medium">{label}</p>
-          <p className="text-muted-foreground mt-1 text-[11px]">{note}</p>
+        <div className="min-w-0">
+          <p className="text-2xl font-bold tracking-tight text-foreground leading-none">
+            {value}
+          </p>
+          <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 truncate">
+            {label}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground/60 truncate italic">
+            {note}
+          </p>
         </div>
       </CardContent>
     </Card>

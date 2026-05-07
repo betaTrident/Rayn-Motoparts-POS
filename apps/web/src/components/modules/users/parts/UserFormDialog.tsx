@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -188,17 +188,22 @@ export default function UserFormDialog({
               </div>
             )}
             {mode === "edit" && (
-              <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2.5 sm:col-span-2">
-                <Checkbox
+              <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/30 px-4 py-3 sm:col-span-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="is_active" className="text-sm font-semibold cursor-pointer">
+                    Account Status
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Enable or disable system access for this user
+                  </p>
+                </div>
+                <Switch
                   id="is_active"
                   checked={form.is_active}
                   onCheckedChange={(checked) =>
-                    setForm((prev) => ({ ...prev, is_active: checked === true }))
+                    setForm((prev) => ({ ...prev, is_active: checked }))
                   }
                 />
-                <Label htmlFor="is_active" className="text-sm font-medium leading-none cursor-pointer">
-                  Account is currently active and can access the system
-                </Label>
               </div>
             )}
           </div>

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { PermissionGroup, PermissionKey, UserRoleData } from "@/types/auth.types";
 
@@ -125,41 +125,38 @@ export default function RolePermissionsMatrix({
                         <div className="h-px flex-1 bg-gradient-to-r from-border/80 to-transparent" />
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {permissions.map((permission) => {
                           const isChecked = (roleDrafts[role.id] ?? []).includes(permission.key);
                           return (
-                            <label
+                            <div
                               key={`${role.id}-${permission.key}`}
                               className={cn(
-                                "group relative flex items-start gap-3 rounded-xl border p-4 transition-all cursor-pointer",
-                                "hover:border-primary/40 hover:bg-primary/[0.01] hover:shadow-sm",
+                                "group flex flex-row items-center justify-between gap-4 rounded-xl border p-4 transition-all",
                                 isChecked 
-                                  ? "bg-primary/[0.02] border-primary/20 ring-1 ring-primary/5" 
-                                  : "bg-background border-border/50"
+                                  ? "bg-primary/[0.02] border-primary/20 ring-1 ring-primary/5 shadow-sm" 
+                                  : "bg-background border-border/50 hover:border-border hover:bg-muted/30"
                               )}
                             >
-                              <div className="pt-0.5">
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={(checked) =>
-                                    onToggle(role.id, permission.key, checked === true)
-                                  }
-                                  className="rounded-[4px] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                />
-                              </div>
-                              <div className="space-y-1">
+                              <div className="min-w-0 space-y-1">
                                 <span className={cn(
-                                  "block text-[13px] font-semibold leading-none",
+                                  "block text-[13px] font-semibold leading-tight",
                                   isChecked ? "text-foreground" : "text-foreground/80"
                                 )}>
                                   {permission.action}
                                 </span>
-                                <span className="block text-[10px] leading-relaxed text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                                <span className="block text-[11px] leading-relaxed text-muted-foreground/70 group-hover:text-muted-foreground/90 transition-colors truncate">
                                   {permission.description || permission.key}
                                 </span>
                               </div>
-                            </label>
+                              <Switch
+                                checked={isChecked}
+                                onCheckedChange={(checked) =>
+                                  onToggle(role.id, permission.key, checked)
+                                }
+                                className="data-[state=checked]:bg-primary"
+                              />
+                            </div>
                           );
                         })}
                       </div>

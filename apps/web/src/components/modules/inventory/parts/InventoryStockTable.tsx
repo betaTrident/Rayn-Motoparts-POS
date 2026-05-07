@@ -1,4 +1,4 @@
-import { Search, Settings, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Search, Settings, SlidersHorizontal, X} from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";
@@ -91,7 +91,7 @@ export function createInventoryStockColumns({
           </p>
           <Badge
             variant="secondary"
-            className="max-w-[10rem] truncate rounded-full px-2 py-0.5 text-[11px]"
+            className="max-w-40 truncate rounded-full px-2 py-0.5 text-[11px]"
           >
             {row.original.category}
           </Badge>
@@ -128,9 +128,11 @@ export function createInventoryStockColumns({
       cell: ({ row }) => <div>{statusBadge(row.original.status)}</div>,
     },
     {
-      accessorKey: "avg_cost",
-      header: "Avg Cost",
-      cell: ({ row }) => <span>{formatCurrency(row.original.avg_cost)}</span>,
+      accessorKey: "total_cost",
+      header: "Total Cost",
+      cell: ({ row }) => (
+        <span>{formatCurrency(row.original.qty_on_hand * row.original.avg_cost)}</span>
+      ),
     },
     {
       id: "actions",

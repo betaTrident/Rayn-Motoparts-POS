@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import {
   PageEmptyState,
   PageErrorState,
-  PageLoadingState,
 } from "@/components/ui/page-state";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 import {
   Select,
   SelectContent,
@@ -145,7 +145,7 @@ export default function ReturnsModulePage() {
       </Card>
 
       {returnsQuery.isLoading ? (
-        <PageLoadingState label="Loading returns..." />
+        <DataTableSkeleton columnCount={8} rowCount={10} />
       ) : returnsQuery.isError ? (
         <PageErrorState
           title="Unable to load returns"

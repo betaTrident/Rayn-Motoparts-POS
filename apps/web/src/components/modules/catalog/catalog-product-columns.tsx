@@ -61,14 +61,9 @@ export function createCatalogProductColumns(
                   {product.variant_count ?? product.variants?.length ?? 0} variant
                   {(product.variant_count ?? product.variants?.length ?? 0) === 1 ? "" : "s"}
                 </span>
-                <span className="max-w-[12.5rem] truncate">
+                <span className="max-w-50 truncate">
                   Part #{product.part_number || "-"}
                 </span>
-                {product.description ? (
-                  <span className="max-w-[16rem] truncate">
-                    {product.description}
-                  </span>
-                ) : null}
               </div>
             </div>
           </div>
@@ -97,7 +92,7 @@ export function createCatalogProductColumns(
           <Badge
             variant="outline"
             className={cn(
-              "max-w-[9.5rem] truncate rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
+              "max-w-38 truncate rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
               getCategoryStyles(name)
             )}
           >

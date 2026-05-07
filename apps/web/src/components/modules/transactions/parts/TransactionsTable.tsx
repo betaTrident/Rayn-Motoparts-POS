@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, Receipt, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Eye, Receipt, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { formatCurrency, formatDateTime } from "@/components/modules/transactions/formatters";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +55,7 @@ export default function TransactionsTable({
       accessorKey: "transactionNumber",
       header: "Transaction #",
       cell: ({ row }) => (
-        <div className="min-w-[11rem]">
+        <div className="min-w-44">
           <p className="text-[13px] font-semibold">{row.original.transactionNumber}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {formatDateTime(row.original.transactionDate)}

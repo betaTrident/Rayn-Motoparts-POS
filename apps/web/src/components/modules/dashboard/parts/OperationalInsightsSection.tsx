@@ -248,7 +248,7 @@ export default function OperationalInsightsSection({
                         {i + 1}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1a1c1c] truncate max-w-[120px] sm:max-w-none">{cashier.name}</p>
+                        <p className="text-xs font-bold text-[#1a1c1c] truncate max-w-30 sm:max-w-none">{cashier.name}</p>
                         <p className="text-[10px] text-[#546067] font-medium">
                           {cashier.orders} orders
                           <span className="hidden sm:inline"> · AOV {formatCurrency(cashier.avgOrderValue)}</span>
