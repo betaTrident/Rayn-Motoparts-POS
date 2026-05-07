@@ -5,8 +5,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useDashboardSnapshot } from "@/hooks/modules/useDashboard";
 import {
   PageErrorState,
-  PageLoadingState,
 } from "@/components/ui/page-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
+import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import type { DashboardVariant } from "@/components/modules/dashboard/types";
 import DashboardHeaderControls from "@/components/modules/dashboard/parts/DashboardHeaderControls";
 import KpiSummaryCards from "@/components/modules/dashboard/parts/KpiSummaryCards";
@@ -101,7 +104,36 @@ export default function DashboardModulePage({
   };
 
   if (dashboardQuery.isLoading) {
-    return <PageLoadingState label="Loading dashboard..." />;
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-40" />
+          </div>
+        </div>
+        
+        <StatsStripSkeleton count={4} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-[300px] w-full" />
+          </Card>
+          <Card className="p-6 space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-[300px] w-full" />
+          </Card>
+        </div>
+
+        <Card className="p-6">
+          <DataTableSkeleton columnCount={5} rowCount={5} showToolbar={false} />
+        </Card>
+      </div>
+    );
   }
 
   if (dashboardQuery.isError || !dashboardQuery.data) {

@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PageEmptyState } from "@/components/ui/page-state";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 import type {
   InventoryCategoryOption,
   InventoryStockRow,
@@ -263,6 +264,10 @@ export default function InventoryStockTable({
     </div>
   );
 
+  if (isLoading) {
+    return <DataTableSkeleton columnCount={9} rowCount={10} />;
+  }
+
   return (
     <DataTable
       columns={columns}
@@ -280,12 +285,6 @@ export default function InventoryStockTable({
               : "Tracked inventory will appear after stock records are created."
           }
         />
-      }
-      loadingState={
-        <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          Loading stock levels...
-        </div>
       }
       mobileCardRenderer={(row) => (
         <div className="rounded-md border border-border/70 bg-card p-4 shadow-sm">

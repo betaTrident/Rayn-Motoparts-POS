@@ -38,6 +38,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageEmptyState, PageErrorState } from "@/components/ui/page-state";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
+import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/layout/PageHeader";
 import CatalogCategoriesPanel from "@/components/modules/catalog/CatalogCategoriesPanel";
 import CatalogCategoryDialog from "@/components/modules/catalog/CatalogCategoryDialog";
@@ -682,24 +685,28 @@ export default function CatalogModulePage() {
           value={stats.total}
           icon={Package}
           accent="primary"
+          isLoading={productsQuery.isLoading}
         />
         <StatCard
           label="Active Listings"
           value={stats.active}
           icon={Wrench}
           accent="green"
+          isLoading={productsQuery.isLoading}
         />
         <StatCard
           label="Inactive Listings"
           value={stats.inactive}
           icon={Archive}
           accent="amber"
+          isLoading={productsQuery.isLoading}
         />
         <StatCard
           label="Avg Sell Price"
           value={formatCurrency(stats.avgSellingPrice)}
           icon={Tag}
           accent="blue"
+          isLoading={productsQuery.isLoading}
         />
       </div>
       <p className="text-muted-foreground text-xs">
@@ -917,35 +924,51 @@ function StatCard({
   value,
   icon: Icon,
   accent,
+  isLoading = false,
 }: {
   label: string;
   value: number | string;
   icon: React.ElementType;
   accent: "primary" | "green" | "amber" | "blue";
+  isLoading?: boolean;
 }) {
   const colors = {
-    primary: "bg-primary/10 text-primary",
-    green:
-      "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
-    amber:
-      "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
+    primary: "bg-primary/10 text-primary border-primary/20",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
+    blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900",
   };
 
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+        <CardContent className="p-4 flex items-center gap-4">
+          <Skeleton className="size-10 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-2 min-w-0">
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="py-4">
-      <CardContent className="flex items-center gap-3 pb-0">
-        <div
-          className={cn(
-            "flex size-9 items-center justify-center rounded-md",
-            colors[accent]
-          )}
-        >
-          <Icon className="size-4" />
+    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+      <CardContent className="p-4 flex items-center gap-4">
+        <div className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+          colors[accent]
+        )}>
+          <Icon className="size-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold leading-none">{value}</p>
-          <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+        <div className="min-w-0">
+          <p className="text-2xl font-bold tracking-tight text-foreground leading-none">
+            {value}
+          </p>
+          <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 truncate">
+            {label}
+          </p>
         </div>
       </CardContent>
     </Card>

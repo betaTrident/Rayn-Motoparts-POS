@@ -142,7 +142,10 @@ export default function InventoryModulePage() {
           onRetry={() => summaryQuery.refetch()}
         />
       ) : (
-        <InventoryStatsStrip summary={summaryQuery.data} />
+        <InventoryStatsStrip 
+          summary={summaryQuery.data} 
+          isLoading={summaryQuery.isLoading} 
+        />
       )}
 
       <Card className="pt-0 pb-0">

@@ -9,6 +9,7 @@ import {
   PageEmptyState,
   PageErrorState,
 } from "@/components/ui/page-state";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 import type {
   TransactionPagination,
   TransactionRow,
@@ -43,6 +44,10 @@ export default function TransactionsTable({
         onRetry={onRetry}
       />
     );
+  }
+
+  if (isLoading) {
+    return <DataTableSkeleton columnCount={7} rowCount={10} />;
   }
 
   const columns: ColumnDef<TransactionRow>[] = [
@@ -113,12 +118,6 @@ export default function TransactionsTable({
       data={results}
       isLoading={isLoading}
       enablePagination={false}
-      loadingState={
-        <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          Loading transactions...
-        </div>
-      }
       emptyState={
         <PageEmptyState
           icon={Receipt}

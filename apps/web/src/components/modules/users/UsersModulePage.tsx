@@ -6,7 +6,10 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageErrorState, PageLoadingState } from "@/components/ui/page-state";
+import { PageErrorState } from "@/components/ui/page-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
+import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -179,7 +182,32 @@ export default function UsersModulePage() {
   };
 
   if (usersQuery.isLoading && !usersQuery.data) {
-    return <PageLoadingState label="Synchronizing user directory..." />;
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="User Management"
+          description="Manage staff profiles, regulate system access, and feature access"
+          actions={
+            <Button disabled className="shadow-sm">
+              <Plus className="mr-2 size-4" />
+              Add Team Member
+            </Button>
+          }
+        />
+        <StatsStripSkeleton count={5} />
+        <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+          <div className="border-b bg-muted/20 px-6 pt-4">
+            <div className="flex h-10 w-48 gap-8">
+              <Skeleton className="h-full w-24 rounded-none" />
+              <Skeleton className="h-full w-24 rounded-none" />
+            </div>
+          </div>
+          <div className="p-6">
+            <DataTableSkeleton columnCount={5} rowCount={10} />
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   if (usersQuery.isError) {

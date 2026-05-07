@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageEmptyState } from "@/components/ui/page-state";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 import type { StockMovementRow } from "@/services/modules/inventory.service";
 
 function formatDateTime(value: string) {
@@ -204,6 +205,10 @@ export default function StockMovementTable({
     </div>
   );
 
+  if (isLoading) {
+    return <DataTableSkeleton columnCount={9} rowCount={10} />;
+  }
+
   return (
     <DataTable
       columns={columns}
@@ -212,7 +217,6 @@ export default function StockMovementTable({
       toolbar={toolbar}
       pageSize={50}
       pageSizeOptions={[50, 100, 200]}
-      loadingState={<span className="text-muted-foreground text-sm">Loading movement log...</span>}
       emptyState={
         <PageEmptyState
           title={hasActiveFilters ? "No matching movements" : "No stock movements yet"}

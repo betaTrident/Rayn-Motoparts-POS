@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 
 interface CatalogProductsTableProps {
   columns: ColumnDef<Product, unknown>[];
@@ -40,12 +41,9 @@ export default function CatalogProductsTable({
   onToggleAvailability,
   onDelete,
 }: CatalogProductsTableProps) {
-  const loadingState = (
-    <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
-      <Loader2 className="size-4 animate-spin" />
-      Loading products...
-    </div>
-  );
+  if (isLoading) {
+    return <DataTableSkeleton columnCount={6} rowCount={10} />;
+  }
 
   return (
     <DataTable
@@ -53,7 +51,6 @@ export default function CatalogProductsTable({
       data={data}
       isLoading={isLoading}
       emptyState={emptyState}
-      loadingState={loadingState}
       toolbar={toolbar}
       footer={footer}
       pageSize={10}

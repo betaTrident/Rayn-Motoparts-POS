@@ -3,10 +3,8 @@ import { Lock, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import PageHeader from "@/components/layout/PageHeader";
-import {
-  PageErrorState,
-  PageLoadingState,
-} from "@/components/ui/page-state";
+import { PageErrorState } from "@/components/ui/page-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSettingsProfile,
@@ -82,7 +80,42 @@ export default function SettingsModulePage() {
   };
 
   if (profileQuery.isLoading) {
-    return <PageLoadingState label="Retrieving account settings..." />;
+    return (
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <PageHeader
+          title="Personal Settings"
+          description="Manage your professional profile, authentication methods, and notification preferences"
+        />
+        <div className="border-b pb-1">
+          <div className="flex h-10 w-48 gap-8">
+            <Skeleton className="h-full w-24 rounded-none" />
+            <Skeleton className="h-full w-24 rounded-none" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
+          <div className="lg:col-span-2">
+            <Card className="p-6 space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <Skeleton className="h-10 w-32 rounded-md" />
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (profileQuery.isError || !profileQuery.data) {

@@ -15,6 +15,9 @@ import {
   PageEmptyState,
   PageErrorState,
 } from "@/components/ui/page-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
+import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import {
   Select,
   SelectContent,
@@ -193,24 +196,28 @@ export default function CustomersModulePage() {
           value={totalsQuery.data?.pagination.totalCount ?? 0}
           icon={Users}
           accent="primary"
+          isLoading={totalsQuery.isLoading}
         />
         <StatCard
           label="Active Customers"
           value={activeCountQuery.data?.pagination.totalCount ?? 0}
           icon={UserCheck}
           accent="green"
+          isLoading={activeCountQuery.isLoading}
         />
         <StatCard
           label="Inactive Customers"
           value={inactiveCountQuery.data?.pagination.totalCount ?? 0}
           icon={UserMinus}
           accent="amber"
+          isLoading={inactiveCountQuery.isLoading}
         />
         <StatCard
           label="Visible This Page"
           value={results.length}
           icon={Eye}
           accent="blue"
+          isLoading={customersQuery.isLoading}
         />
       </div>
 
@@ -220,19 +227,17 @@ export default function CustomersModulePage() {
           description="Please check your connection and try again."
           onRetry={() => customersQuery.refetch()}
         />
-      ) : (
-        <DataTable
-          columns={customerColumns}
-          data={results}
-          isLoading={customersQuery.isLoading}
-          enablePagination={false}
-          toolbar={toolbar}
-          loadingState={
-            <div className="text-muted-foreground flex items-center justify-center gap-2 py-8 text-sm">
-              <Loader2 className="size-4 animate-spin" />
-              Loading customers...
-            </div>
-          }
+  if (customersQuery.isLoading) {
+    return <DataTableSkeleton columnCount={6} rowCount={10} />;
+  }
+
+  return (
+    <DataTable
+      columns={customerColumns}
+      data={results}
+      isLoading={customersQuery.isLoading}
+      enablePagination={false}
+      toolbar={toolbar}
           emptyState={
             <PageEmptyState
               icon={Users}
@@ -310,7 +315,6 @@ export default function CustomersModulePage() {
             ) : null
           }
         />
-      )}
     </div>
   );
 }
@@ -320,33 +324,51 @@ function StatCard({
   value,
   icon: Icon,
   accent,
+  isLoading = false,
 }: {
   label: string;
   value: number | string;
   icon: React.ElementType;
   accent: "primary" | "green" | "amber" | "blue";
+  isLoading?: boolean;
 }) {
   const colors = {
-    primary: "bg-primary/10 text-primary",
-    green: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
-    amber: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
+    primary: "bg-primary/10 text-primary border-primary/20",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
+    blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900",
   };
 
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+        <CardContent className="p-4 flex items-center gap-4">
+          <Skeleton className="size-10 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-2 min-w-0">
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="py-4">
-      <CardContent className="flex items-center gap-3 pb-0">
-        <div
-          className={cn(
-            "flex size-9 items-center justify-center rounded-md",
-            colors[accent]
-          )}
-        >
-          <Icon className="size-4" />
+    <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border">
+      <CardContent className="p-4 flex items-center gap-4">
+        <div className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+          colors[accent]
+        )}>
+          <Icon className="size-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold leading-none">{value}</p>
-          <p className="text-muted-foreground mt-1 text-xs">{label}</p>
+        <div className="min-w-0">
+          <p className="text-2xl font-bold tracking-tight text-foreground leading-none">
+            {value}
+          </p>
+          <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 truncate">
+            {label}
+          </p>
         </div>
       </CardContent>
     </Card>
