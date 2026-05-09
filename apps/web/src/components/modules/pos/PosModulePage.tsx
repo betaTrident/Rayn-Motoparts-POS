@@ -5,8 +5,10 @@ import {
   Minus,
   Plus,
   ShoppingCart,
+  Tag,
   Trash2,
   Wallet,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -64,12 +66,15 @@ import RaynReceiptLogo from "@/assets/RAYN-LOGO.svg";
 interface CartLine {
   product: Product;
   qty: number;
+  discountType: "percentage" | "fixed_amount" | null;
+  discountValue: number | null;
 }
 
 interface ReceiptLineSnapshot {
   name: string;
   qty: number;
   unitPrice: number;
+  discountAmount: number;
   lineTotal: number;
 }
 
@@ -81,6 +86,7 @@ interface ReceiptDisplayData {
   cashierName: string;
   lines: ReceiptLineSnapshot[];
   subtotal: number;
+  discountAmount: number;
   totalAmount: number;
   amountTendered: number;
   changeGiven: number;
@@ -93,6 +99,25 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function computeLineDiscount(
+  unitPrice: number,
+  qty: number,
+  discountType: CartLine["discountType"],
+  discountValue: number | null,
+) {
+  const gross = unitPrice * qty;
+  let discountAmount = 0;
+  if (discountType === "percentage" && discountValue !== null) {
+    discountAmount = (gross * discountValue) / 100;
+  } else if (discountType === "fixed_amount" && discountValue !== null) {
+    discountAmount = Math.min(discountValue, gross);
+  }
+  return {
+    discountAmount,
+    lineTotal: gross - discountAmount,
+  };
 }
 
 function CheckoutMethodHint({
@@ -121,6 +146,132 @@ function CheckoutMethodHint({
       Non-cash checkout must match the exact total.
       {amountTendered !== totalAmount ? " Update the amount to proceed." : ""}
     </p>
+  );
+}
+
+function CartLineDiscountEditor({
+  discountType,
+  discountValue,
+  unitPrice,
+  qty,
+  onChange,
+}: {
+  discountType: CartLine["discountType"];
+  discountValue: number | null;
+  unitPrice: number;
+  qty: number;
+  onChange: (discountType: CartLine["discountType"], discountValue: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [localType, setLocalType] = useState<"percentage" | "fixed_amount">(
+    discountType ?? "percentage",
+  );
+  const [localValue, setLocalValue] = useState(
+    discountValue !== null ? String(discountValue) : "",
+  );
+  const gross = unitPrice * qty;
+  const { discountAmount } = computeLineDiscount(unitPrice, qty, discountType, discountValue);
+  const hasDiscount = discountType !== null && discountValue !== null;
+
+  const applyDiscount = () => {
+    const parsed = Number(localValue);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return;
+    }
+    const clampedValue = localType === "percentage" ? Math.min(parsed, 100) : Math.min(parsed, gross);
+    onChange(localType, clampedValue);
+    setOpen(false);
+  };
+
+  const clearDiscount = () => {
+    onChange(null, null);
+    setLocalValue("");
+    setLocalType("percentage");
+    setOpen(false);
+  };
+
+  return (
+    <div className="mt-1.5">
+      {hasDiscount ? (
+        <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <Tag className="size-3" />
+          <span>
+            {discountType === "percentage"
+              ? `${discountValue}%`
+              : formatCurrency(discountValue ?? 0)}{" "}
+            off (-{formatCurrency(discountAmount)})
+          </span>
+          <button
+            type="button"
+            onClick={clearDiscount}
+            className="hover:text-destructive"
+            aria-label="Remove discount"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+        >
+          <Tag className="size-3" />
+          Add discount
+        </button>
+      )}
+      {open ? (
+        <div className="mt-2 space-y-2 rounded-md border bg-background p-2 shadow-sm">
+          <div className="flex gap-1">
+            {(["percentage", "fixed_amount"] as const).map((discountOption) => (
+              <button
+                type="button"
+                key={discountOption}
+                onClick={() => setLocalType(discountOption)}
+                className={cn(
+                  "flex-1 rounded border px-2 py-1 text-xs",
+                  localType === discountOption
+                    ? "border-primary bg-primary text-white"
+                    : "border-border",
+                )}
+              >
+                {discountOption === "percentage" ? "% Off" : "PHP Off"}
+              </button>
+            ))}
+          </div>
+          <Input
+            type="number"
+            min="0"
+            step={localType === "percentage" ? "1" : "0.01"}
+            max={localType === "percentage" ? "100" : String(gross)}
+            value={localValue}
+            onChange={(event) => setLocalValue(event.target.value)}
+            placeholder={localType === "percentage" ? "10" : "50.00"}
+            className="h-7 text-xs"
+            autoFocus
+          />
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 flex-1 text-xs"
+              onClick={() => setOpen(false)}
+              type="button"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 flex-1 text-xs"
+              onClick={applyDiscount}
+              type="button"
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -163,7 +314,29 @@ export default function PosModulePage() {
   const subtotal = useMemo(
     () =>
       cartLines.reduce(
-        (sum, line) => sum + Number(line.product.price) * line.qty,
+        (sum, line) =>
+          sum +
+          computeLineDiscount(
+            Number(line.product.price),
+            line.qty,
+            line.discountType,
+            line.discountValue,
+          ).lineTotal,
+        0,
+      ),
+    [cartLines],
+  );
+  const totalDiscount = useMemo(
+    () =>
+      cartLines.reduce(
+        (sum, line) =>
+          sum +
+          computeLineDiscount(
+            Number(line.product.price),
+            line.qty,
+            line.discountType,
+            line.discountValue,
+          ).discountAmount,
         0,
       ),
     [cartLines],
@@ -211,6 +384,8 @@ export default function PosModulePage() {
         [product.id]: {
           product,
           qty: existing ? existing.qty + 1 : 1,
+          discountType: existing?.discountType ?? null,
+          discountValue: existing?.discountValue ?? null,
         },
       };
     });
@@ -261,6 +436,27 @@ export default function PosModulePage() {
     });
   };
 
+  const setLineDiscount = (
+    productId: number,
+    discountType: CartLine["discountType"],
+    discountValue: number | null,
+  ) => {
+    setCart((prev) => {
+      const existing = prev[productId];
+      if (!existing) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [productId]: {
+          ...existing,
+          discountType,
+          discountValue,
+        },
+      };
+    });
+  };
+
   const resetSale = () => {
     setCart({});
     setCheckoutError("");
@@ -301,6 +497,8 @@ export default function PosModulePage() {
         items: cartLines.map((line) => ({
           variant_id: line.product.variant_id ?? 0,
           qty: line.qty,
+          discount_type: line.discountType ?? undefined,
+          discount_value: line.discountValue ?? undefined,
         })),
         payments: [
           {
@@ -316,12 +514,21 @@ export default function PosModulePage() {
         result.receipt?.receiptNumber ??
         `TEMP-${result.transaction.transactionNumber}`;
       const preparedCustomerName = customerName.trim() || "Walk-in Customer";
-      const currentLines: ReceiptLineSnapshot[] = cartLines.map((line) => ({
-        name: line.product.name,
-        qty: line.qty,
-        unitPrice: Number(line.product.price),
-        lineTotal: Number(line.product.price) * line.qty,
-      }));
+      const currentLines: ReceiptLineSnapshot[] = cartLines.map((line) => {
+        const { discountAmount, lineTotal } = computeLineDiscount(
+          Number(line.product.price),
+          line.qty,
+          line.discountType,
+          line.discountValue,
+        );
+        return {
+          name: line.product.name,
+          qty: line.qty,
+          unitPrice: Number(line.product.price),
+          discountAmount,
+          lineTotal,
+        };
+      });
 
       setReceiptDisplay({
         transactionNumber: result.transaction.transactionNumber,
@@ -331,6 +538,7 @@ export default function PosModulePage() {
         cashierName: "POS Cashier",
         lines: currentLines,
         subtotal: result.transaction.subtotal,
+        discountAmount: result.transaction.discountAmount,
         totalAmount: result.transaction.totalAmount,
         amountTendered: result.transaction.amountTendered,
         changeGiven: result.transaction.changeGiven,
@@ -641,9 +849,25 @@ export default function PosModulePage() {
                           </Button>
                         </div>
                         <p className="text-sm font-semibold">
-                          {formatCurrency(Number(line.product.price) * line.qty)}
+                          {formatCurrency(
+                            computeLineDiscount(
+                              Number(line.product.price),
+                              line.qty,
+                              line.discountType,
+                              line.discountValue,
+                            ).lineTotal,
+                          )}
                         </p>
                       </div>
+                      <CartLineDiscountEditor
+                        discountType={line.discountType}
+                        discountValue={line.discountValue}
+                        unitPrice={Number(line.product.price)}
+                        qty={line.qty}
+                        onChange={(discountType, discountValue) =>
+                          setLineDiscount(line.product.id, discountType, discountValue)
+                        }
+                      />
                     </div>
                   ))}
                 </div>
@@ -656,6 +880,12 @@ export default function PosModulePage() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-medium">{formatCurrency(subtotal)}</span>
                 </div>
+                {totalDiscount > 0 ? (
+                  <div className="flex items-center justify-between text-sm text-emerald-700">
+                    <span>Discount</span>
+                    <span>-{formatCurrency(totalDiscount)}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between text-base font-bold">
                   <span>Total Amount</span>
                   <span className="text-primary">{formatCurrency(subtotal)}</span>
@@ -799,12 +1029,25 @@ export default function PosModulePage() {
                       {line.product.name} x {line.qty}
                     </span>
                     <span className="font-medium">
-                      {formatCurrency(Number(line.product.price) * line.qty)}
+                      {formatCurrency(
+                        computeLineDiscount(
+                          Number(line.product.price),
+                          line.qty,
+                          line.discountType,
+                          line.discountValue,
+                        ).lineTotal,
+                      )}
                     </span>
                   </div>
                 ))}
               </div>
               <div className="mt-4 space-y-2 border-t pt-4 text-sm">
+                {totalDiscount > 0 ? (
+                  <div className="flex items-center justify-between text-emerald-700">
+                    <span>Discount</span>
+                    <span>-{formatCurrency(totalDiscount)}</span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Total due</span>
                   <span className="font-semibold">{formatCurrency(subtotal)}</span>
@@ -909,6 +1152,11 @@ export default function PosModulePage() {
                         <p className="truncate font-medium">{line.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {line.qty} x {formatCurrency(line.unitPrice)}
+                          {line.discountAmount > 0 ? (
+                            <span className="ml-2 text-emerald-700">
+                              (-{formatCurrency(line.discountAmount)})
+                            </span>
+                          ) : null}
                         </p>
                       </div>
                       <p className="font-semibold">{formatCurrency(line.lineTotal)}</p>
@@ -923,6 +1171,12 @@ export default function PosModulePage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatCurrency(receiptDisplay.subtotal)}</span>
                   </div>
+                  {receiptDisplay.discountAmount > 0 ? (
+                    <div className="flex items-center justify-between text-emerald-700">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(receiptDisplay.discountAmount)}</span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Total</span>
                     <span className="font-bold">{formatCurrency(receiptDisplay.totalAmount)}</span>

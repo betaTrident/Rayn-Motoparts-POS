@@ -84,6 +84,7 @@ def ensure_receipt_dual_write_snapshot(txn, performed_by) -> tuple[Receipt, bool
         'seller_tin': profile.tin if profile else None,
         'seller_phone': profile.phone if profile else None,
         'subtotal': txn.subtotal,
+        'discount_amount': txn.discount_amount,
         'taxable_amount': txn.taxable_amount,
         'tax_amount': txn.tax_amount,
         'total_amount': txn.total_amount,
@@ -120,6 +121,7 @@ def ensure_receipt_dual_write_snapshot(txn, performed_by) -> tuple[Receipt, bool
             unit_of_measure='pcs',
             qty=item.qty,
             unit_price=item.unit_price,
+            discount_amount=item.discount_amount,
             tax_amount=item.line_tax_amount,
             line_total=item.line_total,
         )

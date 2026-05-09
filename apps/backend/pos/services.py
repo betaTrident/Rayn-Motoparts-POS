@@ -250,6 +250,7 @@ def create_and_complete_sale(
 
         line_items: list[SalesTransactionItem] = []
         subtotal = Decimal("0")
+        discount_amount = Decimal("0")
         tax_amount = Decimal("0")
         total_amount = Decimal("0")
         for item in items:
@@ -266,9 +267,12 @@ def create_and_complete_sale(
                 unit_price=unit_price,
                 unit_cost=unit_cost,
                 tax_rate=item_tax_rate,
+                discount_type=item.get("discount_type"),
+                discount_value=item.get("discount_value"),
             )
             line_items.append(line)
             subtotal += line.line_subtotal
+            discount_amount += line.discount_amount
             tax_amount += line.line_tax_amount
             total_amount += line.line_total
 
@@ -281,6 +285,7 @@ def create_and_complete_sale(
 
         change_given = amount_tendered - total_amount
         transaction_obj.subtotal = subtotal
+        transaction_obj.discount_amount = discount_amount
         transaction_obj.taxable_amount = subtotal
         transaction_obj.tax_amount = tax_amount
         transaction_obj.total_amount = total_amount
@@ -290,6 +295,7 @@ def create_and_complete_sale(
         transaction_obj.save(
             update_fields=[
                 "subtotal",
+                "discount_amount",
                 "taxable_amount",
                 "tax_amount",
                 "total_amount",
@@ -330,6 +336,7 @@ def create_and_complete_sale(
             "status": transaction_obj.status,
             "customerName": transaction_obj.customer_name,
             "subtotal": float(transaction_obj.subtotal),
+            "discountAmount": float(transaction_obj.discount_amount),
             "taxAmount": float(transaction_obj.tax_amount),
             "totalAmount": float(transaction_obj.total_amount),
             "amountTendered": float(transaction_obj.amount_tendered),

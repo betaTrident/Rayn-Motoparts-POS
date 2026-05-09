@@ -14,6 +14,29 @@ class PosCheckoutItemSerializer(serializers.Serializer):
         decimal_places=4,
         min_value=Decimal("0.0001"),
     )
+    discount_type = serializers.ChoiceField(
+        choices=["percentage", "fixed_amount"],
+        required=False,
+        allow_null=True,
+        default=None,
+    )
+    discount_value = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        min_value=Decimal("0"),
+        required=False,
+        allow_null=True,
+        default=None,
+    )
+
+    def validate(self, attrs):
+        discount_type = attrs.get("discount_type")
+        discount_value = attrs.get("discount_value")
+        if (discount_type is None) != (discount_value is None):
+            raise serializers.ValidationError(
+                "discount_type and discount_value must both be provided or both omitted."
+            )
+        return attrs
 
 
 class PosCheckoutPaymentSerializer(serializers.Serializer):

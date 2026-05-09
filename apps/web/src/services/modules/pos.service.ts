@@ -48,6 +48,8 @@ export interface PosCheckoutPayload {
   items: Array<{
     variant_id: number;
     qty: number;
+    discount_type?: "percentage" | "fixed_amount" | null;
+    discount_value?: number | null;
   }>;
   payments: Array<{
     payment_method_id: number;
@@ -64,6 +66,7 @@ export interface PosCheckoutResponse {
     status: string;
     customerName: string | null;
     subtotal: number;
+    discountAmount: number;
     taxAmount: number;
     totalAmount: number;
     amountTendered: number;
