@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.utils.text import slugify
 from rest_framework import serializers
 
+from .permissions import can_manage_pricing, can_view_cost
 from .models import Category, Product, ProductVariant, TaxRate, UnitOfMeasure
 
 
@@ -87,6 +88,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
             'category',
             'category_name',
             'uom_code',
+            'tax_rate',
             'tax_rate_name',
             'description',
             'cost_price',
@@ -142,6 +144,8 @@ class ProductReadSerializer(serializers.ModelSerializer):
         return obj.variants.filter(deleted_at__isnull=True, is_active=True).count()
 
     def get_variants(self, obj):
+        request = self.context.get('request')
+        include_cost = can_view_cost(getattr(request, 'user', None))
         return [
             {
                 "id": variant.id,
@@ -158,7 +162,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
                     else "Medium"
                 ),
                 "selling_price": str(variant.effective_price),
-                "cost_price": str(variant.effective_cost),
+                **({"cost_price": str(variant.effective_cost)} if include_cost else {}),
                 "is_active": variant.is_active,
             }
             for variant in obj.variants.filter(deleted_at__isnull=True).order_by("id")
@@ -167,14 +171,40 @@ class ProductReadSerializer(serializers.ModelSerializer):
     def get_size(self, obj):
         variant = self._first_variant(obj)
         if variant and isinstance(variant.attributes, dict):
-            return variant.attributes.get('size', 'medium')
-        return 'medium'
+            return variant.attributes.get('size')
+        return None
 
     def get_size_display(self, obj):
-        return self.get_size(obj).capitalize()
+        value = self.get_size(obj)
+        if not value:
+            return None
+        return value
 
     def get_image(self, obj):
         return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        can_cost = can_view_cost(user)
+        can_pricing = can_manage_pricing(user)
+
+        if not can_cost:
+            data.pop('cost_price', None)
+            for variant in data.get('variants', []):
+                if isinstance(variant, dict):
+                    variant.pop('cost_price', None)
+
+        data['can_view_cost'] = can_cost
+        data['can_manage_pricing'] = can_pricing
+        return data
+
+
+class TaxRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaxRate
+        fields = ['id', 'name', 'rate', 'is_active']
 
 
 class ProductWriteSerializer(serializers.Serializer):
@@ -188,7 +218,12 @@ class ProductWriteSerializer(serializers.Serializer):
     price = serializers.DecimalField(max_digits=14, decimal_places=4, min_value=Decimal('0.0001'), required=False)
     variant_sku = serializers.CharField(max_length=100, required=False, allow_blank=True)
     variant_name = serializers.CharField(max_length=200, required=False, allow_blank=True, allow_null=True)
-    size = serializers.ChoiceField(choices=['solo', 'small', 'medium', 'large'])
+    tax_rate = serializers.PrimaryKeyRelatedField(
+        queryset=TaxRate.objects.filter(is_active=True, deleted_at__isnull=True),
+        required=False,
+        allow_null=True,
+    )
+    size = serializers.CharField(max_length=80, required=False, allow_blank=True, allow_null=True)
     is_active = serializers.BooleanField(required=False)
     is_taxable = serializers.BooleanField(required=False, default=True)
     is_serialized = serializers.BooleanField(required=False, default=False)
@@ -201,9 +236,39 @@ class ProductWriteSerializer(serializers.Serializer):
     def _get_tax_rate(self):
         return TaxRate.objects.filter(name='VAT 12%').first() or TaxRate.objects.first()
 
+    def validate_size(self, value):
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        if 'cost_price' in attrs and not can_view_cost(user):
+            raise serializers.ValidationError({'cost_price': 'You do not have permission to manage cost price.'})
+
+        pricing_fields = {'selling_price', 'price', 'is_taxable', 'tax_rate'}
+        submitted_pricing_fields = [field for field in pricing_fields if field in attrs]
+        if submitted_pricing_fields and not can_manage_pricing(user):
+            raise serializers.ValidationError(
+                {'detail': 'You do not have permission to manage product pricing and tax settings.'}
+            )
+
+        is_taxable = attrs.get('is_taxable')
+        provided_tax_rate = attrs.get('tax_rate')
+        if is_taxable is True and provided_tax_rate is None:
+            legacy_default = self._get_tax_rate()
+            if legacy_default is None:
+                raise serializers.ValidationError({'tax_rate': 'A valid tax rate is required when product is taxable.'})
+            attrs['tax_rate'] = legacy_default
+
+        return attrs
+
     def create(self, validated_data):
         uom = self._get_uom()
-        tax_rate = self._get_tax_rate()
+        tax_rate = validated_data.get('tax_rate') or self._get_tax_rate()
         if not uom or not tax_rate:
             raise serializers.ValidationError('Unit of measure and tax rate must be seeded first.')
 
@@ -237,7 +302,7 @@ class ProductWriteSerializer(serializers.Serializer):
             product=product,
             variant_sku=variant_sku,
             variant_name=validated_data.get('variant_name'),
-            attributes={'size': validated_data['size']},
+            attributes=({'size': validated_data['size']} if validated_data.get('size') else {}),
             cost_price=cost_price,
             selling_price=selling_price,
             is_active=is_active,
@@ -264,6 +329,8 @@ class ProductWriteSerializer(serializers.Serializer):
 
         if 'description' in validated_data:
             instance.description = validated_data.get('description') or ''
+        if 'tax_rate' in validated_data and validated_data.get('tax_rate') is not None:
+            instance.tax_rate = validated_data['tax_rate']
 
         instance.cost_price = cost_price
         instance.selling_price = selling_price
@@ -276,6 +343,7 @@ class ProductWriteSerializer(serializers.Serializer):
                 'name',
                 'category',
                 'description',
+                'tax_rate',
                 'part_number',
                 'cost_price',
                 'selling_price',
@@ -290,7 +358,10 @@ class ProductWriteSerializer(serializers.Serializer):
         if variant:
             attrs = variant.attributes if isinstance(variant.attributes, dict) else {}
             if 'size' in validated_data:
-                attrs['size'] = validated_data['size']
+                if validated_data['size']:
+                    attrs['size'] = validated_data['size']
+                else:
+                    attrs.pop('size', None)
             variant.attributes = attrs
             if 'variant_sku' in validated_data and validated_data.get('variant_sku'):
                 variant.variant_sku = validated_data['variant_sku'].strip()

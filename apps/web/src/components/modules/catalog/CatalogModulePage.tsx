@@ -9,6 +9,7 @@ import type {
   Product,
   ProductFormData,
   ProductSize,
+  TaxRateOption,
 } from "@/types/product.types";
 import * as productService from "@/services/productService.service";
 import * as inventoryService from "@/services/modules/inventory.service";
@@ -63,9 +64,10 @@ const EMPTY_PRODUCT: ProductFormData = {
   description: "",
   cost_price: 0,
   selling_price: 0,
+  tax_rate: null,
   variant_sku: "",
   variant_name: "",
-  size: "medium",
+  size: null,
   is_active: true,
   is_taxable: true,
   is_serialized: false,
@@ -79,6 +81,7 @@ const EMPTY_CATEGORY: CategoryFormData = {
 
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_CATEGORIES: Category[] = [];
+const EMPTY_TAX_RATES: TaxRateOption[] = [];
 
 type ProductFormErrors = Partial<Record<keyof ProductFormData, string>>;
 type CategoryFormErrors = Partial<Record<keyof CategoryFormData, string>>;
@@ -113,6 +116,10 @@ function validateProductForm(data: ProductFormData): ProductFormErrors {
 
   if (!Number.isFinite(data.cost_price) || data.cost_price < 0) {
     errors.cost_price = "Cost price cannot be negative.";
+  }
+
+  if (data.is_taxable && !data.tax_rate) {
+    errors.tax_rate = "Select a tax rate for taxable products.";
   }
 
   return errors;
@@ -181,6 +188,10 @@ export default function CatalogModulePage() {
     queryKey: queryKeys.catalog.sizes,
     queryFn: () => productService.getSizes(),
   });
+  const taxRatesQuery = useQuery({
+    queryKey: queryKeys.catalog.taxRates,
+    queryFn: () => productService.getTaxRates(),
+  });
 
   const createProductMut = useMutation({
     mutationFn: (data: ProductFormData) => productService.createProduct(data),
@@ -212,6 +223,7 @@ export default function CatalogModulePage() {
           parsed.fieldErrors.is_available ??
           prev.is_active,
         is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
+        tax_rate: parsed.fieldErrors.tax_rate ?? prev.tax_rate,
         is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
         description: parsed.fieldErrors.description ?? prev.description,
@@ -256,6 +268,7 @@ export default function CatalogModulePage() {
           parsed.fieldErrors.is_available ??
           prev.is_active,
         is_taxable: parsed.fieldErrors.is_taxable ?? prev.is_taxable,
+        tax_rate: parsed.fieldErrors.tax_rate ?? prev.tax_rate,
         is_serialized: parsed.fieldErrors.is_serialized ?? prev.is_serialized,
         size: parsed.fieldErrors.size ?? prev.size,
         description: parsed.fieldErrors.description ?? prev.description,
@@ -296,6 +309,7 @@ export default function CatalogModulePage() {
   const sizeOptions = sizesQuery.data?.length
     ? sizesQuery.data
     : DEFAULT_SIZE_OPTIONS;
+  const taxRateOptions = taxRatesQuery.data ?? EMPTY_TAX_RATES;
 
   const deleteProductMut = useMutation({
     mutationFn: (id: number) => productService.deleteProduct(id),
@@ -385,6 +399,7 @@ export default function CatalogModulePage() {
 
   const categories = categoriesQuery.data ?? EMPTY_CATEGORIES;
   const products = productsQuery.data ?? EMPTY_PRODUCTS;
+  const canViewCost = products.some((product) => product.can_view_cost);
 
   const filteredProducts = useMemo(() => {
     const keyword = deferredSearch.trim().toLowerCase();
@@ -451,11 +466,12 @@ export default function CatalogModulePage() {
       part_number: product.part_number,
       category: product.category,
       description: product.description,
-      cost_price: parseFloat(product.cost_price),
+      cost_price: parseFloat(product.cost_price ?? product.selling_price),
       selling_price: parseFloat(product.selling_price),
+      tax_rate: product.tax_rate,
       variant_sku: product.variant_sku,
       variant_name: product.variant_name,
-      size: product.size,
+      size: product.size ?? null,
       is_active: product.is_active,
       is_taxable: product.is_taxable,
       is_serialized: product.is_serialized,
@@ -604,8 +620,9 @@ export default function CatalogModulePage() {
         onToggleAvailability: toggleProductAvailability,
         onDelete: openDeleteProduct,
         onViewVariants: openViewVariants,
+        showCostColumn: canViewCost,
       }),
-    [openEditProduct, openDeleteProduct, openViewVariants, toggleProductAvailability]
+    [openEditProduct, openDeleteProduct, openViewVariants, toggleProductAvailability, canViewCost]
   );
 
   const productsToolbar = (
@@ -791,6 +808,7 @@ export default function CatalogModulePage() {
         productServerError={productServerError}
         categories={categories}
         sizeOptions={sizeOptions}
+        taxRateOptions={taxRateOptions}
         validateProductForm={validateProductForm}
         onCreateProduct={handleCreateProduct}
         onUpdateProduct={handleUpdateProduct}

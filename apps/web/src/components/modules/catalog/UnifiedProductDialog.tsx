@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Loader2, Lock } from "lucide-react";
 
-import type { Category, Product, ProductFormData, ProductSize } from "@/types/product.types";
+import type { Category, Product, ProductFormData, ProductSize, TaxRateOption } from "@/types/product.types";
 import type { InventoryStockRow } from "@/services/modules/inventory.service";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +23,7 @@ interface UnifiedProductDialogProps {
   productServerError: string | null;
   categories: Category[];
   sizeOptions: { value: ProductSize; label: string }[];
+  taxRateOptions: TaxRateOption[];
   validateProductForm: (data: ProductFormData) => ProductFormErrors;
   onCreateProduct: (payload: ProductFormData) => Promise<Product>;
   onUpdateProduct: (id: number, payload: ProductFormData) => Promise<void>;
@@ -43,6 +44,7 @@ export default function UnifiedProductDialog(props: UnifiedProductDialogProps) {
     productServerError,
     categories,
     sizeOptions,
+    taxRateOptions,
     validateProductForm,
     onCreateProduct,
     onUpdateProduct,
@@ -270,6 +272,7 @@ export default function UnifiedProductDialog(props: UnifiedProductDialogProps) {
                 productServerError={productServerError}
                 categories={categories}
                 sizeOptions={sizeOptions}
+                taxRateOptions={taxRateOptions}
               />
             </TabsContent>
             <TabsContent value="adjustment" className="m-0">

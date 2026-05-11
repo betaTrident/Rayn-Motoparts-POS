@@ -101,6 +101,7 @@ export const queryKeys = {
     products: (input: CatalogProductQueryKeyInput = {}) =>
       ["catalog", "products", input] as const,
     sizes: ["catalog", "sizes"] as const,
+    taxRates: ["catalog", "tax-rates"] as const,
   },
   pos: {
     all: ["pos"] as const,

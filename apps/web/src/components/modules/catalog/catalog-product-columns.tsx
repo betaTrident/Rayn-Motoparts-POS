@@ -24,6 +24,7 @@ interface ProductColumnHandlers {
   onToggleAvailability: (product: Product) => void;
   onDelete: (product: Product) => void;
   onViewVariants: (product: Product) => void;
+  showCostColumn?: boolean;
 }
 
 function formatCurrency(amount: string | number) {
@@ -38,7 +39,7 @@ function formatCurrency(amount: string | number) {
 export function createCatalogProductColumns(
   handlers: ProductColumnHandlers
 ): ColumnDef<Product>[] {
-  return [
+  const columns: ColumnDef<Product>[] = [
     {
       accessorKey: "name",
       header: "Product",
@@ -102,11 +103,20 @@ export function createCatalogProductColumns(
       },
     },
     {
+      accessorKey: "variant_sku",
+      header: "Variant SKU",
+      cell: ({ row }) => (
+        <span className="font-mono text-[12px] text-muted-foreground">
+          {row.original.variant_sku || "-"}
+        </span>
+      ),
+    },
+    {
       accessorKey: "size_display",
       header: "Size",
       cell: ({ row }) => (
         <span className="text-[13px] text-muted-foreground">
-          {row.original.size_display}
+          {row.original.size_display || "-"}
         </span>
       ),
     },
@@ -223,5 +233,24 @@ export function createCatalogProductColumns(
       },
     },
   ];
+
+  if (handlers.showCostColumn) {
+    columns.splice(4, 0, {
+      accessorKey: "cost_price",
+      header: "Cost Price",
+      cell: ({ row }) => (
+        <span className="text-[13px] font-semibold tabular-nums text-foreground">
+          {row.original.cost_price ? formatCurrency(row.original.cost_price) : "-"}
+        </span>
+      ),
+      sortingFn: (rowA, rowB) => {
+        const a = parseFloat(rowA.original.cost_price ?? "0");
+        const b = parseFloat(rowB.original.cost_price ?? "0");
+        return a - b;
+      },
+    });
+  }
+
+  return columns;
 }
       

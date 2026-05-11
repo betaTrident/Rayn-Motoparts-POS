@@ -6,6 +6,7 @@ import {
   getCategories,
   getProducts,
   getSizes,
+  getTaxRates,
   updateCategory,
   updateProduct,
 } from "@/services/productService.service";
@@ -15,6 +16,7 @@ import type {
   Product,
   ProductFormData,
   SizeOption,
+  TaxRateOption,
 } from "@/types/product.types";
 
 export type {
@@ -23,6 +25,7 @@ export type {
   Product,
   ProductFormData,
   SizeOption,
+  TaxRateOption,
 };
 
 export interface ProductListFilters {
@@ -42,6 +45,10 @@ export async function fetchProducts(filters?: ProductListFilters): Promise<Produ
 
 export async function fetchSizes(): Promise<SizeOption[]> {
   return getSizes();
+}
+
+export async function fetchTaxRates(): Promise<TaxRateOption[]> {
+  return getTaxRates();
 }
 
 export async function createCatalogProduct(payload: ProductFormData): Promise<Product> {

@@ -6,8 +6,9 @@ import type {
   Product,
   ProductFormData,
   SizeOption,
+  TaxRateOption,
 } from "@/types/product.types";
-import type { CategoryDto, ProductDto, SizeOptionDto } from "@/types/api/catalog.types";
+import type { CategoryDto, ProductDto, SizeOptionDto, TaxRateDto } from "@/types/api/catalog.types";
 
 const toCategory = (dto: CategoryDto): Category => ({
   ...dto,
@@ -18,7 +19,7 @@ const toProduct = (dto: ProductDto): Product => ({
   ...dto,
   part_number: dto.part_number ?? "",
   description: dto.description ?? "",
-  cost_price: dto.cost_price ?? dto.price,
+  cost_price: dto.cost_price,
   selling_price: dto.selling_price ?? dto.price,
   is_active: dto.is_active ?? dto.is_available,
   is_taxable: dto.is_taxable ?? true,
@@ -31,9 +32,13 @@ const toProduct = (dto: ProductDto): Product => ({
     dto.variants?.map((variant) => ({
       ...variant,
       variant_name: variant.variant_name ?? "",
+      size_display: variant.size_display ?? null,
     })) ?? [],
   price: dto.selling_price ?? dto.price,
+  size_display: dto.size_display ?? null,
   is_available: dto.is_active ?? dto.is_available,
+  can_view_cost: dto.can_view_cost ?? false,
+  can_manage_pricing: dto.can_manage_pricing ?? false,
 });
 
 // ════════════════════════════════════════════════
@@ -109,4 +114,16 @@ export async function deleteProduct(id: number): Promise<void> {
 export async function getSizes(): Promise<SizeOption[]> {
   const { data } = await api.get<SizeOptionDto[]>(ENDPOINTS.products.sizes);
   return data as SizeOption[];
+}
+
+const toTaxRate = (dto: TaxRateDto): TaxRateOption => ({
+  id: dto.id,
+  name: dto.name,
+  rate: dto.rate,
+  is_active: dto.is_active,
+});
+
+export async function getTaxRates(): Promise<TaxRateOption[]> {
+  const { data } = await api.get<TaxRateDto[]>(ENDPOINTS.products.taxRates);
+  return data.map(toTaxRate);
 }

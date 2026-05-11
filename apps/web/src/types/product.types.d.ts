@@ -1,8 +1,11 @@
-// ──────────────────────────────────────────────
-// Product & Category types (mirrors Django models)
-// ──────────────────────────────────────────────
+export type ProductSize = string;
 
-export type ProductSize = "solo" | "small" | "medium" | "large";
+export interface TaxRateOption {
+  id: number;
+  name: string;
+  rate: string;
+  is_active: boolean;
+}
 
 export interface Category {
   id: number;
@@ -28,9 +31,10 @@ export interface Product {
   category: number;
   category_name: string;
   uom_code: string;
+  tax_rate: number;
   tax_rate_name: string;
   description: string;
-  cost_price: string;
+  cost_price?: string;
   selling_price: string;
   is_active: boolean;
   is_taxable: boolean;
@@ -44,16 +48,18 @@ export interface Product {
     variant_sku: string;
     variant_name: string | null;
     size: ProductSize;
-    size_display: string;
+    size_display: string | null;
     selling_price: string;
-    cost_price: string;
+    cost_price?: string;
     is_active: boolean;
   }>;
-  price: string;            // Django DecimalField → string
-  size: ProductSize;
-  size_display: string;
+  price: string;
+  size: ProductSize | null;
+  size_display: string | null;
   is_available: boolean;
   image: string | null;
+  can_view_cost?: boolean;
+  can_manage_pricing?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -66,10 +72,11 @@ export interface ProductFormData {
   description: string;
   cost_price: number;
   selling_price: number;
+  tax_rate?: number | null;
   price?: number;
   variant_sku?: string;
   variant_name?: string;
-  size: ProductSize;
+  size?: ProductSize | null;
   is_active: boolean;
   is_available?: boolean;
   is_taxable: boolean;

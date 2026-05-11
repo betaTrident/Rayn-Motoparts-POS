@@ -210,7 +210,7 @@ export default function CatalogProductDialog({
                 Size
               </Label>
               <Select
-                value={productForm.size}
+                value={productForm.size ?? ""}
                 onValueChange={(val) =>
                   setProductForm((f) => ({
                     ...f,

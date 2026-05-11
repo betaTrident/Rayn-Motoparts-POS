@@ -19,6 +19,7 @@ export const ENDPOINTS = {
     items: 'products/items/',
     itemById: (id: number) => `products/items/${id}/`,
     sizes: 'products/items/sizes/',
+    taxRates: 'products/items/tax-rates/',
   },
   pos: {
     bootstrap: 'pos/bootstrap/',
