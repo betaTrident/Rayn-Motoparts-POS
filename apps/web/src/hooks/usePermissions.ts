@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { useAuth } from "@/context/AuthContext";
-import type { PermissionKey, UserRole } from "@/types/auth.types";
+import type { UserRole } from "@/types/auth.types";
 
 const ROLE_PRIORITY: UserRole[] = [
   "superadmin",
@@ -26,9 +26,7 @@ export function usePermissions() {
     permissions,
     highestRole,
     canAccessAdmin: hasAnyRole(["superadmin", "admin"]),
-    canAccessUsers:
-      hasAnyRole(["superadmin", "admin"]) &&
-      (hasPermission("users:read" as PermissionKey) || permissions.length === 0),
+    canAccessUsers: hasAnyRole(["superadmin", "admin"]),
     canAccessCatalog: hasAnyRole(["superadmin", "admin", "staff"]),
     canAccessPos: hasAnyRole(["superadmin", "admin", "staff"]),
     canAccessProcurement: false,

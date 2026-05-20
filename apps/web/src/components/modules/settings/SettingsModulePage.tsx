@@ -3,6 +3,7 @@ import { Lock, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import PageHeader from "@/components/layout/PageHeader";
+import { Card } from "@/components/ui/card";
 import { PageErrorState } from "@/components/ui/page-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -128,6 +129,14 @@ export default function SettingsModulePage() {
     );
   }
 
+  const profileData = {
+    first_name: profileQuery.data.first_name || "",
+    last_name: profileQuery.data.last_name || "",
+    phone: profileQuery.data.phone || "",
+    email: profileQuery.data.email || "",
+    username: profileQuery.data.username || "",
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <PageHeader
@@ -137,7 +146,7 @@ export default function SettingsModulePage() {
 
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as any)}
+        onValueChange={(v) => setActiveTab(v as "profile" | "security")}
         className="space-y-6"
       >
         <div className="flex items-center justify-between border-b pb-1">
@@ -156,7 +165,7 @@ export default function SettingsModulePage() {
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <TabsContent value="profile" className="m-0 focus-visible:ring-0">
             <ProfileSettings
-              data={profileQuery.data}
+              data={profileData}
               form={profileForm}
               onChange={(updates) => setProfileForm((prev) => ({ ...prev, ...updates }))}
               onSubmit={handleProfileSubmit}

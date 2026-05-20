@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useId, type Dispatch, type SetStateAction } from "react";
 
 import type {
   Category,
@@ -42,6 +42,8 @@ export default function ProductDetailsTab({
   sizeOptions,
   taxRateOptions,
 }: ProductDetailsTabProps) {
+  const sizeSuggestionsId = useId();
+
   return (
     <div className="space-y-4 px-4 py-5 sm:px-6">
       <div className="space-y-1.5">
@@ -124,16 +126,16 @@ export default function ProductDetailsTab({
           <Label htmlFor="product-size" className="text-muted-foreground text-xs font-medium">Size</Label>
           <Input
             id="product-size"
-            placeholder="Optional, e.g. Small, 14mm, XL"
+            placeholder="Optional, e.g. Small, 14mm, 100/80"
             value={productForm.size ?? ""}
-            list="catalog-size-suggestions"
+            list={sizeSuggestionsId}
             onChange={(e) => {
               const value = e.target.value.trim();
               setProductForm((f) => ({ ...f, size: value || null }));
               setProductFormErrors((prev) => ({ ...prev, size: undefined }));
             }}
           />
-          <datalist id="catalog-size-suggestions">
+          <datalist id={sizeSuggestionsId}>
             {sizeOptions.map((s) => (
               <option key={s.value} value={s.label} />
             ))}

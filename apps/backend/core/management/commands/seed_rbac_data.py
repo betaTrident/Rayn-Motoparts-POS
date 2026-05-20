@@ -69,7 +69,6 @@ ROLE_PERMISSION_KEYS = {
         ("users", "deactivate"),
         ("users", "reset_password"),
         ("roles", "read"),
-        ("system", "audit"),
     },
     "staff": {
         ("products", "read"),

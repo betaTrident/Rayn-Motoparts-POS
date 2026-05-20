@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   PageEmptyState,
   PageErrorState,
-  PageLoadingState,
 } from "@/components/ui/page-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTableSkeleton } from "@/components/ui/skeletons/DataTableSkeleton";
 import { StatsStripSkeleton } from "@/components/ui/skeletons/StatsStripSkeleton";
 import { useReportsSnapshot } from "@/hooks/modules/useReports";
+import { cn } from "@/lib/utils";
 import type { ReportsSnapshot } from "@/services/modules/reports.service";
 
 function formatCurrency(value: number): string {
